@@ -3,7 +3,8 @@
 //   node tools/bundle-apps-script.mjs [outFile]      (default: local-data/ACC_Downtime_Backend.gs)
 //
 // The order is the one the backend tests use: Schema first, then the rest alphabetically.
-// The result is generated code: never edit it, and never commit it.
+// The result is generated code: never edit it. The only committed copy is deploy/plant-apps-script/Code.gs (plant-system
+// branch), checked against the source by backend/apps-script/tests/bundle.test.mjs.
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
