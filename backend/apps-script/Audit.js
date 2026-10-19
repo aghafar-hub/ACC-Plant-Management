@@ -54,6 +54,7 @@ var AUDIT_GROUPS_ = {
   actions: ['create_action', 'merge_action', 'update_action', 'comment_action', 'action_check', 'create_task', 'update_task', 'apply_template'],
   areas: ['activate_area', 'deactivate_area'],
   notifications: ['notification_check', 'notification_failed', 'digest_sent', 'digest_failed', 'send_report', 'send_test_email'],
+  shift: ['shift_report_save', 'shift_report_submit', 'shift_stoppage_close', 'shift_report_approve', 'shift_report_return', 'shift_report_validate'],
   system: ['seed_defaults', 'migrate_actions']
 };
 var AUDIT_PAGE_DEFAULT_ = 100;

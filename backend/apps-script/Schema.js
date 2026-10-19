@@ -3515,7 +3515,9 @@ var SCHEMA = {
     "upload": "Edit",
     "master": "Edit",
     "settings": "Edit",
-    "users": "Edit"
+    "users": "Edit",
+    "shift": "Edit",
+    "daily": "Edit"
    },
    "ROLE-MGR": {
     "overview": "View",
@@ -3528,7 +3530,9 @@ var SCHEMA = {
     "upload": "Hidden",
     "master": "View",
     "settings": "Hidden",
-    "users": "Hidden"
+    "users": "Hidden",
+    "shift": "View",
+    "daily": "View"
    },
    "ROLE-ENG": {
     "overview": "View",
@@ -3541,7 +3545,9 @@ var SCHEMA = {
     "upload": "Edit",
     "master": "Edit",
     "settings": "Hidden",
-    "users": "Hidden"
+    "users": "Hidden",
+    "shift": "View",
+    "daily": "View"
    },
    "ROLE-VIEW": {
     "overview": "View",
@@ -3554,7 +3560,9 @@ var SCHEMA = {
     "upload": "Hidden",
     "master": "Hidden",
     "settings": "Hidden",
-    "users": "Hidden"
+    "users": "Hidden",
+    "shift": "Hidden",
+    "daily": "View"
    },
    "ROLE-SHIFT": {
     "overview": "View",
@@ -3567,7 +3575,9 @@ var SCHEMA = {
     "upload": "Hidden",
     "master": "Hidden",
     "settings": "Hidden",
-    "users": "Hidden"
+    "users": "Hidden",
+    "shift": "Edit",
+    "daily": "View"
    },
    "ROLE-PROD": {
     "overview": "View",
@@ -3580,7 +3590,9 @@ var SCHEMA = {
     "upload": "Hidden",
     "master": "Hidden",
     "settings": "Hidden",
-    "users": "Hidden"
+    "users": "Hidden",
+    "shift": "Edit",
+    "daily": "View"
    },
    "ROLE-REL": {
     "overview": "View",
@@ -3593,7 +3605,9 @@ var SCHEMA = {
     "upload": "Edit",
     "master": "Edit",
     "settings": "Hidden",
-    "users": "Hidden"
+    "users": "Hidden",
+    "shift": "Edit",
+    "daily": "View"
    },
    "ROLE-QC": {
     "overview": "View",
@@ -3606,7 +3620,9 @@ var SCHEMA = {
     "upload": "Hidden",
     "master": "Hidden",
     "settings": "Hidden",
-    "users": "Hidden"
+    "users": "Hidden",
+    "shift": "Hidden",
+    "daily": "View"
    }
   },
   "classifications": [

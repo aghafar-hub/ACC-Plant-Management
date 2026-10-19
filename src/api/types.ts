@@ -12,12 +12,14 @@
  * - The server never trusts the client: it re-validates every write.
  */
 import type { Responsibility, ResponsibilityInput } from '../plant/responsibilities';
+import type { ShiftBundle, ShiftHistory, ShiftList, ShiftReportInput, ShiftRestartInput, ShiftReviewInput } from '../plant/shift';
 
 export type TabId =
   | 'overview' | 'pareto' | 'repeats' | 'reliability' | 'reports' | 'actions' | 'events'
-  | 'upload' | 'master' | 'settings' | 'users';
+  | 'upload' | 'master' | 'settings' | 'users' | 'shift' | 'daily';
+/** shift and daily: backend 2.1.0 (plant system), Shift reports and Daily meeting. */
 export const TAB_IDS: TabId[] = [
-  'overview', 'pareto', 'repeats', 'reliability', 'reports', 'actions', 'events', 'upload', 'master', 'settings', 'users',
+  'overview', 'pareto', 'repeats', 'reliability', 'reports', 'actions', 'events', 'upload', 'master', 'settings', 'users', 'shift', 'daily',
 ];
 export type AccessLevel = 'Hidden' | 'View' | 'Edit';
 export type Access = Record<TabId, AccessLevel>;
@@ -60,6 +62,12 @@ export interface EventRow {
   accepted_by?: string;
   /** when accepted_flags was last changed ('YYYY-MM-DD HH:MM:SS.mmm') */
   accepted_at?: string;
+  /** schema v7: upload | shift | history (blank = upload) */
+  origin?: string;
+  /** schema v7: exact | day (blank = exact) */
+  time_precision?: string;
+  /** schema v7: the shift stoppage this event was posted from */
+  shift_stop_id?: string;
 }
 
 /** Fields an authorised user may correct on a stored event. */
@@ -556,7 +564,7 @@ export interface ActiveUsersPayload {
 }
 
 /** The plain-English groups of the Activity log filter (backend Audit.js AUDIT_GROUPS_). */
-export const AUDIT_GROUPS = ['signin', 'users', 'settings', 'master', 'events', 'upload', 'actions', 'areas', 'notifications', 'system'] as const;
+export const AUDIT_GROUPS = ['signin', 'users', 'settings', 'master', 'events', 'upload', 'actions', 'areas', 'notifications', 'shift', 'system'] as const;
 export type AuditGroup = (typeof AUDIT_GROUPS)[number];
 /** Every field optional; from / to are plant dates (inclusive); q is case-insensitive text; limit 1-200 (100). */
 export interface AuditFilter { user_id?: string; group?: AuditGroup; from?: string; to?: string; q?: string; limit?: number }
@@ -676,6 +684,18 @@ export interface Api {
   listResponsibilities(token: string): Promise<Responsibility[]>;
   /** Backend 2.0.0: replaces the complete set of one user; returns that set. Users Edit; an Admin's only by the Admin role. */
   saveResponsibilities(token: string, userId: string, rows: ResponsibilityInput[]): Promise<Responsibility[]>;
+
+  // --- shift reports (plant system, backend 2.1.0) ---
+  /** Reports dated from..to (at most 62 days), their stoppages, every open stoppage and what those reports closed. shift or daily View. */
+  listShiftReports(token: string, from: string, to: string): Promise<ShiftList>;
+  /** Status changes and stoppage changes of one report. shift or daily View. */
+  getShiftReportHistory(token: string, reportId: string): Promise<ShiftHistory>;
+  /** Shift leader: creates or updates the report (the complete list of its own stoppages); submit sends it to production. shift Edit + duty. */
+  saveShiftReport(token: string, report: ShiftReportInput): Promise<ShiftBundle>;
+  /** A later shift enters the restart time of an open stoppage; returns that later shift's report. shift Edit + duty. */
+  closeShiftStoppage(token: string, restart: ShiftRestartInput): Promise<ShiftBundle>;
+  /** Production approve / return, reliability validate / return, with corrections. shift Edit + duty. */
+  reviewShiftReport(token: string, review: ShiftReviewInput): Promise<ShiftBundle>;
 
   // --- notifications ---
   /**

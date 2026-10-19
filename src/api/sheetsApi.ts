@@ -95,6 +95,11 @@ export function createSheetsApi(url: string): Api {
     setUserTabAccess: (token, userId, overrides) => call('setUserTabAccess', token, { userId, overrides }),
     listResponsibilities: (token) => call('listResponsibilities', token),
     saveResponsibilities: (token, userId, rows) => call('saveResponsibilities', token, { userId, rows }),
+    listShiftReports: (token, from, to) => call('listShiftReports', token, { from, to }),
+    getShiftReportHistory: (token, reportId) => call('getShiftReportHistory', token, { reportId }),
+    saveShiftReport: (token, report) => call('saveShiftReport', token, { report }),
+    closeShiftStoppage: (token, restart) => call('closeShiftStoppage', token, { restart }),
+    reviewShiftReport: (token, review) => call('reviewShiftReport', token, { review }),
 
     getNotifications: (token) => call('getNotifications', token),
     setNotificationState: (token, notificationId, state, snoozeUntil) =>

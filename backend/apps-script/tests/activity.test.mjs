@@ -223,7 +223,7 @@ test('listAuditLog reads a bounded number of rows per call and continues with th
 const NOT_LOGGED = {
   personal: ['setNotificationState', 'saveNotificationPrefs'],
   read: ['getMyAccess', 'getStartup', 'getEvents', 'getEventEdits', 'getUploadHistory', 'getUploadWarnings', 'listUsers', 'getNotifications',
-    'listActions', 'getAreaTargets', 'listActiveUsers', 'listAuditLog', 'listTasks', 'listTaskTemplates', 'listResponsibilities'],
+    'listActions', 'getAreaTargets', 'listActiveUsers', 'listAuditLog', 'listTasks', 'listTaskTemplates', 'listResponsibilities', 'listShiftReports', 'getShiftReportHistory'],
 };
 
 function writeCases(w) {
@@ -252,6 +252,14 @@ function writeCases(w) {
     ['updateUser', () => ({ params: { userId: w.viewer.user_id, changes: { role_id: 'ROLE-ENG' } } }), 'update_user', /^role_id: ROLE-VIEW -> ROLE-ENG$/],
     ['resetPassword', () => ({ params: { userId: w.viewer.user_id } }), 'reset_password'],
     ['setUserTabAccess', () => ({ params: { userId: w.eng.user_id, overrides: { upload: 'Edit' } } }), 'set_tab_access', /^upload: role default -> Edit$/],
+    // 2.1.0: shift reports (the Admin role may do every step)
+    ['saveShiftReport', () => ({ params: { report: { report_date: '2026-10-11', shift_id: 'D', area_id: 'K.1', notes: '', submit: true,
+      stoppages: [{ code_raw: '100.AA01', stop_ts: '2026-10-11 09:00', start_ts: '2026-10-11 10:00', classification: 'MEC', is_failure: true, reason_raw: 'Bearing', description: '' },
+        { code_raw: '100.AA01', stop_ts: '2026-10-11 18:00', start_ts: '', classification: 'ELE', is_failure: true, reason_raw: 'Trip', description: '' }] } } }),
+      'shift_report_submit', /^Added 2, changed 0, removed 0$/],
+    ['closeShiftStoppage', () => ({ params: { restart: { stop_id: w.env.rows('shift_stoppages').find((s) => s.stop_state === 'open').stop_id, report_date: '2026-10-11', shift_id: 'N', start_ts: '2026-10-11 22:15' } } }),
+      'shift_stoppage_close', /^Restart 2026-10-11 22:15 in SR-20261011-N-K\.1$/],
+    ['reviewShiftReport', () => ({ params: { review: { report_id: 'SR-20261011-D-K.1', decision: 'approve', comment: '', edits: [] } } }), 'shift_report_approve'],
     // 2.0.0 (plant system)
     ['saveResponsibilities', () => ({ params: { userId: w.eng.user_id, rows: [{ duty: 'shift_entry', scope_type: 'area', scope_id: 'K.1' }] } }), 'set_responsibilities', /^\+ shift_entry @ K\.1$/],
     ['runNotificationChecks', () => ({ params: {} }), 'notification_check'],

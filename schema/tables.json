@@ -861,14 +861,14 @@
     {"role_id": "ROLE-QC", "name": "Quality engineer", "description": "Enters and validates laboratory results and quality limits; views dashboards"}
   ],
   "tabAccessDefaults": {
-    "ROLE-ADMIN": {"overview": "Edit", "pareto": "Edit", "repeats": "Edit", "reliability": "Edit", "reports": "Edit", "actions": "Edit", "events": "Edit", "upload": "Edit", "master": "Edit", "settings": "Edit", "users": "Edit"},
-    "ROLE-MGR":   {"overview": "View", "pareto": "View", "repeats": "View", "reliability": "View", "reports": "Edit", "actions": "Edit", "events": "View", "upload": "Hidden", "master": "View", "settings": "Hidden", "users": "Hidden"},
-    "ROLE-ENG":   {"overview": "View", "pareto": "View", "repeats": "View", "reliability": "View", "reports": "View", "actions": "Edit", "events": "Edit", "upload": "Edit", "master": "Edit", "settings": "Hidden", "users": "Hidden"},
-    "ROLE-VIEW":  {"overview": "View", "pareto": "View", "repeats": "View", "reliability": "View", "reports": "View", "actions": "View", "events": "View", "upload": "Hidden", "master": "Hidden", "settings": "Hidden", "users": "Hidden"},
-    "ROLE-SHIFT": {"overview": "View", "pareto": "View", "repeats": "View", "reliability": "View", "reports": "View", "actions": "View", "events": "View", "upload": "Hidden", "master": "Hidden", "settings": "Hidden", "users": "Hidden"},
-    "ROLE-PROD":  {"overview": "View", "pareto": "View", "repeats": "View", "reliability": "View", "reports": "Edit", "actions": "Edit", "events": "View", "upload": "Hidden", "master": "Hidden", "settings": "Hidden", "users": "Hidden"},
-    "ROLE-REL":   {"overview": "View", "pareto": "View", "repeats": "View", "reliability": "View", "reports": "View", "actions": "Edit", "events": "Edit", "upload": "Edit", "master": "Edit", "settings": "Hidden", "users": "Hidden"},
-    "ROLE-QC":    {"overview": "View", "pareto": "View", "repeats": "View", "reliability": "View", "reports": "View", "actions": "View", "events": "View", "upload": "Hidden", "master": "Hidden", "settings": "Hidden", "users": "Hidden"}
+    "ROLE-ADMIN": {"overview": "Edit", "pareto": "Edit", "repeats": "Edit", "reliability": "Edit", "reports": "Edit", "actions": "Edit", "events": "Edit", "upload": "Edit", "master": "Edit", "settings": "Edit", "users": "Edit", "shift": "Edit", "daily": "Edit"},
+    "ROLE-MGR":   {"overview": "View", "pareto": "View", "repeats": "View", "reliability": "View", "reports": "Edit", "actions": "Edit", "events": "View", "upload": "Hidden", "master": "View", "settings": "Hidden", "users": "Hidden", "shift": "View", "daily": "View"},
+    "ROLE-ENG":   {"overview": "View", "pareto": "View", "repeats": "View", "reliability": "View", "reports": "View", "actions": "Edit", "events": "Edit", "upload": "Edit", "master": "Edit", "settings": "Hidden", "users": "Hidden", "shift": "View", "daily": "View"},
+    "ROLE-VIEW":  {"overview": "View", "pareto": "View", "repeats": "View", "reliability": "View", "reports": "View", "actions": "View", "events": "View", "upload": "Hidden", "master": "Hidden", "settings": "Hidden", "users": "Hidden", "shift": "Hidden", "daily": "View"},
+    "ROLE-SHIFT": {"overview": "View", "pareto": "View", "repeats": "View", "reliability": "View", "reports": "View", "actions": "View", "events": "View", "upload": "Hidden", "master": "Hidden", "settings": "Hidden", "users": "Hidden", "shift": "Edit", "daily": "View"},
+    "ROLE-PROD":  {"overview": "View", "pareto": "View", "repeats": "View", "reliability": "View", "reports": "Edit", "actions": "Edit", "events": "View", "upload": "Hidden", "master": "Hidden", "settings": "Hidden", "users": "Hidden", "shift": "Edit", "daily": "View"},
+    "ROLE-REL":   {"overview": "View", "pareto": "View", "repeats": "View", "reliability": "View", "reports": "View", "actions": "Edit", "events": "Edit", "upload": "Edit", "master": "Edit", "settings": "Hidden", "users": "Hidden", "shift": "Edit", "daily": "View"},
+    "ROLE-QC":    {"overview": "View", "pareto": "View", "repeats": "View", "reliability": "View", "reports": "View", "actions": "View", "events": "View", "upload": "Hidden", "master": "Hidden", "settings": "Hidden", "users": "Hidden", "shift": "Hidden", "daily": "View"}
   },
   "classificationSeeds": [
     {"code": "PRO", "name": "Production", "is_incident": true, "sort_order": 1},

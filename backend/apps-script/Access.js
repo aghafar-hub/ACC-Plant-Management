@@ -74,7 +74,13 @@ var ACTION_RULES = {
   acceptEventFlagsBulk: { auth: 'tabs', tabs: ['events'], level: 'Edit' },
   // 2.0.0 (plant system): who holds which duty, where (Responsibilities.js)
   listResponsibilities: { auth: 'tabs', tabs: ['users'], level: 'View' },
-  saveResponsibilities: { auth: 'tabs', tabs: ['users'], level: 'Edit' }
+  saveResponsibilities: { auth: 'tabs', tabs: ['users'], level: 'Edit' },
+  // 2.1.0: shift reports (ShiftReports.js). Each step also needs the person's duty for the area (checked in the handler).
+  listShiftReports: { auth: 'tabs', tabs: ['shift', 'daily'], level: 'View' },
+  getShiftReportHistory: { auth: 'tabs', tabs: ['shift', 'daily'], level: 'View' },
+  saveShiftReport: { auth: 'tabs', tabs: ['shift'], level: 'Edit' },
+  closeShiftStoppage: { auth: 'tabs', tabs: ['shift'], level: 'Edit' },
+  reviewShiftReport: { auth: 'tabs', tabs: ['shift'], level: 'Edit' }
 };
 
 function levelRank_(level) { return LEVELS.indexOf(level); }

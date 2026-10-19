@@ -17,6 +17,7 @@ export const AUDIT_GROUP_LABELS: Record<AuditGroup, string> = {
   actions: 'Actions',
   areas: 'Areas',
   notifications: 'Notifications',
+  shift: 'Shift reports',
   system: 'System',
 };
 export const auditGroupLabel = (g: AuditGroup): string => t(AUDIT_GROUP_LABELS[g] ?? g);
@@ -79,6 +80,12 @@ export function auditSentence(e: AuditEntry, name: (id: string) => string): stri
     case 'create_user': return t('Added user {who} ({detail})', { who: name(id), detail: roleText(d).replace(' as ', t(' as ')) });
     case 'update_user': return withNote(t('Changed user {who}', { who: name(id) }), d === 'No change' ? '' : changesText(d));
     case 'reset_password': return t('Reset the password of {who} (a temporary password was issued)', { who: name(id) });
+    case 'shift_report_save': return withNote(t('Saved shift report {id}', { id }), d);
+    case 'shift_report_submit': return withNote(t('Submitted shift report {id}', { id }), d);
+    case 'shift_stoppage_close': return withNote(t('Entered the restart of an open stoppage'), d);
+    case 'shift_report_approve': return withNote(t('Approved shift report {id} (production)', { id }), d);
+    case 'shift_report_return': return withNote(t('Returned shift report {id}', { id }), d);
+    case 'shift_report_validate': return withNote(t('Validated shift report {id} (reliability)', { id }), d);
     case 'set_responsibilities': return withNote(t('Changed the responsibilities of {who}', { who: name(id) }), d === 'No change' ? '' : d.replace(/; /g, ', '));
     case 'set_tab_access': return withNote(t('Changed the page access of {who}', { who: name(id) }), d === 'No change' ? '' : changesText(d));
     case 'save_setting': {

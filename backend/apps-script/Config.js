@@ -4,7 +4,7 @@
  * at load time, so file order does not matter.
  */
 
-var APP_VERSION = '2.0.0';
+var APP_VERSION = '2.1.0';
 var TIMEZONE = 'Africa/Cairo';
 
 // Password hashing cost. Run benchmarkHashRounds() and, if it suggests a
@@ -21,7 +21,7 @@ var UPLOAD_WARNING_MAX = 20000;
 var FINGERPRINT_HINT_MAX = 20;
 var TEXT_MAX = 1000;
 
-var TAB_IDS = ['overview', 'pareto', 'repeats', 'reliability', 'reports', 'actions', 'events', 'upload', 'master', 'settings', 'users'];
+var TAB_IDS = ['overview', 'pareto', 'repeats', 'reliability', 'reports', 'actions', 'events', 'upload', 'master', 'settings', 'users', 'shift', 'daily'];
 var DASHBOARD_TABS = ['overview', 'pareto', 'repeats', 'reliability', 'reports', 'actions', 'events'];
 var LEVELS = ['Hidden', 'View', 'Edit'];
 

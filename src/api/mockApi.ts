@@ -19,6 +19,10 @@ import { codeKey, eventIdOf, fingerprintOf, isValidDate, matchKey, parseTs } fro
 import { THEME_NAMES } from '../theme/themes';
 import { store } from '../storagePrefix';
 import { respKey, validateSet, type Responsibility } from '../plant/responsibilities';
+import {
+  DEFAULT_SHIFTS, SHIFT_STOP_FIELDS, blockingFlags, reportIdOf, shiftWindow,
+  type ShiftHistory, type ShiftReport, type ShiftStage, type ShiftStoppage, type ShiftStopField,
+} from '../plant/shift';
 
 const LEVEL_RANK: Record<AccessLevel, number> = { Hidden: 0, View: 1, Edit: 2 };
 const CLASS_CODES: ClassificationCode[] = ['PRO', 'MEC', 'ELE', 'AUT', 'PL', 'CIR'];
@@ -110,7 +114,7 @@ export interface SentMockMail { from: string; to: string[]; cc: string[]; subjec
  * outlives a reload and a fresh sign-in like on a real server (everything else in the mock starts again on a reload).
  */
 /** The backend version the demo behaves like. */
-export const MOCK_SERVER_VERSION = '2.0.0';
+export const MOCK_SERVER_VERSION = '2.1.0';
 
 export function createMockApi(opts: { seed?: number; demoActions?: boolean; keepAccountThemes?: boolean } = {}): MockApi {
   let db: SyntheticDb | null = null;
@@ -390,6 +394,123 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
   const RESOLVABLE = ['long_stop', 'repeat_group', 'upload_gap', 'action_due', 'action_ready_to_close', 'task_overdue'];
   const SNOOZE_MAX_DAYS = 366;
   let responsibilities: (Responsibility & { active: boolean })[] = [];
+  // shift reports (backend 2.1.0; mirrors ShiftReports.js)
+  const shiftReports: ShiftReport[] = [];
+  const shiftStops: ShiftStoppage[] = [];
+  const shiftLog: ShiftHistory['log'] = [];
+  const shiftEdits: ShiftHistory['edits'] = [];
+  let shiftCounter = 0;
+  const shiftLogReport = new Map<string, string>();
+  const shiftEditReport = new Map<string, string>();
+  const msOfTs = (ts: string): number => parseTs(ts) ?? NaN;
+  function shiftDef(id: string) {
+    const def = DEFAULT_SHIFTS.find((s) => s.shift_id === id);
+    if (!def) throw new ApiError(`There is no shift ${id.slice(0, 20)}.`, 'bad_request');
+    return def;
+  }
+  const DUTY_TEXT: Record<string, string> = { shift_entry: 'Shift report entry', production_review: 'Production review', reliability_validation: 'Reliability validation' };
+  function requireShiftDuty(user: MockUser, duty: string, area: { area_id: string; line_id: string }, day: string): void {
+    if (user.role_id === 'ROLE-ADMIN') return;
+    const ok = responsibilities.some((r) => r.user_id === user.user_id && r.active && r.duty === duty && (!r.valid_from || r.valid_from <= day) && (!r.valid_to || day <= r.valid_to) &&
+      (r.scope_type === 'plant' || (r.scope_type === 'line' && r.scope_id === area.line_id) || (r.scope_type === 'area' && r.scope_id === area.area_id)));
+    if (!ok) throw new ApiError(`You do not hold the duty "${DUTY_TEXT[duty]}" for ${area.area_id} on ${day}. An Admin can add it in Settings > Users > Responsibilities.`, 'forbidden');
+  }
+  function blankReport(id: string, day: string, shiftId: string, areaId: string, lineId: string, by: string, at: string): ShiftReport {
+    return { report_id: id, report_date: day, shift_id: shiftId, area_id: areaId, line_id: lineId, status: 'draft', source: 'app', entered_by: by, entered_at: at,
+      submitted_by: '', submitted_at: '', prod_reviewed_by: '', prod_reviewed_at: '', rel_validated_by: '', rel_validated_at: '', posted_at: '',
+      returned_by: '', returned_at: '', return_stage: '', return_comment: '', notes: '', updated_by: by, updated_at: at };
+  }
+  function blankStop(): ShiftStoppage {
+    return { stop_id: '', report_id: '', area_id: '', line_id: '', code_raw: '', equipment_id: '', stop_ts: '', start_ts: '', duration_s: null, freq: 1, classification: '',
+      criticality: '', is_failure: false, reason_raw: '', reason_id: '', description: '', flags: '', stop_state: 'open', closed_report_id: '', closed_by: '', closed_at: '',
+      row_state: 'active', posted_event_id: '', created_by: '', created_at: '', updated_by: '', updated_at: '' };
+  }
+  function logShift(reportId: string, action: string, from: string, to: string, stage: string, by: string, comment: string): void {
+    const id = `WL-${(++shiftCounter).toString(16).padStart(10, '0')}`;
+    shiftLogReport.set(id, reportId);
+    shiftLog.push({ log_id: id, action, from_status: from, to_status: to, stage, by_user: by, at: nowTs(), comment });
+  }
+  function logStopEdits(before: ShiftStoppage, reportId: string, stage: ShiftStage, after: Partial<ShiftStoppage>, by: string, comment: string): void {
+    for (const f of SHIFT_STOP_FIELDS) {
+      const a = String(before[f] ?? ''), b = String(after[f] ?? '');
+      if (a === b) continue;
+      const id = `SE-${(++shiftCounter).toString(16).padStart(10, '0')}`;
+      shiftEditReport.set(id, reportId);
+      shiftEdits.push({ edit_id: id, stop_id: before.stop_id, stage, field: f, old_value: a, new_value: b, comment, edited_by: by, edited_at: nowTs() });
+    }
+  }
+  function shiftTs(v: unknown, label: string): string {
+    if (v === null || v === undefined || v === '') return '';
+    let s = typeof v === 'string' ? v.trim().replace('T', ' ') : '';
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(s)) s += ':00';
+    const ms = parseTs(s);
+    if (ms === null) throw new ApiError(`${label} must be a date and time like 2026-10-20 14:30.`, 'bad_request');
+    return fmtTs(ms);
+  }
+  function cleanShiftStop(s: { code_raw?: unknown; stop_ts?: unknown; start_ts?: unknown; classification?: unknown; is_failure?: unknown; reason_raw?: unknown; description?: unknown },
+    area: { area_id: string; line_id: string }, win: { start: string; end: string } | null, checkWindow: boolean) {
+    const stop = shiftTs(s.stop_ts, 'Stop time');
+    if (!stop) throw new ApiError('Every stoppage needs its stop time.', 'bad_request');
+    if (checkWindow && win && (stop < win.start || stop >= win.end)) throw new ApiError(`Stop time ${stop.slice(0, 16)} is outside this shift (${win.start.slice(0, 16)} to ${win.end.slice(0, 16)}). Enter it in the report of the shift it started in.`, 'bad_request');
+    const start = shiftTs(s.start_ts, 'Restart time');
+    if (start && checkWindow && win && start > win.end) throw new ApiError(`Restart time ${start.slice(0, 16)} is after this shift ends. Leave it blank: the shift that sees the restart enters it.`, 'bad_request');
+    if (start && start > nowTs()) throw new ApiError(`Restart time ${start.slice(0, 16)} is in the future.`, 'bad_request');
+    if (stop > nowTs()) throw new ApiError(`Stop time ${stop.slice(0, 16)} is in the future.`, 'bad_request');
+    const cls = typeof s.classification === 'string' ? s.classification.trim().toUpperCase() : '';
+    const klass = get().classifications.find((c) => c.code === cls);
+    const incident = !!klass?.is_incident;
+    const failure = s.is_failure === true && incident;
+    const norm = normalizeRecord({ event_date: stop.slice(0, 10), line_id: area.line_id, area_id: area.area_id, code_raw: typeof s.code_raw === 'string' ? s.code_raw : '', stop_ts: stop, start_ts: start || stop,
+      freq: 1, classification: cls, criticality: incident ? 'INC' : 'NO_INC', is_failure: failure, reason_raw: s.reason_raw ?? '', description: s.description ?? '' }, lookup());
+    if ('error' in norm) throw new ApiError(norm.error, 'bad_request');
+    const r = norm.rec;
+    return {
+      area_id: area.area_id, line_id: area.line_id, code_raw: r.code_raw, equipment_id: r.equipment_id ?? '', stop_ts: stop, start_ts: start,
+      duration_s: start ? r.duration_s : null, freq: 1, classification: cls, criticality: incident ? 'INC' : 'NO_INC', is_failure: failure,
+      reason_raw: r.reason_raw, reason_id: r.reason_id ?? '', description: r.description, flags: r.flags, stop_state: (start ? 'closed' : 'open') as 'open' | 'closed',
+    };
+  }
+  function requireNoBlocking(stops: ShiftStoppage[]): void {
+    const bad = stops.filter((s) => blockingFlags(s).length);
+    if (bad.length) throw new ApiError(`${bad.length} stoppage(s) must be fixed first: ${bad.slice(0, 3).map((s) => `${s.stop_ts.slice(11, 16)} ${s.code_raw || '(no code)'} (${blockingFlags(s).join(', ').replace(/_/g, ' ')})`).join('; ')}.`, 'bad_request');
+  }
+  function shiftBundle(id: string) {
+    return clone({ report: shiftReports.find((r) => r.report_id === id)!, stoppages: shiftStops.filter((s) => s.row_state === 'active' && (s.report_id === id || s.closed_report_id === id)) });
+  }
+  function postReadyStops(by: string): number {
+    const done = (st?: string) => st === 'validated' || st === 'posted';
+    const rep = (id: string) => shiftReports.find((r) => r.report_id === id);
+    const ready = shiftStops.filter((s) => s.row_state === 'active' && !s.posted_event_id && s.stop_state === 'closed' && done(rep(s.report_id)?.status) && done(rep(s.closed_report_id || s.report_id)?.status));
+    const d = get();
+    const stamp = nowTs();
+    for (const s of ready) {
+      const norm = normalizeRecord({ event_date: s.stop_ts.slice(0, 10), line_id: s.line_id, area_id: s.area_id, code_raw: s.code_raw, stop_ts: s.stop_ts, start_ts: s.start_ts, freq: 1,
+        classification: s.classification, criticality: s.criticality, is_failure: s.is_failure, reason_raw: s.reason_raw, description: s.description }, lookup());
+      if ('error' in norm) continue;
+      const r = norm.rec;
+      const fp = fingerprintOf(r.area_id, r.code_key, r.stop_ts, r.start_ts, 1);
+      const existing = d.events.find((e) => e.fingerprint === fp);
+      if (existing) { s.posted_event_id = existing.event_id; continue; }
+      const id = eventIdOf(fp);
+      d.events.push({
+        event_id: id, batch_id: s.closed_report_id || s.report_id, event_date: r.event_date, line_id: r.line_id, area_id: r.area_id, code_raw: r.code_raw, equipment_id: r.equipment_id,
+        is_area_level: r.is_area_level, stop_ts: r.stop_ts, start_ts: r.start_ts, duration_s: r.duration_s, freq: 1, classification: r.classification as ClassificationCode,
+        criticality: r.criticality, is_failure: r.is_failure, reason_raw: stored(r.reason_raw), reason_id: r.reason_id, description: stored(r.description),
+        source_file: `Shift report ${s.report_id}`, fingerprint: fp, flags: stored(r.flags), edited: false, is_void: false, created_at: stamp,
+        origin: 'shift', time_precision: 'exact', shift_stop_id: s.stop_id,
+      });
+      s.posted_event_id = id;
+    }
+    for (const r of shiftReports) {
+      if (r.status !== 'validated') continue;
+      const own = shiftStops.filter((s) => s.row_state === 'active' && (s.report_id === r.report_id || s.closed_report_id === r.report_id));
+      if (own.every((s) => !!s.posted_event_id)) {
+        r.status = 'posted'; r.posted_at = stamp; r.updated_at = stamp;
+        logShift(r.report_id, 'post', 'validated', 'posted', 'reliability', by, `${own.length} stoppage(s) in the downtime analysis`);
+      }
+    }
+    return ready.length;
+  }
   let notifications: Notification[] = [];
   let notifState: NotificationState[] = [];
   let notifPrefs: { user_id: string; key: string; value: string; updated_at: string }[] = [];
@@ -1314,6 +1435,170 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
       const label = (r: typeof clean[number]) => `${r.duty}${r.section ? ` (${r.section})` : ''} @ ${r.scope_type === 'plant' ? 'plant' : r.scope_id}${r.is_backup ? ' backup' : ''}${r.valid_from || r.valid_to ? ` ${r.valid_from || '...'}..${r.valid_to || '...'}` : ''}`;
       audit(a.user.user_id, 'set_responsibilities', 'users', userId, [...added.map((r) => `+ ${label(r)}`), ...removed.map((r) => `- ${label(r)}`)].join('; ') || 'No change');
       return clone(responsibilities.filter((r) => r.user_id === userId && r.active).map(({ active: _a, ...r }) => r));
+    },
+
+    // --- shift reports (plant system, backend 2.1.0; mirrors ShiftReports.js)
+    async listShiftReports(token, from, to) {
+      need(token, ['shift', 'daily'], 'View');
+      if (!isValidDate(from) || !isValidDate(to) || to < from) throw new ApiError('Choose a valid date range.', 'bad_request');
+      if ((Date.parse(to) - Date.parse(from)) / 86_400_000 > 62) throw new ApiError('Choose at most 62 days.', 'bad_request');
+      const reports = shiftReports.filter((r) => r.report_date >= from && r.report_date <= to);
+      const ids = new Set(reports.map((r) => r.report_id));
+      const stops = shiftStops.filter((s) => s.row_state === 'active' && (ids.has(s.report_id) || ids.has(s.closed_report_id) || s.stop_state === 'open'));
+      for (const s of stops) if (!ids.has(s.report_id)) { const r = shiftReports.find((x) => x.report_id === s.report_id); if (r) { reports.push(r); ids.add(r.report_id); } }
+      return clone({ shifts: DEFAULT_SHIFTS, reports, stoppages: stops });
+    },
+    async getShiftReportHistory(token, reportId) {
+      need(token, ['shift', 'daily'], 'View');
+      if (!shiftReports.some((r) => r.report_id === reportId)) throw new ApiError('That shift report was not found.', 'not_found');
+      return clone({ log: shiftLog.filter((l) => l.at && shiftLogReport.get(l.log_id) === reportId), edits: shiftEdits.filter((e) => shiftEditReport.get(e.edit_id) === reportId) });
+    },
+    async saveShiftReport(token, input) {
+      const a = need(token, ['shift'], 'Edit');
+      if (!input || typeof input !== 'object') throw new ApiError('The report is missing.', 'bad_request');
+      const day = String(input.report_date ?? '');
+      if (!isValidDate(day)) throw new ApiError('Choose the report date.', 'bad_request');
+      const def = shiftDef(String(input.shift_id ?? ''));
+      const win = shiftWindow(def, day);
+      if (win.start > nowTs()) throw new ApiError('This shift has not started yet.', 'bad_request');
+      const list = Array.isArray(input.stoppages) ? input.stoppages : [];
+      const area = get().areas.find((x) => x.area_id === input.area_id);
+      if (!area) throw new ApiError(`There is no area ${String(input.area_id).slice(0, 40)}.`, 'bad_request');
+      if (area.active === false) throw new ApiError(`Area ${area.area_id} is switched off.`, 'bad_request');
+      requireShiftDuty(a.user, 'shift_entry', area, day);
+      const id = reportIdOf(day, def.shift_id, area.area_id);
+      let rep = shiftReports.find((r) => r.report_id === id);
+      const stamp = nowTs();
+      if (rep && rep.status !== 'draft' && rep.status !== 'returned') throw new ApiError(`This report is ${rep.status.replace('_', ' ')} and can no longer be changed by the shift leader.`, 'conflict');
+      const cleaned = list.map((s) => ({ input: s, clean: cleanShiftStop(s, area, win, true) }));
+      if (!rep) {
+        rep = blankReport(id, day, def.shift_id, area.area_id, area.line_id, a.user.user_id, stamp);
+        shiftReports.push(rep);
+        logShift(id, 'create', '', 'draft', 'entry', a.user.user_id, '');
+      }
+      const mine = shiftStops.filter((s) => s.report_id === id && s.row_state === 'active');
+      const keep = new Set<string>();
+      let added = 0, changed = 0, removed = 0;
+      for (const { input: s, clean } of cleaned) {
+        if (s.stop_id) {
+          const old = mine.find((x) => x.stop_id === s.stop_id);
+          if (!old) throw new ApiError(`Stoppage ${s.stop_id.slice(0, 30)} is not in this report.`, 'bad_request');
+          if (keep.has(s.stop_id)) throw new ApiError(`Stoppage ${s.stop_id.slice(0, 30)} is listed twice.`, 'bad_request');
+          keep.add(s.stop_id);
+          if (old.closed_report_id && old.closed_report_id !== id) { clean.start_ts = old.start_ts; clean.duration_s = old.duration_s; clean.stop_state = old.stop_state; }
+          if (SHIFT_STOP_FIELDS.some((f) => String(old[f] ?? '') !== String(clean[f] ?? ''))) {
+            if (rep.status === 'returned') logStopEdits(old, id, 'entry', clean, a.user.user_id, 'Changed after return');
+            Object.assign(old, clean, { updated_by: a.user.user_id, updated_at: stamp });
+            changed++;
+          }
+        } else {
+          shiftStops.push({ ...blankStop(), ...clean, stop_id: `SS-${(++shiftCounter).toString(16).padStart(10, '0')}`, report_id: id, row_state: 'active', created_by: a.user.user_id, created_at: stamp });
+          added++;
+        }
+      }
+      for (const s of mine) {
+        if (keep.has(s.stop_id)) continue;
+        if (s.closed_report_id && s.closed_report_id !== id) throw new ApiError(`The stoppage at ${s.stop_ts.slice(0, 16)} was closed by a later shift and cannot be removed here.`, 'conflict');
+        s.row_state = 'deleted'; s.updated_by = a.user.user_id; s.updated_at = stamp; removed++;
+      }
+      rep.notes = String(input.notes ?? '').trim(); rep.updated_by = a.user.user_id; rep.updated_at = stamp;
+      const detail = `Added ${added}, changed ${changed}, removed ${removed}`;
+      if (input.submit === true) {
+        requireNoBlocking(shiftStops.filter((s) => s.row_state === 'active' && (s.report_id === id || s.closed_report_id === id)));
+        logShift(id, 'submit', rep.status, 'submitted', 'entry', a.user.user_id, '');
+        rep.status = 'submitted'; rep.submitted_by = a.user.user_id; rep.submitted_at = stamp;
+        audit(a.user.user_id, 'shift_report_submit', 'shift_reports', id, detail);
+      } else audit(a.user.user_id, 'shift_report_save', 'shift_reports', id, detail);
+      return shiftBundle(id);
+    },
+    async closeShiftStoppage(token, input) {
+      const a = need(token, ['shift'], 'Edit');
+      if (!input || typeof input !== 'object') throw new ApiError('The restart is missing.', 'bad_request');
+      const day = String(input.report_date ?? '');
+      if (!isValidDate(day)) throw new ApiError('Choose the date of your shift.', 'bad_request');
+      const def = shiftDef(String(input.shift_id ?? ''));
+      const win = shiftWindow(def, day);
+      const start = shiftTs(input.start_ts, 'Restart time');
+      if (!start) throw new ApiError('Enter the restart time.', 'bad_request');
+      if (start > nowTs()) throw new ApiError(`Restart time ${start.slice(0, 16)} is in the future.`, 'bad_request');
+      if (start < win.start || start > win.end) throw new ApiError(`Restart time ${start.slice(0, 16)} is outside your shift (${win.start.slice(0, 16)} to ${win.end.slice(0, 16)}).`, 'bad_request');
+      const s = shiftStops.find((x) => x.stop_id === input.stop_id && x.row_state === 'active');
+      if (!s) throw new ApiError('That stoppage was not found.', 'not_found');
+      const area = get().areas.find((x) => x.area_id === s.area_id)!;
+      requireShiftDuty(a.user, 'shift_entry', area, day);
+      const id = reportIdOf(day, def.shift_id, area.area_id);
+      if (id === s.report_id) throw new ApiError('This stoppage belongs to this shift: enter its restart time in the report itself.', 'bad_request');
+      if (s.stop_state !== 'open' && s.closed_report_id !== id) throw new ApiError('This stoppage already has its restart time.', 'conflict');
+      if (start < s.stop_ts) throw new ApiError(`The restart time is before the stop time (${s.stop_ts.slice(0, 16)}).`, 'bad_request');
+      let rep = shiftReports.find((r) => r.report_id === id);
+      const stamp = nowTs();
+      if (rep && rep.status !== 'draft' && rep.status !== 'returned') throw new ApiError(`Your report for this shift is already ${rep.status.replace('_', ' ')}.`, 'conflict');
+      if (!rep) {
+        rep = blankReport(id, day, def.shift_id, area.area_id, area.line_id, a.user.user_id, stamp);
+        shiftReports.push(rep);
+        logShift(id, 'create', '', 'draft', 'entry', a.user.user_id, '');
+      }
+      logStopEdits(s, id, 'entry', { ...s, start_ts: start }, a.user.user_id, 'Restart entered by a later shift');
+      Object.assign(s, { start_ts: start, duration_s: (msOfTs(start) - msOfTs(s.stop_ts)) / 1000, stop_state: 'closed', closed_report_id: id, closed_by: a.user.user_id, closed_at: stamp, updated_by: a.user.user_id, updated_at: stamp });
+      audit(a.user.user_id, 'shift_stoppage_close', 'shift_stoppages', s.stop_id, `Restart ${start.slice(0, 16)} in ${id}`);
+      return shiftBundle(id);
+    },
+    async reviewShiftReport(token, input) {
+      const a = need(token, ['shift'], 'Edit');
+      if (!input || typeof input !== 'object') throw new ApiError('The review is missing.', 'bad_request');
+      const decision = input.decision;
+      if (!['approve', 'return', 'validate'].includes(decision)) throw new ApiError('Decision must be approve, return or validate.', 'bad_request');
+      const comment = String(input.comment ?? '').trim();
+      if (decision === 'return' && comment.length < 3) throw new ApiError('Say why the report is returned (at least 3 characters).', 'bad_request');
+      const rep = shiftReports.find((r) => r.report_id === input.report_id);
+      if (!rep) throw new ApiError('That shift report was not found.', 'not_found');
+      const area = get().areas.find((x) => x.area_id === rep.area_id)!;
+      let stage: ShiftStage;
+      if (rep.status === 'submitted') {
+        stage = 'production';
+        if (decision === 'validate') throw new ApiError('This report waits for production review first.', 'conflict');
+        requireShiftDuty(a.user, 'production_review', area, rep.report_date);
+        if (a.user.role_id !== 'ROLE-ADMIN' && (rep.entered_by === a.user.user_id || rep.submitted_by === a.user.user_id)) throw new ApiError('You entered this report, so someone else must review it.', 'forbidden');
+      } else if (rep.status === 'prod_approved') {
+        stage = 'reliability';
+        if (decision === 'approve') throw new ApiError('This report is already approved by production; validate or return it.', 'conflict');
+        requireShiftDuty(a.user, 'reliability_validation', area, rep.report_date);
+      } else throw new ApiError(`This report is ${rep.status.replace('_', ' ')} and is not waiting for a review.`, 'conflict');
+      const stops = shiftStops.filter((s) => s.row_state === 'active' && (s.report_id === rep.report_id || s.closed_report_id === rep.report_id));
+      const stamp = nowTs();
+      const plans: { s: ShiftStoppage; clean: ReturnType<typeof cleanShiftStop> }[] = [];
+      for (const e of Array.isArray(input.edits) ? input.edits : []) {
+        const s = stops.find((x) => x.stop_id === e.stop_id);
+        if (!s) throw new ApiError(`Stoppage ${String(e.stop_id).slice(0, 30)} is not part of this report.`, 'bad_request');
+        const keys = Object.keys(e.changes ?? {});
+        for (const f of keys) if (!SHIFT_STOP_FIELDS.includes(f as ShiftStopField)) throw new ApiError(`Field ${f.slice(0, 30)} cannot be changed.`, 'bad_request');
+        if (s.report_id !== rep.report_id && keys.some((f) => f !== 'start_ts')) throw new ApiError('Only the restart time of a stoppage from an earlier shift can be changed here.', 'bad_request');
+        const merged = Object.fromEntries(SHIFT_STOP_FIELDS.map((f) => [f, keys.includes(f) ? (e.changes as Record<string, unknown>)[f] : s[f]])) as Record<ShiftStopField, unknown>;
+        const clean = cleanShiftStop({ ...merged, is_failure: merged.is_failure === true } as never, area, null, false);
+        if (s.closed_report_id && s.closed_report_id !== s.report_id && !clean.start_ts) throw new ApiError('A restart entered by a later shift cannot be removed; correct it instead.', 'bad_request');
+        plans.push({ s, clean });
+      }
+      for (const { s, clean } of plans) {
+        logStopEdits(s, rep.report_id, stage, clean, a.user.user_id, comment);
+        Object.assign(s, clean, { updated_by: a.user.user_id, updated_at: stamp });
+        if (clean.stop_state === 'open') Object.assign(s, { closed_report_id: '', closed_by: '', closed_at: '' });
+      }
+      const from = rep.status;
+      if (decision === 'return') {
+        rep.status = stage === 'production' ? 'returned' : 'submitted';
+        Object.assign(rep, { returned_by: a.user.user_id, returned_at: stamp, return_stage: stage, return_comment: comment });
+      } else if (decision === 'approve') {
+        requireNoBlocking(stops);
+        Object.assign(rep, { status: 'prod_approved', prod_reviewed_by: a.user.user_id, prod_reviewed_at: stamp });
+      } else {
+        requireNoBlocking(stops);
+        Object.assign(rep, { status: 'validated', rel_validated_by: a.user.user_id, rel_validated_at: stamp });
+      }
+      rep.updated_by = a.user.user_id; rep.updated_at = stamp;
+      logShift(rep.report_id, decision, from, rep.status, stage, a.user.user_id, comment);
+      const posted = decision === 'validate' ? postReadyStops(a.user.user_id) : 0;
+      audit(a.user.user_id, `shift_report_${decision}`, 'shift_reports', rep.report_id, `${plans.length ? `${plans.length} change(s). ` : ''}${decision === 'validate' ? `${posted} stoppage(s) posted. ` : ''}${comment}`);
+      return shiftBundle(rep.report_id);
     },
 
     // --- notifications
