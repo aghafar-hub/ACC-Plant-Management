@@ -18,3 +18,6 @@ export const SERVER_1_10 = '1.10.0';
 
 /** Backend 2.0.0 (plant system): responsibilities, shift reports and their review chain. */
 export const SERVER_2_0 = '2.0.0';
+
+/** Backend 2.1.0 (plant system): shift reports, the two reviews, posting to events, the daily meeting. */
+export const SERVER_2_1 = '2.1.0';

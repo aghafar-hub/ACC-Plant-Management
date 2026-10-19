@@ -35,9 +35,13 @@ export const MasterPage = lazyPage(() => import('../pages/Master'));
 export const SettingsPage = lazyPage(() => import('../pages/Settings'));
 export const ActionsPage = lazyPage(() => import('../pages/Actions'));
 export const NotificationsPage = lazyPage(() => import('../pages/Notifications'));
+export const ShiftReportsPage = lazyPage(() => import('../pages/ShiftReports'));
+export const DailyMeetingPage = lazyPage(() => import('../pages/DailyMeeting'));
 
 // Address prefix -> chunk. '/overview' is the old Dashboard address.
 const BY_PATH: [string, LazyPage][] = [
+  ['/shift', ShiftReportsPage],
+  ['/daily', DailyMeetingPage],
   ['/dashboard', DashboardPage],
   ['/overview', DashboardPage],
   ['/pareto', ParetoPage],

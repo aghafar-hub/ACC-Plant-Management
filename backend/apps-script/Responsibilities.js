@@ -24,6 +24,11 @@ function listResponsibilities_() {
   return readTable_(T.RESPONSIBILITIES).filter(function (r) { return toBool_(r.active); }).map(respOut_);
 }
 
+/** The caller's own duties (2.1.0): the Shift reports and Daily meeting pages offer the areas the person works on. */
+function listMyResponsibilities_(session) {
+  return listResponsibilities_().filter(function (r) { return r.user_id === session.user.user_id; });
+}
+
 /** One row as the client sends it -> the cleaned row, or a plain-English error. */
 function cleanResponsibility_(row, lines, areas) {
   requireObject_(row, 'A responsibility');

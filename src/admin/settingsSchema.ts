@@ -124,7 +124,7 @@ export function groups(): Group[] {
       ],
     },
     {
-      // Schema v7 (plant system, Stage 1): the shift report review. Not on a settings page yet; the Shift reports screens will show it.
+      // Schema v7 (plant system, Stage 1): the shift report review deadlines (Settings > Calculations, backend 2.1.0).
       id: 'shift-review', title: t('Shift report review'), icon: 'calendar', when: 'now',
       intro: t('How long each step of the shift report review may take, when the daily meeting is held, and the first date entered through shift reports.'),
       fields: [

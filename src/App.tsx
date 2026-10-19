@@ -25,7 +25,7 @@ import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import { documentTitle } from './util/docTitle';
 import {
-  ActionsPage, DashboardPage, EventExplorerPage, MasterPage, NotificationsPage, ParetoPage, preloadPath, ReliabilityPage, ReportsPage, RepeatsPage,
+  ActionsPage, DailyMeetingPage, DashboardPage, EventExplorerPage, ShiftReportsPage, MasterPage, NotificationsPage, ParetoPage, preloadPath, ReliabilityPage, ReportsPage, RepeatsPage,
   SettingsPage, UploadPage, ValidatePage, whenIdle,
 } from './routes/lazyPages';
 import { ActionsProvider } from './actions/ActionsContext';
@@ -50,6 +50,8 @@ const Master = MasterPage.Component;
 const Settings = SettingsPage.Component;
 const ActionsBoard = ActionsPage.Component;
 const NotificationsInbox = NotificationsPage.Component;
+const ShiftReports = ShiftReportsPage.Component;
+const DailyMeeting = DailyMeetingPage.Component;
 
 // Hover, keyboard focus or a touch on any link or menu tile in the shell starts loading that page's code,
 // so the page is usually ready by the time the click lands. Links carry their address in href ('#/pareto');
@@ -221,6 +223,8 @@ export default function App() {
               <Route path="/change-password" element={<ChangePassword />} />
               <Route element={<ShellLayout />}>
                 <Route path="/" element={<Home />} />
+                <Route path="/shift/:sub?" element={<RequireTab tab="shift"><ShiftReports /></RequireTab>} />
+                <Route path="/daily" element={<RequireTab tab="daily"><DailyMeeting /></RequireTab>} />
                 <Route path="/dashboard" element={<RequireTab tab="overview"><Dashboard /></RequireTab>} />
                 <Route path="/overview" element={<OldOverview />} />
                 <Route path="/pareto" element={<RequireTab tab="pareto"><Pareto /></RequireTab>} />

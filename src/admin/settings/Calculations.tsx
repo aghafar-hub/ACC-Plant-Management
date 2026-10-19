@@ -11,7 +11,7 @@ export default function Calculations() {
   return (
     <div data-testid="settings-calculations">
       <DataNotes st={st} />
-      {st.startup && <SettingsForm settings={settings} canEdit={edit} badge={<AccessBadge edit={edit} />} groupIds={['availability', 'rules', 'targets']} onSaved={(text) => { toast(text); st.reload(); }} />}
+      {st.startup && <SettingsForm settings={settings} canEdit={edit} badge={<AccessBadge edit={edit} />} groupIds={['availability', 'rules', 'targets', 'shift-review']} onSaved={(text) => { toast(text); st.reload(); }} />}
       {toastNode}
     </div>
   );

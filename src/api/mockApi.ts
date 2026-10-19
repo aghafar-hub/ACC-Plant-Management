@@ -1413,6 +1413,10 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
       need(token, ['users'], 'View');
       return clone(responsibilities.filter((r) => r.active).map(({ active: _a, ...r }) => r));
     },
+    async listMyResponsibilities(token) {
+      const a = auth(token);
+      return clone(responsibilities.filter((r) => r.active && r.user_id === a.user.user_id).map(({ active: _a, ...r }) => r));
+    },
     async saveResponsibilities(token, userId, rows) {
       const a = need(token, ['users'], 'Edit');
       if (!Array.isArray(rows)) throw new ApiError('Responsibilities must be a list.', 'bad_request');
@@ -1446,7 +1450,9 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
       const ids = new Set(reports.map((r) => r.report_id));
       const stops = shiftStops.filter((s) => s.row_state === 'active' && (ids.has(s.report_id) || ids.has(s.closed_report_id) || s.stop_state === 'open'));
       for (const s of stops) if (!ids.has(s.report_id)) { const r = shiftReports.find((x) => x.report_id === s.report_id); if (r) { reports.push(r); ids.add(r.report_id); } }
-      return clone({ shifts: DEFAULT_SHIFTS, reports, stoppages: stops });
+      const people: Record<string, string> = {};
+      for (const u of get().users) people[u.user_id] = u.display_name;
+      return clone({ shifts: DEFAULT_SHIFTS, reports, stoppages: stops, people });
     },
     async getShiftReportHistory(token, reportId) {
       need(token, ['shift', 'daily'], 'View');

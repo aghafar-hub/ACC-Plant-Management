@@ -36,7 +36,8 @@ export interface ShiftReviewInput {
   report_id: string; decision: 'approve' | 'return' | 'validate'; comment: string;
   edits: { stop_id: string; changes: Partial<Pick<ShiftStoppageInput, ShiftStopField>> }[];
 }
-export interface ShiftList { shifts: ShiftDef[]; reports: ShiftReport[]; stoppages: ShiftStoppage[] }
+/** people: display names of the users on these reports (user_id -> name). */
+export interface ShiftList { shifts: ShiftDef[]; reports: ShiftReport[]; stoppages: ShiftStoppage[]; people: Record<string, string> }
 export interface ShiftBundle { report: ShiftReport; stoppages: ShiftStoppage[] }
 export interface ShiftHistory {
   log: { log_id: string; action: string; from_status: string; to_status: string; stage: string; by_user: string; at: string; comment: string }[];

@@ -76,6 +76,7 @@ var ACTION_RULES = {
   listResponsibilities: { auth: 'tabs', tabs: ['users'], level: 'View' },
   saveResponsibilities: { auth: 'tabs', tabs: ['users'], level: 'Edit' },
   // 2.1.0: shift reports (ShiftReports.js). Each step also needs the person's duty for the area (checked in the handler).
+  listMyResponsibilities: { auth: 'session' },
   listShiftReports: { auth: 'tabs', tabs: ['shift', 'daily'], level: 'View' },
   getShiftReportHistory: { auth: 'tabs', tabs: ['shift', 'daily'], level: 'View' },
   saveShiftReport: { auth: 'tabs', tabs: ['shift'], level: 'Edit' },

@@ -8,8 +8,10 @@ import { t } from './i18n/t';
 export type PageId = TabId | 'validate';
 
 /** The navigation sections: the left rail headings, the page tabs' scope, the More sheet groups. */
-export type SectionId = 'analyze' | 'reports' | 'act' | 'data' | 'setup';
+export type SectionId = 'operate' | 'analyze' | 'reports' | 'act' | 'data' | 'setup';
 export const SECTIONS: { id: SectionId; label: string }[] = [
+  // plant system (backend 2.1.0): Shift reports and Daily meeting
+  { id: 'operate', label: 'Operate' },
   { id: 'analyze', label: 'Analyze' },
   { id: 'reports', label: 'Reports' },
   { id: 'act', label: 'Act' },
@@ -34,6 +36,8 @@ export interface PageDef {
 }
 
 export const PAGES: PageDef[] = [
+  { id: 'shift', access: 'shift', path: '/shift', label: 'Shift reports', tab: 'Shift reports', short: 'Shift', icon: 'clock', group: 'operate' },
+  { id: 'daily', access: 'daily', path: '/daily', label: 'Daily meeting', tab: 'Daily meeting', short: 'Daily', icon: 'calendar', group: 'operate' },
   // The Dashboard keeps the id (and access tab) `overview`; its address is /dashboard (/overview redirects there).
   { id: 'overview', access: 'overview', path: '/dashboard', label: 'Dashboard', tab: 'Dashboard', short: 'Dashboard', icon: 'dashboard', group: 'analyze' },
   { id: 'pareto', access: 'pareto', path: '/pareto', label: 'Causes', tab: 'Causes', short: 'Causes', icon: 'limits', group: 'analyze' },
@@ -71,7 +75,7 @@ export const pageTab = (p: PageDef): string => t(p.tab);
 export const pageShort = (p: PageDef): string => t(p.short);
 
 /** The first four of these that the person may see go on the phone bottom bar, left to right; More is the fifth slot (mobile-actions.png). */
-export const BOTTOM_BAR_ORDER: PageId[] = ['overview', 'pareto', 'actions', 'events', 'reliability', 'repeats', 'validate', 'upload'];
+export const BOTTOM_BAR_ORDER: PageId[] = ['shift', 'overview', 'pareto', 'actions', 'events', 'daily', 'reliability', 'repeats', 'validate', 'upload'];
 export const BOTTOM_BAR_SLOTS = 4;
 /** The pages on the phone bottom bar (before More), given the pages the person may see. */
 export const bottomBarPages = (visible: PageDef[]): PageDef[] =>

@@ -682,6 +682,8 @@ export interface Api {
   setUserTabAccess(token: string, userId: string, overrides: Partial<Access>): Promise<AdminUser>;
   /** Backend 2.0.0 (plant system): every responsibility in force or dated (switched-off rows are left out). Users View. */
   listResponsibilities(token: string): Promise<Responsibility[]>;
+  /** Backend 2.1.0: the caller's own duties. Any signed-in user. */
+  listMyResponsibilities(token: string): Promise<Responsibility[]>;
   /** Backend 2.0.0: replaces the complete set of one user; returns that set. Users Edit; an Admin's only by the Admin role. */
   saveResponsibilities(token: string, userId: string, rows: ResponsibilityInput[]): Promise<Responsibility[]>;
 

@@ -12,3 +12,14 @@ Never paste them into the live or the test project.
 Do not edit it by hand: a backend test fails when it is out of date with the source files.
 
 Set-up steps: [docs/plant-system/03-database-v7.md](../../docs/plant-system/03-database-v7.md).
+
+## Updating to a new version
+
+1. Replace `Code.gs` (and `appsscript.json` if it changed) with the files of this folder.
+2. Run `ensureSchema`, then `seedDefaults` (they only add what is missing: tables, columns, the page access of new pages, seeds).
+3. Deploy › Manage deployments › edit the web app › Version: **New version** › Deploy. The `/exec` address stays the same.
+
+| Version | What it adds | After pasting, run |
+|---|---|---|
+| 2.0.0 | Responsibilities (Users page) | ensureSchema, seedDefaults |
+| 2.1.0 | Shift reports, Review, Daily meeting; posting validated stoppages to the downtime analysis | seedDefaults (adds the Shift reports and Daily meeting page access to every role) |

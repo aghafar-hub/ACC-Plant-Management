@@ -223,7 +223,7 @@ test('listAuditLog reads a bounded number of rows per call and continues with th
 const NOT_LOGGED = {
   personal: ['setNotificationState', 'saveNotificationPrefs'],
   read: ['getMyAccess', 'getStartup', 'getEvents', 'getEventEdits', 'getUploadHistory', 'getUploadWarnings', 'listUsers', 'getNotifications',
-    'listActions', 'getAreaTargets', 'listActiveUsers', 'listAuditLog', 'listTasks', 'listTaskTemplates', 'listResponsibilities', 'listShiftReports', 'getShiftReportHistory'],
+    'listActions', 'getAreaTargets', 'listActiveUsers', 'listAuditLog', 'listTasks', 'listTaskTemplates', 'listResponsibilities', 'listMyResponsibilities', 'listShiftReports', 'getShiftReportHistory'],
 };
 
 function writeCases(w) {

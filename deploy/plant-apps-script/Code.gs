@@ -6095,6 +6095,7 @@ var ACTION_RULES = {
   listResponsibilities: { auth: 'tabs', tabs: ['users'], level: 'View' },
   saveResponsibilities: { auth: 'tabs', tabs: ['users'], level: 'Edit' },
   // 2.1.0: shift reports (ShiftReports.js). Each step also needs the person's duty for the area (checked in the handler).
+  listMyResponsibilities: { auth: 'session' },
   listShiftReports: { auth: 'tabs', tabs: ['shift', 'daily'], level: 'View' },
   getShiftReportHistory: { auth: 'tabs', tabs: ['shift', 'daily'], level: 'View' },
   saveShiftReport: { auth: 'tabs', tabs: ['shift'], level: 'Edit' },
@@ -7803,6 +7804,7 @@ var HANDLERS = {
   setUserTabAccess: function (s, p) { return setUserTabAccess_(s, p.userId, p.overrides); },
   listResponsibilities: function () { return listResponsibilities_(); },
   saveResponsibilities: function (s, p) { return saveResponsibilities_(s, p.userId, p.rows); },
+  listMyResponsibilities: function (s) { return listMyResponsibilities_(s); },
   listShiftReports: function (s, p) { return listShiftReports_(p.from, p.to); },
   getShiftReportHistory: function (s, p) { return getShiftReportHistory_(p.reportId); },
   saveShiftReport: function (s, p) { return saveShiftReport_(s, p.report); },
@@ -10246,6 +10248,11 @@ function listResponsibilities_() {
   return readTable_(T.RESPONSIBILITIES).filter(function (r) { return toBool_(r.active); }).map(respOut_);
 }
 
+/** The caller's own duties (2.1.0): the Shift reports and Daily meeting pages offer the areas the person works on. */
+function listMyResponsibilities_(session) {
+  return listResponsibilities_().filter(function (r) { return r.user_id === session.user.user_id; });
+}
+
 /** One row as the client sends it -> the cleaned row, or a plain-English error. */
 function cleanResponsibility_(row, lines, areas) {
   requireObject_(row, 'A responsibility');
@@ -10871,8 +10878,14 @@ function listShiftReports_(from, to) {
   if (Object.keys(extra).length) {
     readTable_(T.SHIFT_REPORTS).forEach(function (r) { if (extra[r.report_id]) reports.push(r); });
   }
+  // the names of the people on these reports (the screens show names, and most people cannot read the Users page)
+  var people = {};
+  var want = {};
+  reports.forEach(function (r) { ['entered_by', 'submitted_by', 'prod_reviewed_by', 'rel_validated_by', 'returned_by'].forEach(function (k) { if (r[k]) want[r[k]] = true; }); });
+  stops.forEach(function (s) { if (s.closed_by) want[s.closed_by] = true; });
+  readUsers_().forEach(function (u) { if (want[u.user_id]) people[u.user_id] = u.display_name; });
   return { shifts: shiftDefs_().map(function (s) { return { shift_id: s.shift_id, name: s.name, start_time: s.start_time, end_time: s.end_time, sort_order: s.sort_order }; }),
-    reports: reports.map(shiftReportOut_), stoppages: stops.map(shiftStopOut_) };
+    reports: reports.map(shiftReportOut_), stoppages: stops.map(shiftStopOut_), people: people };
 }
 
 function getShiftReportHistory_(reportId) {

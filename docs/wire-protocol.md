@@ -62,6 +62,7 @@ wins over the role row. Missing row = Hidden.
 | `createUser`, `updateUser`, `resetPassword`, `setUserTabAccess` | `users` Edit |
 | `listResponsibilities` | `users` View (backend 2.0.0, plant system) |
 | `saveResponsibilities` | `users` Edit; the responsibilities of an Admin only by the Admin role (backend 2.0.0) |
+| `listMyResponsibilities` | any valid session: the caller's own duties (backend 2.1.0) |
 | `listShiftReports`, `getShiftReportHistory` | `shift` or `daily` View (backend 2.1.0) |
 | `saveShiftReport`, `closeShiftStoppage`, `reviewShiftReport` | `shift` Edit, plus the duty for the area on the report date: Shift report entry, Production review or Reliability validation (the Admin role may do every step) (backend 2.1.0) |
 | `getNotifications`, `setNotificationState`, `saveNotificationPrefs` | any valid session (not while a temporary password is still unchanged); only the caller's own state and preferences are read or written |

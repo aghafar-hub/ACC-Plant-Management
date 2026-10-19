@@ -94,6 +94,7 @@ export function createSheetsApi(url: string): Api {
     resetPassword: (token, userId) => call('resetPassword', token, { userId }),
     setUserTabAccess: (token, userId, overrides) => call('setUserTabAccess', token, { userId, overrides }),
     listResponsibilities: (token) => call('listResponsibilities', token),
+    listMyResponsibilities: (token) => call('listMyResponsibilities', token),
     saveResponsibilities: (token, userId, rows) => call('saveResponsibilities', token, { userId, rows }),
     listShiftReports: (token, from, to) => call('listShiftReports', token, { from, to }),
     getShiftReportHistory: (token, reportId) => call('getShiftReportHistory', token, { reportId }),

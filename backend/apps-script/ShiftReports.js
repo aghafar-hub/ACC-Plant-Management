@@ -102,8 +102,14 @@ function listShiftReports_(from, to) {
   if (Object.keys(extra).length) {
     readTable_(T.SHIFT_REPORTS).forEach(function (r) { if (extra[r.report_id]) reports.push(r); });
   }
+  // the names of the people on these reports (the screens show names, and most people cannot read the Users page)
+  var people = {};
+  var want = {};
+  reports.forEach(function (r) { ['entered_by', 'submitted_by', 'prod_reviewed_by', 'rel_validated_by', 'returned_by'].forEach(function (k) { if (r[k]) want[r[k]] = true; }); });
+  stops.forEach(function (s) { if (s.closed_by) want[s.closed_by] = true; });
+  readUsers_().forEach(function (u) { if (want[u.user_id]) people[u.user_id] = u.display_name; });
   return { shifts: shiftDefs_().map(function (s) { return { shift_id: s.shift_id, name: s.name, start_time: s.start_time, end_time: s.end_time, sort_order: s.sort_order }; }),
-    reports: reports.map(shiftReportOut_), stoppages: stops.map(shiftStopOut_) };
+    reports: reports.map(shiftReportOut_), stoppages: stops.map(shiftStopOut_), people: people };
 }
 
 function getShiftReportHistory_(reportId) {

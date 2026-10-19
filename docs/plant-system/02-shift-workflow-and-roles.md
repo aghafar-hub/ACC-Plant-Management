@@ -1,5 +1,8 @@
 # Stage 1 — Shift reports, review chain and responsibilities
 
+**Status (backend 2.1.0, branch `claude/plant-system`):** built. Settings › Users › Responsibilities and "Who does what" (2.0.0);
+Shift reports (My shift · Review · All reports) and Daily meeting (2.1.0). What was decided while building is listed at the end.
+
 ## Goal
 
 Downtime enters the app once, at the source: the shift leader records it during the shift. It is then checked twice before it counts in the downtime analysis:
@@ -101,3 +104,14 @@ Scope is **plant**, a **line** (L.1, L.2) or one **area**. A responsibility can 
 ## What is open
 
 * Whether the production values (production, running hours, power, fuel) are also entered on the shift report or only come from the DCS report (Stage 2, waiting for the DCS report).
+
+## Decided while building (2.1.0)
+
+* **The Admin role may do every step** (enter, approve, validate) for any area, for set-up and testing. Everyone else needs the duty for the area on the report date.
+* **Nobody approves their own report:** the person who entered or submitted a report cannot give it the production approval (the Admin role aside).
+* **A reliability return goes back to production**, not to the shift leader; production may then return it to the shift leader.
+* **Draft first, then submit.** A draft may hold unfinished rows. Submitting, approving and validating are refused while a stoppage has a blocking problem (no classification, an unknown classification, a restart before the stop).
+* **PL and CIR are never failures**; criticality follows the classification (PRO, MEC, ELE, AUT = INC).
+* **Times:** a stop must start inside the shift; a restart typed in a shift may not be after its end (leave it blank, the later shift enters it); nothing in the future.
+* **Posting:** a stoppage goes into the downtime analysis when it is closed and both its own report and the report that entered its restart are validated. It becomes an event with origin `shift`, its batch is the report id. When the same stop is already stored (for example the month's workbook was also uploaded) the two are linked and nothing is added twice. A report whose stoppages are all posted becomes *In the downtime analysis*.
+* **Daily meeting:** one production day runs from 08:00 to 08:00. Figures come from the shift reports at whatever step they are, marked provisional until validated. An area counts as "in use" once it has a shift report in the last 7 days; areas not in use are listed but not counted as late.

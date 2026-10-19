@@ -50,6 +50,7 @@ var HANDLERS = {
   setUserTabAccess: function (s, p) { return setUserTabAccess_(s, p.userId, p.overrides); },
   listResponsibilities: function () { return listResponsibilities_(); },
   saveResponsibilities: function (s, p) { return saveResponsibilities_(s, p.userId, p.rows); },
+  listMyResponsibilities: function (s) { return listMyResponsibilities_(s); },
   listShiftReports: function (s, p) { return listShiftReports_(p.from, p.to); },
   getShiftReportHistory: function (s, p) { return getShiftReportHistory_(p.reportId); },
   saveShiftReport: function (s, p) { return saveShiftReport_(s, p.report); },
