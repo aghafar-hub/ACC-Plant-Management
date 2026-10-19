@@ -43,6 +43,8 @@ export function buildSchema(src) {
       areas: src.areaSeeds,
       contractors: src.contractorSeeds || [],
       taskTemplates: src.taskTemplateSeeds || [],
+      shifts: src.shiftSeeds || [],
+      kpiDefinitions: src.kpiDefinitionSeeds || [],
     },
   };
 }

@@ -9,9 +9,9 @@ export interface NumberField { key: string; kind: 'int' | 'number_or_blank'; min
 export interface ChoiceField { key: string; kind: 'choice'; label: string; help: string; options: { value: string; label: string; detail?: string }[]; fallback?: string }
 /**
  * Free text; blank is allowed. `format` url (default): the app's web address; ids: comma-separated user ids (who can close
- * actions); email: one email address (backend 1.9.0); plain: any one-line text.
+ * actions); email: one email address (backend 1.9.0); plain: any one-line text; time: HH:MM; date: YYYY-MM-DD (schema v7).
  */
-export interface TextField { key: string; kind: 'text'; maxLength: number; label: string; help: string; placeholder?: string; fallback?: string; format?: 'url' | 'ids' | 'email' | 'plain' }
+export interface TextField { key: string; kind: 'text'; maxLength: number; label: string; help: string; placeholder?: string; fallback?: string; format?: 'url' | 'ids' | 'email' | 'plain' | 'time' | 'date' }
 export type Field = NumberField | ChoiceField | TextField;
 
 export interface Group { id: string; title: string; icon: string; when: When; intro: string; fields: Field[] }
@@ -124,6 +124,18 @@ export function groups(): Group[] {
       ],
     },
     {
+      // Schema v7 (plant system, Stage 1): the shift report review. Not on a settings page yet; the Shift reports screens will show it.
+      id: 'shift-review', title: t('Shift report review'), icon: 'calendar', when: 'now',
+      intro: t('How long each step of the shift report review may take, when the daily meeting is held, and the first date entered through shift reports.'),
+      fields: [
+        { key: 'shift_submit_deadline_h', kind: 'int', min: 1, max: 168, label: t('Shift leader submits within'), unit: t('hours'), fallback: '2', help: t('Hours after the shift ends (1 to 168).') },
+        { key: 'prod_review_deadline_h', kind: 'int', min: 1, max: 720, label: t('Production manager reviews within'), unit: t('hours'), fallback: '12', help: t('Hours after the report is submitted (1 to 720).') },
+        { key: 'rel_validation_deadline_h', kind: 'int', min: 1, max: 720, label: t('Reliability validates within'), unit: t('hours'), fallback: '48', help: t('Hours after production approval (1 to 720).') },
+        { key: 'daily_meeting_time', kind: 'text', format: 'time', maxLength: 5, label: t('Daily meeting time'), placeholder: '09:00', fallback: '09:00', help: t('Plant time, like 09:00.') },
+        { key: 'shift_entry_from', kind: 'text', format: 'date', maxLength: 10, label: t('Shift reports from'), placeholder: '2026-10-01', fallback: '2026-10-01', help: t('Downtime before this date stays as uploaded; from this date it comes from validated shift reports.') },
+      ],
+    },
+    {
       id: 'signin', title: t('Sign-in rules'), icon: 'shield', when: 'signin',
       intro: t('How long sessions last and how long someone must wait after too many wrong passwords. A wait never signs anyone out.'),
       fields: [
@@ -155,6 +167,8 @@ export function validateSettings(values: Record<string, string>): Record<string,
         else if (f.format === 'ids') { if (raw !== '' && !/^[^,\s][^,]*(,[^,]*)*$/.test(raw)) out[f.key] = t('Write user ids separated by commas.'); }
         else if (f.format === 'email') { if (raw !== '' && !/^[^\s@<>,;"]+@[^\s@<>,;"]+\.[^\s@<>,;"]+$/.test(raw)) out[f.key] = t('Write one email address, like name@company.com.'); }
         else if (f.format === 'plain') { if (/[<>"]/.test(raw)) out[f.key] = t('Do not use < > or quotes.'); }
+        else if (f.format === 'time') { if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(raw)) out[f.key] = t('Write a time like 09:00.'); }
+        else if (f.format === 'date') { if (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(raw)) out[f.key] = t('Write a date like 2026-10-01.'); }
         else if (raw !== '' && !/^https?:\/\/[^\s"'<>]+$/i.test(raw)) out[f.key] = t('Write a web address that starts with http:// or https://, with no spaces or quotes.');
         continue;
       }

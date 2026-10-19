@@ -1,7 +1,7 @@
 // GENERATED FILE - do not edit by hand.
 // Source: schema/tables.json. Regenerate with: node tools/gen-apps-script-schema.mjs
 var SCHEMA = {
- "version": 6,
+ "version": 7,
  "tableOrder": [
   "lines",
   "areas",
@@ -29,7 +29,19 @@ var SCHEMA = {
   "area_targets",
   "task_templates",
   "task_template_steps",
-  "user_activity"
+  "user_activity",
+  "shifts",
+  "shift_reports",
+  "shift_stoppages",
+  "shift_stoppage_edits",
+  "workflow_log",
+  "responsibilities",
+  "kpi_definitions",
+  "kpi_targets",
+  "production_metrics",
+  "production_values",
+  "production_corrections",
+  "dcs_import_batches"
  ],
  "tables": {
   "lines": {
@@ -514,6 +526,30 @@ var SCHEMA = {
     {
      "name": "accepted_at",
      "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "origin",
+     "type": "enum",
+     "required": false,
+     "enum": [
+      "upload",
+      "shift",
+      "history"
+     ]
+    },
+    {
+     "name": "time_precision",
+     "type": "enum",
+     "required": false,
+     "enum": [
+      "exact",
+      "day"
+     ]
+    },
+    {
+     "name": "shift_stop_id",
+     "type": "text",
      "required": false
     }
    ]
@@ -1654,6 +1690,1052 @@ var SCHEMA = {
      "required": true
     }
    ]
+  },
+  "shifts": {
+   "description": "Plant shifts (v7, Stage 1). Times are plant-local HH:MM; a shift may cross midnight.",
+   "key": [
+    "shift_id"
+   ],
+   "columns": [
+    {
+     "name": "shift_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "start_time",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "end_time",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "sort_order",
+     "type": "int",
+     "required": true
+    },
+    {
+     "name": "active",
+     "type": "bool",
+     "required": true
+    },
+    {
+     "name": "notes",
+     "type": "text",
+     "required": false
+    }
+   ]
+  },
+  "shift_reports": {
+   "description": "One shift report per date, shift and area (v7, Stage 1). Moves Draft -> Submitted -> Production approved -> Validated -> Posted; can be Returned at each review step.",
+   "key": [
+    "report_id"
+   ],
+   "columns": [
+    {
+     "name": "report_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "report_date",
+     "type": "date",
+     "required": true
+    },
+    {
+     "name": "shift_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "area_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "line_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "status",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "draft",
+      "submitted",
+      "returned",
+      "prod_approved",
+      "validated",
+      "posted"
+     ]
+    },
+    {
+     "name": "source",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "app",
+      "excel_import",
+      "history"
+     ]
+    },
+    {
+     "name": "import_batch_id",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "entered_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "entered_at",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "submitted_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "submitted_at",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "prod_reviewed_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "prod_reviewed_at",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "rel_validated_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "rel_validated_at",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "posted_at",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "returned_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "returned_at",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "return_stage",
+     "type": "enum",
+     "required": false,
+     "enum": [
+      "production",
+      "reliability"
+     ]
+    },
+    {
+     "name": "return_comment",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "notes",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "updated_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "updated_at",
+     "type": "timestamp",
+     "required": false
+    }
+   ]
+  },
+  "shift_stoppages": {
+   "description": "Stoppages entered in a shift report (v7, Stage 1). Same fields as events; become events when the report is posted.",
+   "key": [
+    "stop_id"
+   ],
+   "columns": [
+    {
+     "name": "stop_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "report_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "area_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "line_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "code_raw",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "equipment_id",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "stop_ts",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "start_ts",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "duration_s",
+     "type": "int",
+     "required": false
+    },
+    {
+     "name": "freq",
+     "type": "int",
+     "required": false
+    },
+    {
+     "name": "classification",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "criticality",
+     "type": "enum",
+     "required": false,
+     "enum": [
+      "INC",
+      "NO_INC"
+     ]
+    },
+    {
+     "name": "is_failure",
+     "type": "bool",
+     "required": false
+    },
+    {
+     "name": "reason_raw",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "reason_id",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "description",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "flags",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "row_state",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "active",
+      "deleted"
+     ]
+    },
+    {
+     "name": "posted_event_id",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "created_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "created_at",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "updated_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "updated_at",
+     "type": "timestamp",
+     "required": false
+    }
+   ]
+  },
+  "shift_stoppage_edits": {
+   "description": "Every change to a shift stoppage after it was submitted: who, which step, old and new value, why (v7).",
+   "key": [
+    "edit_id"
+   ],
+   "columns": [
+    {
+     "name": "edit_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "stop_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "report_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "stage",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "entry",
+      "production",
+      "reliability"
+     ]
+    },
+    {
+     "name": "field",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "old_value",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "new_value",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "comment",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "edited_by",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "edited_at",
+     "type": "timestamp",
+     "required": false
+    }
+   ]
+  },
+  "workflow_log": {
+   "description": "Status changes of shift reports (v7).",
+   "key": [
+    "log_id"
+   ],
+   "columns": [
+    {
+     "name": "log_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "report_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "action",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "create",
+      "submit",
+      "approve",
+      "return",
+      "validate",
+      "post",
+      "reopen"
+     ]
+    },
+    {
+     "name": "from_status",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "to_status",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "stage",
+     "type": "enum",
+     "required": false,
+     "enum": [
+      "entry",
+      "production",
+      "reliability"
+     ]
+    },
+    {
+     "name": "by_user",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "at",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "comment",
+     "type": "text",
+     "required": false
+    }
+   ]
+  },
+  "responsibilities": {
+   "description": "Who does what, where (v7). One row per user, duty and scope; a user may hold several.",
+   "key": [
+    "resp_id"
+   ],
+   "columns": [
+    {
+     "name": "resp_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "user_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "duty",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "shift_entry",
+      "production_review",
+      "reliability_validation",
+      "targets",
+      "master_data",
+      "daily_meeting"
+     ]
+    },
+    {
+     "name": "scope_type",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "plant",
+      "line",
+      "area"
+     ]
+    },
+    {
+     "name": "scope_id",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "is_backup",
+     "type": "bool",
+     "required": true
+    },
+    {
+     "name": "valid_from",
+     "type": "date",
+     "required": false
+    },
+    {
+     "name": "valid_to",
+     "type": "date",
+     "required": false
+    },
+    {
+     "name": "active",
+     "type": "bool",
+     "required": true
+    },
+    {
+     "name": "created_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "created_at",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "updated_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "updated_at",
+     "type": "timestamp",
+     "required": false
+    }
+   ]
+  },
+  "kpi_definitions": {
+   "description": "One agreed definition per KPI (v7, Stage 0). Seeded as draft from the NRS workbook; approved by the owner.",
+   "key": [
+    "kpi_id"
+   ],
+   "columns": [
+    {
+     "name": "kpi_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "category",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "reliability",
+      "production",
+      "energy",
+      "fuel",
+      "cement",
+      "quality"
+     ]
+    },
+    {
+     "name": "unit",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "formula",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "aggregation",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "ratio_of_sums",
+      "sum",
+      "weighted_avg",
+      "last"
+     ]
+    },
+    {
+     "name": "better",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "higher",
+      "lower",
+      "none"
+     ]
+    },
+    {
+     "name": "decimals",
+     "type": "int",
+     "required": true
+    },
+    {
+     "name": "applies_to",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "nrs_formula",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "app_formula",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "decision",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "status",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "draft",
+      "approved"
+     ]
+    },
+    {
+     "name": "approved_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "approved_at",
+     "type": "timestamp",
+     "required": false
+    }
+   ]
+  },
+  "kpi_targets": {
+   "description": "Targets by scope, KPI and month (v7). Replaces the 9 NRS target sheets and the hard-coded KPI targets; month 0 = whole year.",
+   "key": [
+    "scope_type",
+    "scope_id",
+    "kpi_id",
+    "year",
+    "month"
+   ],
+   "columns": [
+    {
+     "name": "scope_type",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "plant",
+      "line",
+      "area"
+     ]
+    },
+    {
+     "name": "scope_id",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "kpi_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "year",
+     "type": "int",
+     "required": true
+    },
+    {
+     "name": "month",
+     "type": "int",
+     "required": true
+    },
+    {
+     "name": "target_value",
+     "type": "float",
+     "required": false
+    },
+    {
+     "name": "lower_limit",
+     "type": "float",
+     "required": false
+    },
+    {
+     "name": "upper_limit",
+     "type": "float",
+     "required": false
+    },
+    {
+     "name": "source",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "updated_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "updated_at",
+     "type": "timestamp",
+     "required": false
+    }
+   ]
+  },
+  "production_metrics": {
+   "description": "What is measured in each area each day (v7, Stage 2): production, running hours, power, fuel, water, stocks.",
+   "key": [
+    "metric_id"
+   ],
+   "columns": [
+    {
+     "name": "metric_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "area_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "unit",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "category",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "production",
+      "running",
+      "power",
+      "fuel",
+      "water",
+      "stock",
+      "quality",
+      "other"
+     ]
+    },
+    {
+     "name": "dcs_tag",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "entry_mode",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "dcs",
+      "manual",
+      "calculated"
+     ]
+    },
+    {
+     "name": "required",
+     "type": "bool",
+     "required": true
+    },
+    {
+     "name": "min_value",
+     "type": "float",
+     "required": false
+    },
+    {
+     "name": "max_value",
+     "type": "float",
+     "required": false
+    },
+    {
+     "name": "sort_order",
+     "type": "int",
+     "required": true
+    },
+    {
+     "name": "active",
+     "type": "bool",
+     "required": true
+    },
+    {
+     "name": "notes",
+     "type": "text",
+     "required": false
+    }
+   ]
+  },
+  "production_values": {
+   "description": "Daily (or per shift) values per area and metric (v7, Stage 2). Raw value from the DCS or the shift leader, plus a recorded correction.",
+   "key": [
+    "value_id"
+   ],
+   "columns": [
+    {
+     "name": "value_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "prod_date",
+     "type": "date",
+     "required": true
+    },
+    {
+     "name": "shift_id",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "area_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "metric_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "raw_value",
+     "type": "float",
+     "required": false
+    },
+    {
+     "name": "correction",
+     "type": "float",
+     "required": false
+    },
+    {
+     "name": "final_value",
+     "type": "float",
+     "required": false
+    },
+    {
+     "name": "source",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "dcs",
+      "manual",
+      "calculated"
+     ]
+    },
+    {
+     "name": "batch_id",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "report_id",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "status",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "entered",
+      "approved",
+      "validated"
+     ]
+    },
+    {
+     "name": "entered_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "entered_at",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "updated_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "updated_at",
+     "type": "timestamp",
+     "required": false
+    }
+   ]
+  },
+  "production_corrections": {
+   "description": "Requested and approved corrections to production values, with the reason (v7, Stage 2). Replaces the NRS *_Corr tables.",
+   "key": [
+    "corr_id"
+   ],
+   "columns": [
+    {
+     "name": "corr_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "prod_date",
+     "type": "date",
+     "required": true
+    },
+    {
+     "name": "area_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "metric_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "old_value",
+     "type": "float",
+     "required": false
+    },
+    {
+     "name": "new_value",
+     "type": "float",
+     "required": false
+    },
+    {
+     "name": "reason",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "requested_by",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "requested_at",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "approved_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "approved_at",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "status",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "requested",
+      "approved",
+      "rejected"
+     ]
+    }
+   ]
+  },
+  "dcs_import_batches": {
+   "description": "Each imported DCS automated report or shift workbook (v7).",
+   "key": [
+    "batch_id"
+   ],
+   "columns": [
+    {
+     "name": "batch_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "file_name",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "file_hash",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "report_type",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "dcs_plg1",
+      "dcs_plg2",
+      "shift_workbook",
+      "nrs_history"
+     ]
+    },
+    {
+     "name": "date_from",
+     "type": "date",
+     "required": false
+    },
+    {
+     "name": "date_to",
+     "type": "date",
+     "required": false
+    },
+    {
+     "name": "rows",
+     "type": "int",
+     "required": false
+    },
+    {
+     "name": "uploaded_by",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "uploaded_at",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "status",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "ok",
+      "partial",
+      "failed"
+     ]
+    },
+    {
+     "name": "notes",
+     "type": "text",
+     "required": false
+    }
+   ]
   }
  },
  "seeds": {
@@ -1822,6 +2904,31 @@ var SCHEMA = {
     "key": "actions_auto_draft",
     "value": "true",
     "description": "true | false. The server rules create Draft actions"
+   },
+   {
+    "key": "shift_submit_deadline_h",
+    "value": "2",
+    "description": "Hours after the shift ends for the shift leader to submit"
+   },
+   {
+    "key": "prod_review_deadline_h",
+    "value": "12",
+    "description": "Hours after submission for the production manager to approve or return"
+   },
+   {
+    "key": "rel_validation_deadline_h",
+    "value": "48",
+    "description": "Hours after production approval for reliability to validate"
+   },
+   {
+    "key": "daily_meeting_time",
+    "value": "09:00",
+    "description": "Time of the daily meeting (HH:MM)"
+   },
+   {
+    "key": "shift_entry_from",
+    "value": "2026-10-01",
+    "description": "First date entered through shift reports; earlier downtime stays as uploaded"
    }
   ],
   "roles": [
@@ -1844,6 +2951,21 @@ var SCHEMA = {
     "role_id": "ROLE-VIEW",
     "name": "Viewer",
     "description": "Views dashboards; never edits"
+   },
+   {
+    "role_id": "ROLE-SHIFT",
+    "name": "Shift leader",
+    "description": "Enters the shift report of the assigned areas; views dashboards"
+   },
+   {
+    "role_id": "ROLE-PROD",
+    "name": "Production manager",
+    "description": "Reviews and approves shift reports; daily meeting"
+   },
+   {
+    "role_id": "ROLE-REL",
+    "name": "Reliability engineer",
+    "description": "Validates shift stoppages before they become downtime; edits events and master data"
    }
   ],
   "tabAccess": {
@@ -1896,6 +3018,45 @@ var SCHEMA = {
     "events": "View",
     "upload": "Hidden",
     "master": "Hidden",
+    "settings": "Hidden",
+    "users": "Hidden"
+   },
+   "ROLE-SHIFT": {
+    "overview": "View",
+    "pareto": "View",
+    "repeats": "View",
+    "reliability": "View",
+    "reports": "View",
+    "actions": "View",
+    "events": "View",
+    "upload": "Hidden",
+    "master": "Hidden",
+    "settings": "Hidden",
+    "users": "Hidden"
+   },
+   "ROLE-PROD": {
+    "overview": "View",
+    "pareto": "View",
+    "repeats": "View",
+    "reliability": "View",
+    "reports": "Edit",
+    "actions": "Edit",
+    "events": "View",
+    "upload": "Hidden",
+    "master": "Hidden",
+    "settings": "Hidden",
+    "users": "Hidden"
+   },
+   "ROLE-REL": {
+    "overview": "View",
+    "pareto": "View",
+    "repeats": "View",
+    "reliability": "View",
+    "reports": "View",
+    "actions": "Edit",
+    "events": "Edit",
+    "upload": "Edit",
+    "master": "Edit",
     "settings": "Hidden",
     "users": "Hidden"
    }
@@ -2236,6 +3397,388 @@ var SCHEMA = {
       "est_stop_h": null
      }
     ]
+   }
+  ],
+  "shifts": [
+   {
+    "shift_id": "M",
+    "name": "Morning",
+    "start_time": "07:00",
+    "end_time": "19:00",
+    "sort_order": 1,
+    "active": true,
+    "notes": "Confirm hours"
+   },
+   {
+    "shift_id": "N",
+    "name": "Night",
+    "start_time": "19:00",
+    "end_time": "07:00",
+    "sort_order": 2,
+    "active": true,
+    "notes": "Confirm hours"
+   }
+  ],
+  "kpiDefinitions": [
+   {
+    "kpi_id": "T_H",
+    "name": "Scheduled hours",
+    "category": "reliability",
+    "unit": "h",
+    "formula": "Calendar hours of the period x scheduled hours per day ÷ 24 (today 24 h a day, 7 days a week)",
+    "aggregation": "sum",
+    "better": "none",
+    "decimals": 1,
+    "applies_to": "all",
+    "nrs_formula": "Available RRHH = days in month x 24",
+    "app_formula": "scheduled_hours_per_day x scheduled days",
+    "decision": "Same today. Decide whether an area that is not needed (e.g. a mill with full silos) is still scheduled.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "STOP_H",
+    "name": "Stoppage hours",
+    "category": "reliability",
+    "unit": "h",
+    "formula": "Hours stopped in the period; stops that overlap in one area are counted once",
+    "aggregation": "sum",
+    "better": "lower",
+    "decimals": 1,
+    "applies_to": "all",
+    "nrs_formula": "SUMIFS of TOTAL STOPPAGE DURATION (h) - overlapping rows are added twice",
+    "app_formula": "Merged per area, so overlaps count once (priority PL > INC > CIR)",
+    "decision": "Use the app rule (overlaps once). NRS hours can be higher where rows overlap.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "RUN_H",
+    "name": "Running hours",
+    "category": "reliability",
+    "unit": "h",
+    "formula": "Scheduled hours − stoppage hours",
+    "aggregation": "sum",
+    "better": "higher",
+    "decimals": 1,
+    "applies_to": "all",
+    "nrs_formula": "Available RRHH − Stoppage Time",
+    "app_formula": "T − (PL + INC + CIR), overlaps once",
+    "decision": "Same idea. Later compare with DCS running hours (see RH_DCS) as a data check.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "INC_H",
+    "name": "Incident hours",
+    "category": "reliability",
+    "unit": "h",
+    "formula": "Hours of stops with criticality INC (PRO, MEC, ELE, AUT)",
+    "aggregation": "sum",
+    "better": "lower",
+    "decimals": 1,
+    "applies_to": "all",
+    "nrs_formula": "SUMIFS ... CRITICALITY = \"INC\"",
+    "app_formula": "Classification PRO/MEC/ELE/AUT",
+    "decision": "Same.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "PL_H",
+    "name": "Planned hours",
+    "category": "reliability",
+    "unit": "h",
+    "formula": "Hours of planned stops (PL)",
+    "aggregation": "sum",
+    "better": "none",
+    "decimals": 1,
+    "applies_to": "all",
+    "nrs_formula": "SUMIFS ... classification PL",
+    "app_formula": "Classification PL",
+    "decision": "Same.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "CIR_H",
+    "name": "Circumstantial hours",
+    "category": "reliability",
+    "unit": "h",
+    "formula": "Hours of circumstantial stops (CIR: power cut, gas or water shortage, full silos ...)",
+    "aggregation": "sum",
+    "better": "lower",
+    "decimals": 1,
+    "applies_to": "all",
+    "nrs_formula": "SUMIFS ... classification CIR",
+    "app_formula": "Classification CIR",
+    "decision": "Same.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "FAILURES",
+    "name": "Stop frequency (failures)",
+    "category": "reliability",
+    "unit": "count",
+    "formula": "Number of failure events: Freq = 1, Failure = YES and not PL or CIR",
+    "aggregation": "sum",
+    "better": "lower",
+    "decimals": 0,
+    "applies_to": "all",
+    "nrs_formula": "COUNTIFS Failure = \"YES\" (every row, including continuation rows and PL/CIR rows marked YES)",
+    "app_formula": "Freq = 1, Failure = YES, not PL/CIR",
+    "decision": "Use the app rule. NRS counts continuation rows and dirty YES labels, so its frequency is higher.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "UF",
+    "name": "Utilization factor (UF)",
+    "category": "reliability",
+    "unit": "%",
+    "formula": "Running hours ÷ scheduled hours",
+    "aggregation": "ratio_of_sums",
+    "better": "higher",
+    "decimals": 1,
+    "applies_to": "all",
+    "nrs_formula": "Run ÷ (Run + Stop) = Run ÷ RRHH",
+    "app_formula": "Run ÷ T (availability basis A)",
+    "decision": "Same formula. Month and year values must be ratio of sums, never the average of daily ratios.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "RF",
+    "name": "Reliability factor (RF)",
+    "category": "reliability",
+    "unit": "%",
+    "formula": "Running hours ÷ (running hours + incident hours)",
+    "aggregation": "ratio_of_sums",
+    "better": "higher",
+    "decimals": 1,
+    "applies_to": "all",
+    "nrs_formula": "IFERROR(Run ÷ (Run + INC), 0)",
+    "app_formula": "Run ÷ (Run + INC) (availability basis C)",
+    "decision": "Same formula. NRS shows 0 when there is no running and no incident; the app shows no value (—).",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "EA",
+    "name": "Equipment availability (EA)",
+    "category": "reliability",
+    "unit": "%",
+    "formula": "(Running hours + circumstantial hours) ÷ scheduled hours",
+    "aggregation": "ratio_of_sums",
+    "better": "higher",
+    "decimals": 1,
+    "applies_to": "all",
+    "nrs_formula": "(Run + CIR) ÷ (Run + Stop)",
+    "app_formula": "Not in the app yet",
+    "decision": "New for the app. Note that planned stops count as lost time in EA; agree that this is intended.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "MTBF",
+    "name": "Mean time between failures (MTBF)",
+    "category": "reliability",
+    "unit": "h",
+    "formula": "Running hours ÷ failure events",
+    "aggregation": "ratio_of_sums",
+    "better": "higher",
+    "decimals": 1,
+    "applies_to": "all",
+    "nrs_formula": "IFERROR(Run ÷ Stop Frequency, MTBF TARGET)",
+    "app_formula": "Run ÷ failure events; no failures = no value",
+    "decision": "Use the app rule: with no failures show \"no failures\", never the target (NRS shows the target, which looks like the target was met exactly).",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "MTTR",
+    "name": "Mean time to repair (MTTR)",
+    "category": "reliability",
+    "unit": "h",
+    "formula": "Failure-event hours ÷ failure events",
+    "aggregation": "ratio_of_sums",
+    "better": "lower",
+    "decimals": 2,
+    "applies_to": "all",
+    "nrs_formula": "IFERROR(INC hours ÷ Stop Frequency, MTTR TARGET)",
+    "app_formula": "Duration of failure events ÷ failure events",
+    "decision": "Decide the numerator: NRS uses all INC hours (also INC rows that are not failures); the app uses the hours of the failure events only.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "PROD_T",
+    "name": "Production",
+    "category": "production",
+    "unit": "t",
+    "formula": "Tons produced by the area in the period (DCS weigh feeders + recorded correction)",
+    "aggregation": "sum",
+    "better": "higher",
+    "decimals": 0,
+    "applies_to": "CR,RM.1,RM.2,FM.1,FM.2,K.1,K.2,CM.1,CM.2,CM.3,CM.4",
+    "nrs_formula": "CR: crusher feed + correction. RM: weigh feeders split OPC/SRC by the mix of the day, dry basis. FM: WF450 + WF550 by coal/petcoke mix. K: see CLK_T. CM: weigh feeders to each silo x running-hour factor",
+    "app_formula": "Not in the app yet",
+    "decision": "Each area keeps the NRS method; every correction gets a reason and an approver (production_corrections).",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "CLK_T",
+    "name": "Clinker production",
+    "category": "production",
+    "unit": "t",
+    "formula": "(Kiln feed + correction) ÷ clinker factor + ash from fuels",
+    "aggregation": "sum",
+    "better": "higher",
+    "decimals": 0,
+    "applies_to": "K.1,K.2",
+    "nrs_formula": "Prod WO Ash = (kiln feed + correction ...) ÷ CF (PLG-CF, Manual-CF or Calculated-CF); Prod = Prod WO Ash + fuel ash tons",
+    "app_formula": "Not in the app yet",
+    "decision": "Agree which clinker factor is used and who may change it; store it per day with its source.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "RH_DCS",
+    "name": "Running hours (DCS)",
+    "category": "production",
+    "unit": "h",
+    "formula": "Running hours counted by the DCS + recorded correction",
+    "aggregation": "sum",
+    "better": "higher",
+    "decimals": 1,
+    "applies_to": "CR,RM.1,RM.2,FM.1,FM.2,K.1,K.2,CM.1,CM.2,CM.3,CM.4",
+    "nrs_formula": "Tag + correction table",
+    "app_formula": "Not in the app yet",
+    "decision": "Compare every day with RUN_H from the stoppage log; a gap above a set limit raises a data check.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "RATE",
+    "name": "Production rate",
+    "category": "production",
+    "unit": "t/h",
+    "formula": "Production ÷ DCS running hours",
+    "aggregation": "ratio_of_sums",
+    "better": "higher",
+    "decimals": 1,
+    "applies_to": "CR,RM.1,RM.2,FM.1,FM.2,K.1,K.2,CM.1,CM.2,CM.3,CM.4",
+    "nrs_formula": "Prod ÷ R H (0 when RH = 0)",
+    "app_formula": "Not in the app yet",
+    "decision": "Ratio of sums for month and year.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "PF",
+    "name": "Performance factor (PF)",
+    "category": "production",
+    "unit": "%",
+    "formula": "Actual rate ÷ target rate",
+    "aggregation": "ratio_of_sums",
+    "better": "higher",
+    "decimals": 1,
+    "applies_to": "CR,RM.1,RM.2,FM.1,FM.2,K.1,K.2,CM.1,CM.2,CM.3,CM.4",
+    "nrs_formula": "Actual rate ÷ target rate",
+    "app_formula": "Not in the app yet",
+    "decision": "Target rate per area and month in kpi_targets.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "OEE",
+    "name": "Overall equipment effectiveness (OEE)",
+    "category": "production",
+    "unit": "%",
+    "formula": "UF x PF x quality rate",
+    "aggregation": "ratio_of_sums",
+    "better": "higher",
+    "decimals": 1,
+    "applies_to": "K.1,K.2,CM.1,CM.2,CM.3,CM.4",
+    "nrs_formula": "Not in NRS",
+    "app_formula": "Not in the app",
+    "decision": "Optional. Needs an agreed quality rate (e.g. 1 − isolated clinker ÷ clinker).",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "SPC",
+    "name": "Specific power consumption (SPC)",
+    "category": "energy",
+    "unit": "kWh/t",
+    "formula": "Total power (process + auxiliary) x 1000 ÷ production",
+    "aggregation": "ratio_of_sums",
+    "better": "lower",
+    "decimals": 1,
+    "applies_to": "CR,RM.1,RM.2,FM.1,FM.2,K.1,K.2,CM.1,CM.2,CM.3,CM.4",
+    "nrs_formula": "Total Pwr x 1000 ÷ Prod; kiln sets values above 100 to 0",
+    "app_formula": "Not in the app yet",
+    "decision": "Values outside the limit are flagged for review, never set to 0.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "SHC",
+    "name": "Specific heat consumption (SHC)",
+    "category": "fuel",
+    "unit": "kcal/kg clinker",
+    "formula": "(Fossil heat + alternative-fuel heat) ÷ (clinker x 1000)",
+    "aggregation": "ratio_of_sums",
+    "better": "lower",
+    "decimals": 0,
+    "applies_to": "K.1,K.2",
+    "nrs_formula": "SUM(fossil, AF heat) ÷ (Prod x 1000); values above 1500 set to 0",
+    "app_formula": "Not in the app yet",
+    "decision": "Flag above the limit instead of 0. Check the Diesel heat column, which uses the calciner natural-gas volume.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "TSR",
+    "name": "Thermal substitution rate (TSR)",
+    "category": "fuel",
+    "unit": "%",
+    "formula": "Alternative-fuel heat ÷ total heat",
+    "aggregation": "ratio_of_sums",
+    "better": "higher",
+    "decimals": 1,
+    "applies_to": "K.1,K.2",
+    "nrs_formula": "AF heat ÷ (fossil + AF heat)",
+    "app_formula": "Not in the app yet",
+    "decision": "Same.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "SWC",
+    "name": "Specific water consumption (SWC)",
+    "category": "energy",
+    "unit": "l/t",
+    "formula": "Water (m³) x 1000 ÷ production",
+    "aggregation": "ratio_of_sums",
+    "better": "lower",
+    "decimals": 1,
+    "applies_to": "RM.1,RM.2,K.1,K.2,CM.1,CM.2,CM.3,CM.4",
+    "nrs_formula": "Water x 1000 ÷ Prod; kiln sets values above 500 to 0",
+    "app_formula": "Not in the app yet",
+    "decision": "Flag above the limit instead of 0.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "GA",
+    "name": "Grinding aid dosage",
+    "category": "cement",
+    "unit": "g/t",
+    "formula": "Grinding aid grams ÷ cement tons",
+    "aggregation": "ratio_of_sums",
+    "better": "none",
+    "decimals": 0,
+    "applies_to": "CM.1,CM.2,CM.3,CM.4",
+    "nrs_formula": "Dosage g/day ÷ tons to the silos",
+    "app_formula": "Not in the app yet",
+    "decision": "Same.",
+    "status": "draft"
+   },
+   {
+    "kpi_id": "CLK_FACTOR",
+    "name": "Clinker in cement",
+    "category": "cement",
+    "unit": "%",
+    "formula": "Clinker tons ÷ cement tons",
+    "aggregation": "ratio_of_sums",
+    "better": "lower",
+    "decimals": 1,
+    "applies_to": "CM.1,CM.2,CM.3,CM.4",
+    "nrs_formula": "From the cement mill material balance",
+    "app_formula": "Not in the app yet",
+    "decision": "Same.",
+    "status": "draft"
    }
   ]
  }

@@ -38,7 +38,13 @@ var SETTING_RULES = {
   actions_chronic_top: { type: 'int', min: 1, max: 100 },
   actions_chronic_months: { type: 'int', min: 1, max: 24 },
   actions_effect_days: { type: 'int', min: 1, max: 3650 },
-  actions_auto_draft: { type: 'enum', values: ['true', 'false'] }
+  actions_auto_draft: { type: 'enum', values: ['true', 'false'] },
+  // Schema v7 (plant system): shift report review deadlines, daily meeting time, first date entered through shift reports.
+  shift_submit_deadline_h: { type: 'int', min: 1, max: 168 },
+  prod_review_deadline_h: { type: 'int', min: 1, max: 720 },
+  rel_validation_deadline_h: { type: 'int', min: 1, max: 720 },
+  daily_meeting_time: { type: 'time' },
+  shift_entry_from: { type: 'date' }
 };
 
 function readSettings_() { return readTable_(T.SETTINGS); }
@@ -86,6 +92,17 @@ function validateSetting_(key, value) {
     if (s !== '' && (s.length > 300 || !/^https?:\/\/[^\s<>"']+$/i.test(s))) {
       throw apiError_(ERR.BAD_REQUEST, 'Setting ' + key + ' must be a web address starting with http:// or https://, or blank.');
     }
+    return s;
+  }
+  if (rule.type === 'time') {
+    var tm = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(s);
+    if (!tm) throw apiError_(ERR.BAD_REQUEST, 'Setting ' + key + ' must be a time like 09:00.');
+    return s;
+  }
+  if (rule.type === 'date') {
+    var dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    var dt = dm && new Date(Date.UTC(+dm[1], +dm[2] - 1, +dm[3]));
+    if (!dm || dt.getUTCMonth() !== +dm[2] - 1 || dt.getUTCDate() !== +dm[3]) throw apiError_(ERR.BAD_REQUEST, 'Setting ' + key + ' must be a date like 2026-10-01.');
     return s;
   }
   if (rule.type === 'number_or_blank' && s === '') return '';

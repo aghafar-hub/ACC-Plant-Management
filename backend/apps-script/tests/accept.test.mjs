@@ -30,7 +30,8 @@ const now = (env) => env.rows('events');
 test('the schema gains the three event columns and the new settings', () => {
   const env = createEnv();
   const cols = env.json(env.run('SCHEMA.tables.events.columns')).map((c) => c.name);
-  assert.deepEqual(cols.slice(-3), ['accepted_flags', 'accepted_by', 'accepted_at']);
+  assert.deepEqual(cols.slice(-6, -3), ['accepted_flags', 'accepted_by', 'accepted_at']);
+  assert.deepEqual(cols.slice(-3), ['origin', 'time_precision', 'shift_stop_id']); // schema v7
   const keys = env.rows('settings').map((s) => s.key);
   for (const k of ['availability_target_pct', 'target_mtbf_h', 'target_mttr_h']) assert.ok(keys.includes(k), k);
   assert.ok(!keys.includes('target_availability_pct') && !keys.includes('notif_availability_target_pct'));

@@ -66,7 +66,12 @@ var T = {
   ROLES: 'roles', USERS: 'users', TAB_ACCESS: 'tab_access', SETTINGS: 'settings', AUDIT: 'audit_log',
   NOTIFICATIONS: 'notifications', NOTIFICATION_STATE: 'notification_state', NOTIFICATION_PREFS: 'notification_prefs',
   ACTIONS: 'actions', ACTION_LOG: 'action_log', CONTRACTORS: 'contractors', AREA_TARGETS: 'area_targets',
-  USER_ACTIVITY: 'user_activity', ACTION_TASKS: 'action_tasks', TASK_TEMPLATES: 'task_templates', TASK_TEMPLATE_STEPS: 'task_template_steps'
+  USER_ACTIVITY: 'user_activity', ACTION_TASKS: 'action_tasks', TASK_TEMPLATES: 'task_templates', TASK_TEMPLATE_STEPS: 'task_template_steps',
+  // Schema v7 (plant system): shift reports and their review, duties, KPI definitions and targets, production data.
+  SHIFTS: 'shifts', SHIFT_REPORTS: 'shift_reports', SHIFT_STOPPAGES: 'shift_stoppages', SHIFT_STOPPAGE_EDITS: 'shift_stoppage_edits',
+  WORKFLOW_LOG: 'workflow_log', RESPONSIBILITIES: 'responsibilities', KPI_DEFINITIONS: 'kpi_definitions', KPI_TARGETS: 'kpi_targets',
+  PRODUCTION_METRICS: 'production_metrics', PRODUCTION_VALUES: 'production_values', PRODUCTION_CORRECTIONS: 'production_corrections',
+  DCS_IMPORT_BATCHES: 'dcs_import_batches'
 };
 
 // Script Property names.

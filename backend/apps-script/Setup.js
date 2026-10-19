@@ -82,6 +82,10 @@ function seedDefaults() {
     // 1.7.0: the three task templates (an existing template id is never touched), then the one-time move of the old action
     // statuses Contractor informed / Waiting stoppage / In progress to tasks (Tasks.js migrateActions_; runs once)
     added[T.TASK_TEMPLATES] = seedTaskTemplates_(seeds.taskTemplates || []);
+    // schema v7: the plant shifts (an existing shift id is never touched)
+    seed(T.SHIFTS, function (r) { return r.shift_id; }, seeds.shifts || []);
+    // schema v7: the draft KPI definitions for the Stage 0 review (an existing kpi id is never touched)
+    seed(T.KPI_DEFINITIONS, function (r) { return r.kpi_id; }, seeds.kpiDefinitions || []);
     // 1.10.0: new defaults for settings nobody has changed since setup (keep me signed in 30 -> 14 days, the longest
     // wait after wrong passwords 15 -> 30 minutes); a value someone saved is left alone
     added.settings_updated = updateUntouchedSettings_({ session_hours_keep: ['720', '336'], lockout_minutes: ['15', '30'] });
