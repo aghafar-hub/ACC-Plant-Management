@@ -223,7 +223,7 @@ test('listAuditLog reads a bounded number of rows per call and continues with th
 const NOT_LOGGED = {
   personal: ['setNotificationState', 'saveNotificationPrefs'],
   read: ['getMyAccess', 'getStartup', 'getEvents', 'getEventEdits', 'getUploadHistory', 'getUploadWarnings', 'listUsers', 'getNotifications',
-    'listActions', 'getAreaTargets', 'listActiveUsers', 'listAuditLog', 'listTasks', 'listTaskTemplates'],
+    'listActions', 'getAreaTargets', 'listActiveUsers', 'listAuditLog', 'listTasks', 'listTaskTemplates', 'listResponsibilities'],
 };
 
 function writeCases(w) {
@@ -252,6 +252,8 @@ function writeCases(w) {
     ['updateUser', () => ({ params: { userId: w.viewer.user_id, changes: { role_id: 'ROLE-ENG' } } }), 'update_user', /^role_id: ROLE-VIEW -> ROLE-ENG$/],
     ['resetPassword', () => ({ params: { userId: w.viewer.user_id } }), 'reset_password'],
     ['setUserTabAccess', () => ({ params: { userId: w.eng.user_id, overrides: { upload: 'Edit' } } }), 'set_tab_access', /^upload: role default -> Edit$/],
+    // 2.0.0 (plant system)
+    ['saveResponsibilities', () => ({ params: { userId: w.eng.user_id, rows: [{ duty: 'shift_entry', scope_type: 'area', scope_id: 'K.1' }] } }), 'set_responsibilities', /^\+ shift_entry @ K\.1$/],
     ['runNotificationChecks', () => ({ params: {} }), 'notification_check'],
     ['createAction', () => ({ params: { input: { title: 'Audit action', scope_kind: 'area', area_id: 'K.1', owner: 'MEC', status: 'Open' } } }), 'create_action'],
     ['updateAction', () => ({ params: { actionId: w.actionId(), changes: { priority: 'High' } } }), 'update_action', /priority: .* -> High/],

@@ -10,6 +10,8 @@ import { Icon } from '../../icons';
 import { pageById, pageLabel, ROLE_LABELS } from '../../navigation';
 import ConfirmDialog from '../ConfirmDialog';
 import { useAction } from '../useAction';
+import type { Responsibility } from '../../plant/responsibilities';
+import ResponsibilitiesSection from './ResponsibilitiesSection';
 import { ROLE_IDS, roleDefault } from './roleDefaults';
 
 const LEVELS: AccessLevel[] = ['Hidden', 'View', 'Edit'];
@@ -18,12 +20,15 @@ export const roleName = (id: string): string => t(ROLE_LABELS[id] ?? id);
 
 type Overrides = Partial<Record<TabId, AccessLevel>>;
 
-export default function UserModal({ user, self, activeAdmins, canEdit: canEditTab, meAdmin = true, canSignOutAll = false, onClose, onChanged, onTempPassword, toast }: {
+export default function UserModal({ user, self, activeAdmins, canEdit: canEditTab, meAdmin = true, canSignOutAll = false, responsibilities, onResponsibilities, onClose, onChanged, onTempPassword, toast }: {
   user: AdminUser; self: boolean; activeAdmins: number; canEdit: boolean;
   /** backend 1.10.0: the person using the app is an Admin (only Admins manage Admins) */
   meAdmin?: boolean;
   /** backend 1.10.0 and an Admin: 'Sign out on all devices' for this person */
   canSignOutAll?: boolean;
+  /** backend 2.0.0 (plant system): this person's duties; undefined = the server has none yet, the section is hidden */
+  responsibilities?: Responsibility[];
+  onResponsibilities?: (rows: Responsibility[]) => void;
   onClose: () => void;
   onChanged: (u: AdminUser) => void; onTempPassword: (who: string, pw: string) => void; toast: (s: string) => void;
 }) {
@@ -172,6 +177,10 @@ export default function UserModal({ user, self, activeAdmins, canEdit: canEditTa
           </div>
         )}
       </FormSection>
+
+      {responsibilities && (
+        <ResponsibilitiesSection userId={user.user_id} rows={responsibilities} canEdit={canEdit} toast={toast} onSaved={(rows) => onResponsibilities?.(rows)} />
+      )}
 
       {confirm === 'deactivate' && (
         <ConfirmDialog title={t('Deactivate {name}?', { name: user.display_name })} danger confirmLabel={t('Deactivate')} busy={details.busy} onCancel={() => setConfirm(null)} onConfirm={() => { setConfirm(null); void saveDetails(); }}>

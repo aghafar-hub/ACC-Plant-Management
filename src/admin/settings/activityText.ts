@@ -79,6 +79,7 @@ export function auditSentence(e: AuditEntry, name: (id: string) => string): stri
     case 'create_user': return t('Added user {who} ({detail})', { who: name(id), detail: roleText(d).replace(' as ', t(' as ')) });
     case 'update_user': return withNote(t('Changed user {who}', { who: name(id) }), d === 'No change' ? '' : changesText(d));
     case 'reset_password': return t('Reset the password of {who} (a temporary password was issued)', { who: name(id) });
+    case 'set_responsibilities': return withNote(t('Changed the responsibilities of {who}', { who: name(id) }), d === 'No change' ? '' : d.replace(/; /g, ', '));
     case 'set_tab_access': return withNote(t('Changed the page access of {who}', { who: name(id) }), d === 'No change' ? '' : changesText(d));
     case 'save_setting': {
       const m = /^(.*) -> (.*)$/.exec(d);

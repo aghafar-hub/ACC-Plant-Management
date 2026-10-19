@@ -3,7 +3,9 @@ import { dateText, tsText } from '../../util/dates';
 import { api, describeError } from '../../api';
 import type { AdminUser } from '../../api/types';
 import { useAuth } from '../../auth/AuthContext';
-import { SERVER_1_10, versionAtLeast } from '../../auth/serverVersion';
+import { SERVER_1_10, SERVER_2_0, versionAtLeast } from '../../auth/serverVersion';
+import type { Responsibility } from '../../plant/responsibilities';
+import CoverageGrid from '../users/CoverageGrid';
 import AccessBadge from '../../components/AccessBadge';
 import { Tile } from '../../components/Tile';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -40,12 +42,17 @@ export default function UsersAccess() {
   const [secret, setSecret] = useState<{ who: string; password: string } | null>(null);
   const [toastNode, toast] = useToast();
   const edit = canEdit('users');
+  // backend 2.0.0 (plant system): duties per person and the coverage grid
+  const plant = versionAtLeast(serverVersion, SERVER_2_0);
+  const [resp, setResp] = useState<Responsibility[] | null>(null);
+  const [showCoverage, setShowCoverage] = useState(false);
 
   const load = useCallback(() => {
     if (!token) return;
     setError(null);
     api.listUsers(token).then(setUsers, (e) => setError(describeError(e)));
-  }, [token]);
+    if (plant) api.listResponsibilities(token).then(setResp, (e) => setError(describeError(e)));
+  }, [token, plant]);
   useEffect(load, [load]);
 
   const replace = (u: AdminUser) => setUsers((cur) => cur?.map((x) => (x.user_id === u.user_id ? u : x)) ?? cur);
@@ -64,7 +71,10 @@ export default function UsersAccess() {
           {users ? t('{n} accounts · {active} active · {pending} waiting to choose a password', { n: users.length, active, pending }) : error ?? t('Loading…')}
           {' '}<AccessBadge edit={edit} />
         </p>
-        {edit && <button type="button" className="btn-primary" onClick={() => setCreating(true)} data-testid="add-user"><Icon name="plus" size={15} /> {t('Add a person')}</button>}
+        <div className="chip-row">
+          {plant && resp && <button type="button" className="btn" aria-pressed={showCoverage} onClick={() => setShowCoverage((v) => !v)} data-testid="toggle-coverage"><Icon name="compliance" size={15} /> {t('Who does what')}</button>}
+          {edit && <button type="button" className="btn-primary" onClick={() => setCreating(true)} data-testid="add-user"><Icon name="plus" size={15} /> {t('Add a person')}</button>}
+        </div>
       </div>
       <div className="tiles">
         <Tile icon="users" label={t('Accounts')} value={users ? num(users.length) : '-'} sub={byRole.map(([r, n]) => `${n} ${roleName(r)}`).join(' · ')} testid="fact-users" />
@@ -72,6 +82,7 @@ export default function UsersAccess() {
         <Tile icon="shield" label={t('Using a temporary password')} value={users ? num(pending) : '-'} sub={t('must choose their own')} testid="fact-pending" />
         <Tile icon="clock" label={t('Latest sign-in')} value={lastLogin ? dateText(lastLogin) : '-'} sub={lastLogin ? whenText(lastLogin.replace(' ', 'T')) : undefined} testid="fact-last-login" />
       </div>
+      {plant && resp && users && showCoverage && <CoverageGrid rows={resp} users={users} />}
       {error && <div className="callout callout--danger" role="alert"><span>{error}</span><button type="button" className="btn btn-sm" onClick={load}>{t('Try again')}</button></div>}
       {users && !mobile && (
         <div className="table-wrap" data-testid="users-table">
@@ -110,6 +121,8 @@ export default function UsersAccess() {
           canSignOutAll={meAdmin && versionAtLeast(serverVersion, SERVER_1_10)}
           onClose={() => setOpenId(null)} onChanged={replace} toast={toast}
           onTempPassword={(who, password) => { load(); setSecret({ who, password }); }}
+          responsibilities={plant && resp ? resp.filter((r) => r.user_id === open.user_id) : undefined}
+          onResponsibilities={(rows) => setResp((cur) => [...(cur ?? []).filter((r) => r.user_id !== open.user_id), ...rows])}
         />
       )}
       {creating && (

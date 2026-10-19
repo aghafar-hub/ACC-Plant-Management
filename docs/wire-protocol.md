@@ -60,6 +60,8 @@ wins over the role row. Missing row = Hidden.
 | `saveSettings` | `settings` Edit |
 | `listUsers` | `users` View |
 | `createUser`, `updateUser`, `resetPassword`, `setUserTabAccess` | `users` Edit |
+| `listResponsibilities` | `users` View (backend 2.0.0, plant system) |
+| `saveResponsibilities` | `users` Edit; the responsibilities of an Admin only by the Admin role (backend 2.0.0) |
 | `getNotifications`, `setNotificationState`, `saveNotificationPrefs` | any valid session (not while a temporary password is still unchanged); only the caller's own state and preferences are read or written |
 | `runNotificationChecks` | `settings` Edit |
 | `listActions` | `actions` View |

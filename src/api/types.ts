@@ -11,6 +11,7 @@
  *   2 for the second, and so on. event_id = 'EV-' + first 16 hex characters.
  * - The server never trusts the client: it re-validates every write.
  */
+import type { Responsibility, ResponsibilityInput } from '../plant/responsibilities';
 
 export type TabId =
   | 'overview' | 'pareto' | 'repeats' | 'reliability' | 'reports' | 'actions' | 'events'
@@ -671,6 +672,10 @@ export interface Api {
   updateUser(token: string, userId: string, changes: Partial<Pick<AdminUser, 'display_name' | 'role_id' | 'active'>>): Promise<AdminUser>;
   resetPassword(token: string, userId: string): Promise<{ temp_password: string }>;
   setUserTabAccess(token: string, userId: string, overrides: Partial<Access>): Promise<AdminUser>;
+  /** Backend 2.0.0 (plant system): every responsibility in force or dated (switched-off rows are left out). Users View. */
+  listResponsibilities(token: string): Promise<Responsibility[]>;
+  /** Backend 2.0.0: replaces the complete set of one user; returns that set. Users Edit; an Admin's only by the Admin role. */
+  saveResponsibilities(token: string, userId: string, rows: ResponsibilityInput[]): Promise<Responsibility[]>;
 
   // --- notifications ---
   /**

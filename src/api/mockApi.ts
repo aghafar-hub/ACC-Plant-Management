@@ -18,6 +18,7 @@ import { buildSyntheticDb, fmtTs, type MockUser, type SyntheticDb } from '../moc
 import { codeKey, eventIdOf, fingerprintOf, isValidDate, matchKey, parseTs } from '../util/normalize';
 import { THEME_NAMES } from '../theme/themes';
 import { store } from '../storagePrefix';
+import { respKey, validateSet, type Responsibility } from '../plant/responsibilities';
 
 const LEVEL_RANK: Record<AccessLevel, number> = { Hidden: 0, View: 1, Edit: 2 };
 const CLASS_CODES: ClassificationCode[] = ['PRO', 'MEC', 'ELE', 'AUT', 'PL', 'CIR'];
@@ -109,7 +110,7 @@ export interface SentMockMail { from: string; to: string[]; cc: string[]; subjec
  * outlives a reload and a fresh sign-in like on a real server (everything else in the mock starts again on a reload).
  */
 /** The backend version the demo behaves like. */
-export const MOCK_SERVER_VERSION = '1.10.0';
+export const MOCK_SERVER_VERSION = '2.0.0';
 
 export function createMockApi(opts: { seed?: number; demoActions?: boolean; keepAccountThemes?: boolean } = {}): MockApi {
   let db: SyntheticDb | null = null;
@@ -388,6 +389,7 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
   // ------------------------------------------------------------ notifications (rules: mockNotifications.ts; the server has its own port)
   const RESOLVABLE = ['long_stop', 'repeat_group', 'upload_gap', 'action_due', 'action_ready_to_close', 'task_overdue'];
   const SNOOZE_MAX_DAYS = 366;
+  let responsibilities: (Responsibility & { active: boolean })[] = [];
   let notifications: Notification[] = [];
   let notifState: NotificationState[] = [];
   let notifPrefs: { user_id: string; key: string; value: string; updated_at: string }[] = [];
@@ -1283,6 +1285,35 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
       audit(a.user.user_id, 'set_tab_access', 'users', userId, TAB_IDS.filter((t) => was[t] !== clean[t])
         .map((t) => `${t}: ${was[t] ?? 'role default'} -> ${clean[t] ?? 'role default'}`).join('; ') || 'No change');
       return clone(adminUser(user));
+    },
+
+    // --- responsibilities (plant system, backend 2.0.0)
+    async listResponsibilities(token) {
+      need(token, ['users'], 'View');
+      return clone(responsibilities.filter((r) => r.active).map(({ active: _a, ...r }) => r));
+    },
+    async saveResponsibilities(token, userId, rows) {
+      const a = need(token, ['users'], 'Edit');
+      if (!Array.isArray(rows)) throw new ApiError('Responsibilities must be a list.', 'bad_request');
+      const d = get();
+      const problem = validateSet(rows, new Set(d.lines.map((l) => l.line_id)), new Set(d.areas.map((x) => x.area_id)));
+      if (problem) throw new ApiError(problem, 'bad_request');
+      const user = d.users.find((x) => x.user_id === userId);
+      if (!user) throw new ApiError('That user was not found.', 'not_found');
+      requireAdminFor(a.user, user.role_id === 'ROLE-ADMIN', 'change the responsibilities of an Admin');
+      const full = (r: { valid_from?: string; valid_to?: string } & Parameters<typeof respKey>[0]) => `${respKey(r)}|${r.valid_from ?? ''}|${r.valid_to ?? ''}`;
+      const clean = rows.map((r) => ({ ...r, section: r.section ?? '', scope_id: r.scope_type === 'plant' ? '' : (r.scope_id ?? '').trim(), is_backup: r.is_backup === true, valid_from: r.valid_from ?? '', valid_to: r.valid_to ?? '' }));
+      const mine = responsibilities.filter((r) => r.user_id === userId && r.active);
+      const after = new Set(clean.map(full));
+      const before = new Set(mine.map(full));
+      const stamp = nowTs();
+      const removed = mine.filter((r) => !after.has(full(r)));
+      removed.forEach((r) => { r.active = false; r.updated_by = a.user.user_id; r.updated_at = stamp; });
+      const added = clean.filter((r) => !before.has(full(r)));
+      for (const r of added) responsibilities.push({ ...r, resp_id: `RS-${String(++counter).padStart(6, '0')}`, user_id: userId, active: true, updated_by: a.user.user_id, updated_at: stamp });
+      const label = (r: typeof clean[number]) => `${r.duty}${r.section ? ` (${r.section})` : ''} @ ${r.scope_type === 'plant' ? 'plant' : r.scope_id}${r.is_backup ? ' backup' : ''}${r.valid_from || r.valid_to ? ` ${r.valid_from || '...'}..${r.valid_to || '...'}` : ''}`;
+      audit(a.user.user_id, 'set_responsibilities', 'users', userId, [...added.map((r) => `+ ${label(r)}`), ...removed.map((r) => `- ${label(r)}`)].join('; ') || 'No change');
+      return clone(responsibilities.filter((r) => r.user_id === userId && r.active).map(({ active: _a, ...r }) => r));
     },
 
     // --- notifications

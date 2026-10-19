@@ -93,6 +93,8 @@ export function createSheetsApi(url: string): Api {
     updateUser: (token, userId, changes) => call('updateUser', token, { userId, changes }),
     resetPassword: (token, userId) => call('resetPassword', token, { userId }),
     setUserTabAccess: (token, userId, overrides) => call('setUserTabAccess', token, { userId, overrides }),
+    listResponsibilities: (token) => call('listResponsibilities', token),
+    saveResponsibilities: (token, userId, rows) => call('saveResponsibilities', token, { userId, rows }),
 
     getNotifications: (token) => call('getNotifications', token),
     setNotificationState: (token, notificationId, state, snoozeUntil) =>

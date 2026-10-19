@@ -319,3 +319,14 @@ button.adm-card:focus-visible {
 .adm-steps li + li {
   margin-top: 4px;
 }
+
+/* Users › Responsibilities and coverage (plant system, backend 2.0.0) */
+.resp-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 6px; }
+.resp-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; }
+.resp-text { min-width: 0; overflow-wrap: anywhere; }
+.resp-add { margin-top: 4px; }
+.cov { margin: 0 0 16px; }
+.cov-title { margin: 0 0 4px; font-size: 15px; }
+.cov-table td, .cov-table th { font-size: 13px; vertical-align: top; }
+.cov-gap { color: var(--tk-danger); font-weight: 600; background: var(--tk-danger-bg); }
+.cov-thin { background: var(--tk-warning-bg); }

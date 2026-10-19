@@ -15,3 +15,6 @@ export function versionAtLeast(version: string | null | undefined, min: string):
 
 /** Backend 1.10.0: sign out of all devices, admin-only management of Admins, keep-as-entered in one call. */
 export const SERVER_1_10 = '1.10.0';
+
+/** Backend 2.0.0 (plant system): responsibilities, shift reports and their review chain. */
+export const SERVER_2_0 = '2.0.0';

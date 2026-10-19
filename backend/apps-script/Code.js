@@ -48,6 +48,8 @@ var HANDLERS = {
   updateUser: function (s, p) { return updateUser_(s, p.userId, p.changes); },
   resetPassword: function (s, p) { return resetPassword_(s, p.userId); },
   setUserTabAccess: function (s, p) { return setUserTabAccess_(s, p.userId, p.overrides); },
+  listResponsibilities: function () { return listResponsibilities_(); },
+  saveResponsibilities: function (s, p) { return saveResponsibilities_(s, p.userId, p.rows); },
   getNotifications: function (s) { return getNotifications_(s); },
   setNotificationState: function (s, p) { return setNotificationState_(s, p.notificationId, p.state, p.snoozeUntil); },
   saveNotificationPrefs: function (s, p) { return saveNotificationPrefs_(s, p.prefs); },

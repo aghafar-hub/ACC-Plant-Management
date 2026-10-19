@@ -71,7 +71,10 @@ var ACTION_RULES = {
   signOutEverywhere: { auth: 'session', mustChangeOk: true },
   signOutUserEverywhere: { auth: 'admin' },
   // 1.10.0: 'keep as entered' for many records in one call
-  acceptEventFlagsBulk: { auth: 'tabs', tabs: ['events'], level: 'Edit' }
+  acceptEventFlagsBulk: { auth: 'tabs', tabs: ['events'], level: 'Edit' },
+  // 2.0.0 (plant system): who holds which duty, where (Responsibilities.js)
+  listResponsibilities: { auth: 'tabs', tabs: ['users'], level: 'View' },
+  saveResponsibilities: { auth: 'tabs', tabs: ['users'], level: 'Edit' }
 };
 
 function levelRank_(level) { return LEVELS.indexOf(level); }
