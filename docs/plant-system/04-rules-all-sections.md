@@ -22,7 +22,7 @@ The first version of the rules covered downtime and reliability only. This page 
 
 ## The checks, section by section
 
-Thresholds are starting values to confirm with each section owner. A blank threshold means the limit comes from the metric or parameter itself (its min / max or specification).
+Thresholds confirmed by the owner on 2026-10-19; each can be changed later in the app. A blank threshold means the limit comes from the metric or parameter itself (its min / max or specification).
 
 ### Downtime
 
@@ -154,7 +154,6 @@ Thresholds are starting values to confirm with each section owner. A blank thres
 
 ## Still to agree
 
-1. Specification limits and aims for each quality parameter (quality department).
-2. Starting thresholds of the checks above (each section owner).
-3. Whether QCX can export each sample with its time, or only daily averages.
-4. Who signs off the month for each section (proposed: production manager for production, quality manager for quality, reliability for downtime).
+1. Specification limits and aims for each quality parameter: entered later in the app (Settings › Quality limits, to be built with Stage 2) by the quality department.
+2. Whether QCX can export each sample with its time, or only daily averages.
+3. Who signs off the month for each section (proposed: production manager for production, quality manager for quality, reliability for downtime).
