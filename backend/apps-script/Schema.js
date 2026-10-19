@@ -41,7 +41,11 @@ var SCHEMA = {
   "production_metrics",
   "production_values",
   "production_corrections",
-  "dcs_import_batches"
+  "dcs_import_batches",
+  "quality_parameters",
+  "quality_results",
+  "check_rules",
+  "data_checks"
  ],
  "tables": {
   "lines": {
@@ -1880,7 +1884,7 @@ var SCHEMA = {
    ]
   },
   "shift_stoppages": {
-   "description": "Stoppages entered in a shift report (v7, Stage 1). Same fields as events; become events when the report is posted.",
+   "description": "Stoppages entered in a shift report (v7, Stage 1). Same fields as events. A stop that lasts beyond the shift stays open and any later shift of the area enters its restart time; it becomes an event when closed and validated.",
    "key": [
     "stop_id"
    ],
@@ -1972,6 +1976,30 @@ var SCHEMA = {
     {
      "name": "flags",
      "type": "text",
+     "required": false
+    },
+    {
+     "name": "stop_state",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "open",
+      "closed"
+     ]
+    },
+    {
+     "name": "closed_report_id",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "closed_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "closed_at",
+     "type": "timestamp",
      "required": false
     },
     {
@@ -2164,6 +2192,8 @@ var SCHEMA = {
       "shift_entry",
       "production_review",
       "reliability_validation",
+      "production_data",
+      "quality_validation",
       "targets",
       "master_data",
       "daily_meeting"
@@ -2251,8 +2281,11 @@ var SCHEMA = {
       "production",
       "energy",
       "fuel",
-      "cement",
-      "quality"
+      "water",
+      "stock",
+      "materials",
+      "quality",
+      "data"
      ]
     },
     {
@@ -2272,7 +2305,9 @@ var SCHEMA = {
      "enum": [
       "ratio_of_sums",
       "sum",
-      "weighted_avg",
+      "average",
+      "std_dev",
+      "share_in_spec",
       "last"
      ]
     },
@@ -2441,7 +2476,7 @@ var SCHEMA = {
       "fuel",
       "water",
       "stock",
-      "quality",
+      "materials",
       "other"
      ]
     },
@@ -2736,6 +2771,390 @@ var SCHEMA = {
      "required": false
     }
    ]
+  },
+  "quality_parameters": {
+   "description": "What the laboratory measures, where, and its limits (v7). One row per sample point and parameter, e.g. RM.1 raw meal LSF.",
+   "key": [
+    "param_id"
+   ],
+   "columns": [
+    {
+     "name": "param_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "area_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "material",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "raw_meal",
+      "kiln_feed",
+      "hot_meal",
+      "clinker",
+      "coal",
+      "petcoke",
+      "cement",
+      "other"
+     ]
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "unit",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "spec_min",
+     "type": "float",
+     "required": false
+    },
+    {
+     "name": "spec_max",
+     "type": "float",
+     "required": false
+    },
+    {
+     "name": "target",
+     "type": "float",
+     "required": false
+    },
+    {
+     "name": "valid_min",
+     "type": "float",
+     "required": false
+    },
+    {
+     "name": "valid_max",
+     "type": "float",
+     "required": false
+    },
+    {
+     "name": "samples_per_day",
+     "type": "int",
+     "required": false
+    },
+    {
+     "name": "qcx_column",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "sort_order",
+     "type": "int",
+     "required": true
+    },
+    {
+     "name": "active",
+     "type": "bool",
+     "required": true
+    },
+    {
+     "name": "notes",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "updated_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "updated_at",
+     "type": "timestamp",
+     "required": false
+    }
+   ]
+  },
+  "quality_results": {
+   "description": "Laboratory results (v7). One row per sample, or one daily average when only the QCX daily export is available.",
+   "key": [
+    "result_id"
+   ],
+   "columns": [
+    {
+     "name": "result_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "sample_ts",
+     "type": "timestamp",
+     "required": true
+    },
+    {
+     "name": "prod_date",
+     "type": "date",
+     "required": true
+    },
+    {
+     "name": "shift_id",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "param_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "value",
+     "type": "float",
+     "required": false
+    },
+    {
+     "name": "basis",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "sample",
+      "daily_avg"
+     ]
+    },
+    {
+     "name": "source",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "qcx",
+      "manual",
+      "analyser"
+     ]
+    },
+    {
+     "name": "batch_id",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "status",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "entered",
+      "validated",
+      "rejected"
+     ]
+    },
+    {
+     "name": "comment",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "entered_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "entered_at",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "validated_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "validated_at",
+     "type": "timestamp",
+     "required": false
+    }
+   ]
+  },
+  "check_rules": {
+   "description": "The data checks the app runs on every section (v7). Thresholds are editable; a rule never changes a value, it raises a check for review.",
+   "key": [
+    "rule_id"
+   ],
+   "columns": [
+    {
+     "name": "rule_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "section",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "downtime",
+      "production",
+      "energy",
+      "fuel",
+      "water",
+      "stock",
+      "materials",
+      "quality",
+      "cross"
+     ]
+    },
+    {
+     "name": "check_type",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "missing",
+      "range",
+      "spec",
+      "change",
+      "balance",
+      "reconcile",
+      "count",
+      "duplicate",
+      "order"
+     ]
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "description",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "applies_to",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "threshold",
+     "type": "float",
+     "required": false
+    },
+    {
+     "name": "threshold_unit",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "severity",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "block",
+      "warn",
+      "info"
+     ]
+    },
+    {
+     "name": "owner_duty",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "active",
+     "type": "bool",
+     "required": true
+    },
+    {
+     "name": "updated_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "updated_at",
+     "type": "timestamp",
+     "required": false
+    }
+   ]
+  },
+  "data_checks": {
+   "description": "Every check raised by check_rules and what was done about it (v7).",
+   "key": [
+    "check_id"
+   ],
+   "columns": [
+    {
+     "name": "check_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "rule_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "section",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "prod_date",
+     "type": "date",
+     "required": true
+    },
+    {
+     "name": "area_id",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "subject_table",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "subject_id",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "value",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "message",
+     "type": "text",
+     "required": true
+    },
+    {
+     "name": "state",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "open",
+      "accepted",
+      "corrected",
+      "dismissed"
+     ]
+    },
+    {
+     "name": "resolution",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "raised_at",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "resolved_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "resolved_at",
+     "type": "timestamp",
+     "required": false
+    }
+   ]
   }
  },
  "seeds": {
@@ -2966,6 +3385,11 @@ var SCHEMA = {
     "role_id": "ROLE-REL",
     "name": "Reliability engineer",
     "description": "Validates shift stoppages before they become downtime; edits events and master data"
+   },
+   {
+    "role_id": "ROLE-QC",
+    "name": "Quality engineer",
+    "description": "Enters and validates laboratory results and quality limits; views dashboards"
    }
   ],
   "tabAccess": {
@@ -3057,6 +3481,19 @@ var SCHEMA = {
     "events": "Edit",
     "upload": "Edit",
     "master": "Edit",
+    "settings": "Hidden",
+    "users": "Hidden"
+   },
+   "ROLE-QC": {
+    "overview": "View",
+    "pareto": "View",
+    "repeats": "View",
+    "reliability": "View",
+    "reports": "View",
+    "actions": "View",
+    "events": "View",
+    "upload": "Hidden",
+    "master": "Hidden",
     "settings": "Hidden",
     "users": "Hidden"
    }
@@ -3401,22 +3838,22 @@ var SCHEMA = {
   ],
   "shifts": [
    {
-    "shift_id": "M",
-    "name": "Morning",
-    "start_time": "07:00",
-    "end_time": "19:00",
+    "shift_id": "D",
+    "name": "Day",
+    "start_time": "08:00",
+    "end_time": "20:00",
     "sort_order": 1,
     "active": true,
-    "notes": "Confirm hours"
+    "notes": ""
    },
    {
     "shift_id": "N",
     "name": "Night",
-    "start_time": "19:00",
-    "end_time": "07:00",
+    "start_time": "20:00",
+    "end_time": "08:00",
     "sort_order": 2,
     "active": true,
-    "notes": "Confirm hours"
+    "notes": "Crosses midnight; belongs to the date it starts"
    }
   ],
   "kpiDefinitions": [
@@ -3432,8 +3869,10 @@ var SCHEMA = {
     "applies_to": "all",
     "nrs_formula": "Available RRHH = days in month x 24",
     "app_formula": "scheduled_hours_per_day x scheduled days",
-    "decision": "Same today. Decide whether an area that is not needed (e.g. a mill with full silos) is still scheduled.",
-    "status": "draft"
+    "decision": "Agreed as proposed. Same today. Decide whether an area that is not needed (e.g. a mill with full silos) is still scheduled.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "STOP_H",
@@ -3447,8 +3886,10 @@ var SCHEMA = {
     "applies_to": "all",
     "nrs_formula": "SUMIFS of TOTAL STOPPAGE DURATION (h) - overlapping rows are added twice",
     "app_formula": "Merged per area, so overlaps count once (priority PL > INC > CIR)",
-    "decision": "Use the app rule (overlaps once). NRS hours can be higher where rows overlap.",
-    "status": "draft"
+    "decision": "Agreed: overlaps counted once.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "RUN_H",
@@ -3462,8 +3903,10 @@ var SCHEMA = {
     "applies_to": "all",
     "nrs_formula": "Available RRHH − Stoppage Time",
     "app_formula": "T − (PL + INC + CIR), overlaps once",
-    "decision": "Same idea. Later compare with DCS running hours (see RH_DCS) as a data check.",
-    "status": "draft"
+    "decision": "Agreed as proposed. Same idea. Later compare with DCS running hours (see RH_DCS) as a data check.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "INC_H",
@@ -3477,8 +3920,10 @@ var SCHEMA = {
     "applies_to": "all",
     "nrs_formula": "SUMIFS ... CRITICALITY = \"INC\"",
     "app_formula": "Classification PRO/MEC/ELE/AUT",
-    "decision": "Same.",
-    "status": "draft"
+    "decision": "Agreed as proposed. Same.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "PL_H",
@@ -3492,8 +3937,10 @@ var SCHEMA = {
     "applies_to": "all",
     "nrs_formula": "SUMIFS ... classification PL",
     "app_formula": "Classification PL",
-    "decision": "Same.",
-    "status": "draft"
+    "decision": "Agreed as proposed. Same.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "CIR_H",
@@ -3507,8 +3954,10 @@ var SCHEMA = {
     "applies_to": "all",
     "nrs_formula": "SUMIFS ... classification CIR",
     "app_formula": "Classification CIR",
-    "decision": "Same.",
-    "status": "draft"
+    "decision": "Agreed as proposed. Same.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "FAILURES",
@@ -3522,8 +3971,10 @@ var SCHEMA = {
     "applies_to": "all",
     "nrs_formula": "COUNTIFS Failure = \"YES\" (every row, including continuation rows and PL/CIR rows marked YES)",
     "app_formula": "Freq = 1, Failure = YES, not PL/CIR",
-    "decision": "Use the app rule. NRS counts continuation rows and dirty YES labels, so its frequency is higher.",
-    "status": "draft"
+    "decision": "Agreed: app rule (Freq = 1, Failure = YES, not PL/CIR).",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "UF",
@@ -3537,8 +3988,10 @@ var SCHEMA = {
     "applies_to": "all",
     "nrs_formula": "Run ÷ (Run + Stop) = Run ÷ RRHH",
     "app_formula": "Run ÷ T (availability basis A)",
-    "decision": "Same formula. Month and year values must be ratio of sums, never the average of daily ratios.",
-    "status": "draft"
+    "decision": "Agreed: ratio of sums.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "RF",
@@ -3552,8 +4005,10 @@ var SCHEMA = {
     "applies_to": "all",
     "nrs_formula": "IFERROR(Run ÷ (Run + INC), 0)",
     "app_formula": "Run ÷ (Run + INC) (availability basis C)",
-    "decision": "Same formula. NRS shows 0 when there is no running and no incident; the app shows no value (—).",
-    "status": "draft"
+    "decision": "Agreed: no value (—) when there is nothing to divide.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "EA",
@@ -3567,8 +4022,10 @@ var SCHEMA = {
     "applies_to": "all",
     "nrs_formula": "(Run + CIR) ÷ (Run + Stop)",
     "app_formula": "Not in the app yet",
-    "decision": "New for the app. Note that planned stops count as lost time in EA; agree that this is intended.",
-    "status": "draft"
+    "decision": "Agreed as NRS: planned stops count as lost time.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "MTBF",
@@ -3582,8 +4039,10 @@ var SCHEMA = {
     "applies_to": "all",
     "nrs_formula": "IFERROR(Run ÷ Stop Frequency, MTBF TARGET)",
     "app_formula": "Run ÷ failure events; no failures = no value",
-    "decision": "Use the app rule: with no failures show \"no failures\", never the target (NRS shows the target, which looks like the target was met exactly).",
-    "status": "draft"
+    "decision": "Agreed: \"no failures\" instead of the target.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "MTTR",
@@ -3597,8 +4056,10 @@ var SCHEMA = {
     "applies_to": "all",
     "nrs_formula": "IFERROR(INC hours ÷ Stop Frequency, MTTR TARGET)",
     "app_formula": "Duration of failure events ÷ failure events",
-    "decision": "Decide the numerator: NRS uses all INC hours (also INC rows that are not failures); the app uses the hours of the failure events only.",
-    "status": "draft"
+    "decision": "Agreed: failure-event hours ÷ failure events (same events as MTBF). Incident hours stay visible as INC_H.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "PROD_T",
@@ -3612,8 +4073,10 @@ var SCHEMA = {
     "applies_to": "CR,RM.1,RM.2,FM.1,FM.2,K.1,K.2,CM.1,CM.2,CM.3,CM.4",
     "nrs_formula": "CR: crusher feed + correction. RM: weigh feeders split OPC/SRC by the mix of the day, dry basis. FM: WF450 + WF550 by coal/petcoke mix. K: see CLK_T. CM: weigh feeders to each silo x running-hour factor",
     "app_formula": "Not in the app yet",
-    "decision": "Each area keeps the NRS method; every correction gets a reason and an approver (production_corrections).",
-    "status": "draft"
+    "decision": "Agreed as proposed. Each area keeps the NRS method; every correction gets a reason and an approver (production_corrections).",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "CLK_T",
@@ -3627,8 +4090,10 @@ var SCHEMA = {
     "applies_to": "K.1,K.2",
     "nrs_formula": "Prod WO Ash = (kiln feed + correction ...) ÷ CF (PLG-CF, Manual-CF or Calculated-CF); Prod = Prod WO Ash + fuel ash tons",
     "app_formula": "Not in the app yet",
-    "decision": "Agree which clinker factor is used and who may change it; store it per day with its source.",
-    "status": "draft"
+    "decision": "Agreed as proposed. Agree which clinker factor is used and who may change it; store it per day with its source.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "RH_DCS",
@@ -3642,8 +4107,10 @@ var SCHEMA = {
     "applies_to": "CR,RM.1,RM.2,FM.1,FM.2,K.1,K.2,CM.1,CM.2,CM.3,CM.4",
     "nrs_formula": "Tag + correction table",
     "app_formula": "Not in the app yet",
-    "decision": "Compare every day with RUN_H from the stoppage log; a gap above a set limit raises a data check.",
-    "status": "draft"
+    "decision": "Agreed as proposed. Compare every day with RUN_H from the stoppage log; a gap above a set limit raises a data check.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "RATE",
@@ -3657,8 +4124,10 @@ var SCHEMA = {
     "applies_to": "CR,RM.1,RM.2,FM.1,FM.2,K.1,K.2,CM.1,CM.2,CM.3,CM.4",
     "nrs_formula": "Prod ÷ R H (0 when RH = 0)",
     "app_formula": "Not in the app yet",
-    "decision": "Ratio of sums for month and year.",
-    "status": "draft"
+    "decision": "Agreed as proposed. Ratio of sums for month and year.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "PF",
@@ -3672,8 +4141,10 @@ var SCHEMA = {
     "applies_to": "CR,RM.1,RM.2,FM.1,FM.2,K.1,K.2,CM.1,CM.2,CM.3,CM.4",
     "nrs_formula": "Actual rate ÷ target rate",
     "app_formula": "Not in the app yet",
-    "decision": "Target rate per area and month in kpi_targets.",
-    "status": "draft"
+    "decision": "Agreed as proposed. Target rate per area and month in kpi_targets.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "OEE",
@@ -3687,8 +4158,10 @@ var SCHEMA = {
     "applies_to": "K.1,K.2,CM.1,CM.2,CM.3,CM.4",
     "nrs_formula": "Not in NRS",
     "app_formula": "Not in the app",
-    "decision": "Optional. Needs an agreed quality rate (e.g. 1 − isolated clinker ÷ clinker).",
-    "status": "draft"
+    "decision": "Optional, still open: needs an agreed quality rate (e.g. 1 − isolated clinker ÷ clinker).",
+    "status": "draft",
+    "approved_by": "",
+    "approved_at": ""
    },
    {
     "kpi_id": "SPC",
@@ -3702,8 +4175,10 @@ var SCHEMA = {
     "applies_to": "CR,RM.1,RM.2,FM.1,FM.2,K.1,K.2,CM.1,CM.2,CM.3,CM.4",
     "nrs_formula": "Total Pwr x 1000 ÷ Prod; kiln sets values above 100 to 0",
     "app_formula": "Not in the app yet",
-    "decision": "Values outside the limit are flagged for review, never set to 0.",
-    "status": "draft"
+    "decision": "Agreed: flag above the limit, never 0.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "SHC",
@@ -3717,8 +4192,10 @@ var SCHEMA = {
     "applies_to": "K.1,K.2",
     "nrs_formula": "SUM(fossil, AF heat) ÷ (Prod x 1000); values above 1500 set to 0",
     "app_formula": "Not in the app yet",
-    "decision": "Flag above the limit instead of 0. Check the Diesel heat column, which uses the calciner natural-gas volume.",
-    "status": "draft"
+    "decision": "Agreed: flag above the limit, never 0; each fuel uses its own volume.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "TSR",
@@ -3732,13 +4209,15 @@ var SCHEMA = {
     "applies_to": "K.1,K.2",
     "nrs_formula": "AF heat ÷ (fossil + AF heat)",
     "app_formula": "Not in the app yet",
-    "decision": "Same.",
-    "status": "draft"
+    "decision": "Agreed as proposed. Same.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "SWC",
     "name": "Specific water consumption (SWC)",
-    "category": "energy",
+    "category": "water",
     "unit": "l/t",
     "formula": "Water (m³) x 1000 ÷ production",
     "aggregation": "ratio_of_sums",
@@ -3747,13 +4226,15 @@ var SCHEMA = {
     "applies_to": "RM.1,RM.2,K.1,K.2,CM.1,CM.2,CM.3,CM.4",
     "nrs_formula": "Water x 1000 ÷ Prod; kiln sets values above 500 to 0",
     "app_formula": "Not in the app yet",
-    "decision": "Flag above the limit instead of 0.",
-    "status": "draft"
+    "decision": "Agreed: flag above the limit, never 0.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "GA",
     "name": "Grinding aid dosage",
-    "category": "cement",
+    "category": "materials",
     "unit": "g/t",
     "formula": "Grinding aid grams ÷ cement tons",
     "aggregation": "ratio_of_sums",
@@ -3762,13 +4243,15 @@ var SCHEMA = {
     "applies_to": "CM.1,CM.2,CM.3,CM.4",
     "nrs_formula": "Dosage g/day ÷ tons to the silos",
     "app_formula": "Not in the app yet",
-    "decision": "Same.",
-    "status": "draft"
+    "decision": "Agreed as proposed. Same.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
    },
    {
     "kpi_id": "CLK_FACTOR",
     "name": "Clinker in cement",
-    "category": "cement",
+    "category": "materials",
     "unit": "%",
     "formula": "Clinker tons ÷ cement tons",
     "aggregation": "ratio_of_sums",
@@ -3777,8 +4260,1621 @@ var SCHEMA = {
     "applies_to": "CM.1,CM.2,CM.3,CM.4",
     "nrs_formula": "From the cement mill material balance",
     "app_formula": "Not in the app yet",
-    "decision": "Same.",
-    "status": "draft"
+    "decision": "Agreed as proposed. Same.",
+    "status": "approved",
+    "approved_at": "2026-10-19",
+    "approved_by": ""
+   },
+   {
+    "kpi_id": "Q_LSF_SD",
+    "name": "Raw meal LSF standard deviation",
+    "category": "quality",
+    "unit": "-",
+    "formula": "Standard deviation of the raw meal LSF results of the period",
+    "aggregation": "std_dev",
+    "better": "lower",
+    "decimals": 2,
+    "applies_to": "RM.1,RM.2",
+    "nrs_formula": "Not in NRS (QCX daily averages only)",
+    "app_formula": "New",
+    "decision": "Needs each sample (hourly), not daily averages: the spread of daily averages hides most of the variation.",
+    "status": "draft",
+    "approved_by": "",
+    "approved_at": ""
+   },
+   {
+    "kpi_id": "Q_KF_LSF_SD",
+    "name": "Kiln feed LSF standard deviation",
+    "category": "quality",
+    "unit": "-",
+    "formula": "Standard deviation of the kiln feed LSF results",
+    "aggregation": "std_dev",
+    "better": "lower",
+    "decimals": 2,
+    "applies_to": "K.1,K.2",
+    "nrs_formula": "Not in NRS (QCX daily averages only)",
+    "app_formula": "New",
+    "decision": "Main measure of kiln feed stability.",
+    "status": "draft",
+    "approved_by": "",
+    "approved_at": ""
+   },
+   {
+    "kpi_id": "Q_FL_AVG",
+    "name": "Clinker free lime",
+    "category": "quality",
+    "unit": "%",
+    "formula": "Average of the clinker free lime results",
+    "aggregation": "average",
+    "better": "none",
+    "decimals": 2,
+    "applies_to": "K.1,K.2",
+    "nrs_formula": "Not in NRS (QCX daily averages only)",
+    "app_formula": "New",
+    "decision": "Too high = under-burnt, too low = over-burnt (fuel lost).",
+    "status": "draft",
+    "approved_by": "",
+    "approved_at": ""
+   },
+   {
+    "kpi_id": "Q_FL_IN_SPEC",
+    "name": "Clinker free lime in specification",
+    "category": "quality",
+    "unit": "%",
+    "formula": "Results inside the free lime limits ÷ all results",
+    "aggregation": "share_in_spec",
+    "better": "higher",
+    "decimals": 1,
+    "applies_to": "K.1,K.2",
+    "nrs_formula": "Not in NRS (QCX daily averages only)",
+    "app_formula": "New",
+    "decision": "Limits from quality_parameters.",
+    "status": "draft",
+    "approved_by": "",
+    "approved_at": ""
+   },
+   {
+    "kpi_id": "Q_C3S_AVG",
+    "name": "Clinker C3S",
+    "category": "quality",
+    "unit": "%",
+    "formula": "Average of the clinker C3S results",
+    "aggregation": "average",
+    "better": "higher",
+    "decimals": 1,
+    "applies_to": "K.1,K.2",
+    "nrs_formula": "Not in NRS (QCX daily averages only)",
+    "app_formula": "New",
+    "decision": "",
+    "status": "draft",
+    "approved_by": "",
+    "approved_at": ""
+   },
+   {
+    "kpi_id": "Q_HM_SO3",
+    "name": "Hot meal SO3",
+    "category": "quality",
+    "unit": "%",
+    "formula": "Average of the hot meal SO3 results",
+    "aggregation": "average",
+    "better": "lower",
+    "decimals": 2,
+    "applies_to": "K.1,K.2",
+    "nrs_formula": "Not in NRS (QCX daily averages only)",
+    "app_formula": "New",
+    "decision": "Early warning of build-up in the preheater.",
+    "status": "draft",
+    "approved_by": "",
+    "approved_at": ""
+   },
+   {
+    "kpi_id": "Q_ISO_CLK",
+    "name": "Isolated (off-spec) clinker",
+    "category": "quality",
+    "unit": "%",
+    "formula": "Isolated clinker tons ÷ clinker tons",
+    "aggregation": "ratio_of_sums",
+    "better": "lower",
+    "decimals": 2,
+    "applies_to": "K.1,K.2",
+    "nrs_formula": "Not in NRS (QCX daily averages only)",
+    "app_formula": "New",
+    "decision": "From the kiln isolated-clinker value (NRS column Isolated Clinker).",
+    "status": "draft",
+    "approved_by": "",
+    "approved_at": ""
+   },
+   {
+    "kpi_id": "Q_FUEL_FINE",
+    "name": "Coal and petcoke fineness",
+    "category": "quality",
+    "unit": "% residue",
+    "formula": "Average sieve residue of the ground coal / petcoke",
+    "aggregation": "average",
+    "better": "lower",
+    "decimals": 1,
+    "applies_to": "FM.1,FM.2",
+    "nrs_formula": "Not in NRS (QCX daily averages only)",
+    "app_formula": "New",
+    "decision": "",
+    "status": "draft",
+    "approved_by": "",
+    "approved_at": ""
+   },
+   {
+    "kpi_id": "Q_BLAINE_SD",
+    "name": "Cement Blaine standard deviation",
+    "category": "quality",
+    "unit": "cm²/g",
+    "formula": "Standard deviation of the cement Blaine results, per product",
+    "aggregation": "std_dev",
+    "better": "lower",
+    "decimals": 0,
+    "applies_to": "CM.1,CM.2,CM.3,CM.4",
+    "nrs_formula": "Not in NRS (QCX daily averages only)",
+    "app_formula": "New",
+    "decision": "Per cement type: OPC and SRC must not be mixed in one figure.",
+    "status": "draft",
+    "approved_by": "",
+    "approved_at": ""
+   },
+   {
+    "kpi_id": "Q_CEM_SO3_IN_SPEC",
+    "name": "Cement SO3 in specification",
+    "category": "quality",
+    "unit": "%",
+    "formula": "Cement SO3 results inside the limits ÷ all results",
+    "aggregation": "share_in_spec",
+    "better": "higher",
+    "decimals": 1,
+    "applies_to": "CM.1,CM.2,CM.3,CM.4",
+    "nrs_formula": "Not in NRS (QCX daily averages only)",
+    "app_formula": "New",
+    "decision": "",
+    "status": "draft",
+    "approved_by": "",
+    "approved_at": ""
+   },
+   {
+    "kpi_id": "Q_CONFORMANCE",
+    "name": "Quality conformance",
+    "category": "quality",
+    "unit": "%",
+    "formula": "All results inside their specification ÷ all results with a specification",
+    "aggregation": "share_in_spec",
+    "better": "higher",
+    "decimals": 1,
+    "applies_to": "all",
+    "nrs_formula": "Not in NRS (QCX daily averages only)",
+    "app_formula": "New",
+    "decision": "One summary figure per area for the daily meeting.",
+    "status": "draft",
+    "approved_by": "",
+    "approved_at": ""
+   },
+   {
+    "kpi_id": "MAT_CLK_BAL",
+    "name": "Clinker balance gap",
+    "category": "materials",
+    "unit": "%",
+    "formula": "(Clinker produced − clinker used by the mills − change in clinker stock) ÷ clinker produced",
+    "aggregation": "ratio_of_sums",
+    "better": "none",
+    "decimals": 1,
+    "applies_to": "K.1,K.2,CM.1,CM.2,CM.3,CM.4",
+    "nrs_formula": "Not in NRS",
+    "app_formula": "New",
+    "decision": "Shows whether kiln production, mill consumption and stock agree; a large gap means one of them is wrong.",
+    "status": "draft",
+    "approved_by": "",
+    "approved_at": ""
+   },
+   {
+    "kpi_id": "STK_CLK_DAYS",
+    "name": "Clinker stock cover",
+    "category": "stock",
+    "unit": "days",
+    "formula": "Clinker stock ÷ average daily clinker use of the last 30 days",
+    "aggregation": "last",
+    "better": "none",
+    "decimals": 1,
+    "applies_to": "all",
+    "nrs_formula": "Not in NRS",
+    "app_formula": "New",
+    "decision": "Value at the end of the period.",
+    "status": "draft",
+    "approved_by": "",
+    "approved_at": ""
+   },
+   {
+    "kpi_id": "DQ_ON_TIME",
+    "name": "Data on time",
+    "category": "data",
+    "unit": "%",
+    "formula": "Required values and reports entered and approved by their deadline ÷ all required",
+    "aggregation": "ratio_of_sums",
+    "better": "higher",
+    "decimals": 1,
+    "applies_to": "all",
+    "nrs_formula": "Not in NRS",
+    "app_formula": "New",
+    "decision": "Measures the reporting itself; shown per area and per duty.",
+    "status": "draft",
+    "approved_by": "",
+    "approved_at": ""
+   },
+   {
+    "kpi_id": "DQ_OPEN_CHECKS",
+    "name": "Open data checks",
+    "category": "data",
+    "unit": "count",
+    "formula": "Data checks still open at the end of the period",
+    "aggregation": "last",
+    "better": "lower",
+    "decimals": 0,
+    "applies_to": "all",
+    "nrs_formula": "Not in NRS",
+    "app_formula": "New",
+    "decision": "",
+    "status": "draft",
+    "approved_by": "",
+    "approved_at": ""
+   }
+  ],
+  "qualityParameters": [
+   {
+    "param_id": "RM.1.RAW_MEAL.LSF",
+    "area_id": "RM.1",
+    "material": "raw_meal",
+    "name": "LSF",
+    "unit": "-",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 80,
+    "valid_max": 120,
+    "samples_per_day": null,
+    "qcx_column": "RM1_LSF",
+    "sort_order": 1,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "RM.1.RAW_MEAL.SM",
+    "area_id": "RM.1",
+    "material": "raw_meal",
+    "name": "SM",
+    "unit": "-",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 1,
+    "valid_max": 4,
+    "samples_per_day": null,
+    "qcx_column": "RM1_SM",
+    "sort_order": 2,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "RM.1.RAW_MEAL.ALM",
+    "area_id": "RM.1",
+    "material": "raw_meal",
+    "name": "AM",
+    "unit": "-",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0.5,
+    "valid_max": 3,
+    "samples_per_day": null,
+    "qcx_column": "RM1_ALM",
+    "sort_order": 3,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "RM.1.RAW_MEAL.SIEVE",
+    "area_id": "RM.1",
+    "material": "raw_meal",
+    "name": "Sieve residue",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 40,
+    "samples_per_day": null,
+    "qcx_column": "RM1_Sieve",
+    "sort_order": 4,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "RM.1.RAW_MEAL.MGO",
+    "area_id": "RM.1",
+    "material": "raw_meal",
+    "name": "MgO",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 6,
+    "samples_per_day": null,
+    "qcx_column": "RM1_MgO",
+    "sort_order": 5,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "RM.1.RAW_MEAL.SO3",
+    "area_id": "RM.1",
+    "material": "raw_meal",
+    "name": "SO3",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 10,
+    "samples_per_day": null,
+    "qcx_column": "RM1_SO3",
+    "sort_order": 6,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "RM.1.RAW_MEAL.CL",
+    "area_id": "RM.1",
+    "material": "raw_meal",
+    "name": "Cl",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 3,
+    "samples_per_day": null,
+    "qcx_column": "RM1_Cl",
+    "sort_order": 7,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "RM.2.RAW_MEAL.LSF",
+    "area_id": "RM.2",
+    "material": "raw_meal",
+    "name": "LSF",
+    "unit": "-",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 80,
+    "valid_max": 120,
+    "samples_per_day": null,
+    "qcx_column": "RM2_LSF",
+    "sort_order": 8,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "RM.2.RAW_MEAL.SM",
+    "area_id": "RM.2",
+    "material": "raw_meal",
+    "name": "SM",
+    "unit": "-",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 1,
+    "valid_max": 4,
+    "samples_per_day": null,
+    "qcx_column": "RM2_SM",
+    "sort_order": 9,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "RM.2.RAW_MEAL.ALM",
+    "area_id": "RM.2",
+    "material": "raw_meal",
+    "name": "AM",
+    "unit": "-",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0.5,
+    "valid_max": 3,
+    "samples_per_day": null,
+    "qcx_column": "RM2_ALM",
+    "sort_order": 10,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "RM.2.RAW_MEAL.SIEVE",
+    "area_id": "RM.2",
+    "material": "raw_meal",
+    "name": "Sieve residue",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 40,
+    "samples_per_day": null,
+    "qcx_column": "RM2_Sieve",
+    "sort_order": 11,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "RM.2.RAW_MEAL.MGO",
+    "area_id": "RM.2",
+    "material": "raw_meal",
+    "name": "MgO",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 6,
+    "samples_per_day": null,
+    "qcx_column": "RM2_Mgo",
+    "sort_order": 12,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "RM.2.RAW_MEAL.SO3",
+    "area_id": "RM.2",
+    "material": "raw_meal",
+    "name": "SO3",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 10,
+    "samples_per_day": null,
+    "qcx_column": "RM2_SO3",
+    "sort_order": 13,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "RM.2.RAW_MEAL.CL",
+    "area_id": "RM.2",
+    "material": "raw_meal",
+    "name": "Cl",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 3,
+    "samples_per_day": null,
+    "qcx_column": "RM2_Cl",
+    "sort_order": 14,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.1.KILN_FEED.LSF",
+    "area_id": "K.1",
+    "material": "kiln_feed",
+    "name": "LSF",
+    "unit": "-",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 80,
+    "valid_max": 120,
+    "samples_per_day": null,
+    "qcx_column": "KF1_LSF",
+    "sort_order": 15,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.1.KILN_FEED.SO3",
+    "area_id": "K.1",
+    "material": "kiln_feed",
+    "name": "SO3",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 10,
+    "samples_per_day": null,
+    "qcx_column": "KF1_SO3",
+    "sort_order": 16,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.1.KILN_FEED.CL",
+    "area_id": "K.1",
+    "material": "kiln_feed",
+    "name": "Cl",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 3,
+    "samples_per_day": null,
+    "qcx_column": "KF1_CL",
+    "sort_order": 17,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.1.CLINKER.LSF",
+    "area_id": "K.1",
+    "material": "clinker",
+    "name": "LSF",
+    "unit": "-",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 80,
+    "valid_max": 120,
+    "samples_per_day": null,
+    "qcx_column": "CK1_LSF",
+    "sort_order": 18,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.1.CLINKER.SO3",
+    "area_id": "K.1",
+    "material": "clinker",
+    "name": "SO3",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 10,
+    "samples_per_day": null,
+    "qcx_column": "CK1_SO3",
+    "sort_order": 19,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.1.CLINKER.FL",
+    "area_id": "K.1",
+    "material": "clinker",
+    "name": "Free lime",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 6,
+    "samples_per_day": null,
+    "qcx_column": "CK1_FL",
+    "sort_order": 20,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.1.CLINKER.C3S",
+    "area_id": "K.1",
+    "material": "clinker",
+    "name": "C3S",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 30,
+    "valid_max": 80,
+    "samples_per_day": null,
+    "qcx_column": "CK1_C3S",
+    "sort_order": 21,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.1.CLINKER.C2S",
+    "area_id": "K.1",
+    "material": "clinker",
+    "name": "C2S",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 40,
+    "samples_per_day": null,
+    "qcx_column": "CK1_C2S",
+    "sort_order": 22,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.1.HOT_MEAL.SO3",
+    "area_id": "K.1",
+    "material": "hot_meal",
+    "name": "SO3",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 10,
+    "samples_per_day": null,
+    "qcx_column": "HM1_SO3",
+    "sort_order": 23,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.1.HOT_MEAL.CL",
+    "area_id": "K.1",
+    "material": "hot_meal",
+    "name": "Cl",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 3,
+    "samples_per_day": null,
+    "qcx_column": "HM1_CL",
+    "sort_order": 24,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.1.HOT_MEAL.VOLATILITY",
+    "area_id": "K.1",
+    "material": "hot_meal",
+    "name": "SO3 volatility",
+    "unit": "-",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 1,
+    "samples_per_day": null,
+    "qcx_column": "HM1_Volatility",
+    "sort_order": 25,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.2.KILN_FEED.LSF",
+    "area_id": "K.2",
+    "material": "kiln_feed",
+    "name": "LSF",
+    "unit": "-",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 80,
+    "valid_max": 120,
+    "samples_per_day": null,
+    "qcx_column": "KF2_LSF",
+    "sort_order": 26,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.2.KILN_FEED.SO3",
+    "area_id": "K.2",
+    "material": "kiln_feed",
+    "name": "SO3",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 10,
+    "samples_per_day": null,
+    "qcx_column": "KF2_SO3",
+    "sort_order": 27,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.2.KILN_FEED.CL",
+    "area_id": "K.2",
+    "material": "kiln_feed",
+    "name": "Cl",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 3,
+    "samples_per_day": null,
+    "qcx_column": "KF2_CL",
+    "sort_order": 28,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.2.CLINKER.LSF",
+    "area_id": "K.2",
+    "material": "clinker",
+    "name": "LSF",
+    "unit": "-",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 80,
+    "valid_max": 120,
+    "samples_per_day": null,
+    "qcx_column": "CK2_LSF",
+    "sort_order": 29,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.2.CLINKER.SO3",
+    "area_id": "K.2",
+    "material": "clinker",
+    "name": "SO3",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 10,
+    "samples_per_day": null,
+    "qcx_column": "CK2_SO3",
+    "sort_order": 30,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.2.CLINKER.FL",
+    "area_id": "K.2",
+    "material": "clinker",
+    "name": "Free lime",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 6,
+    "samples_per_day": null,
+    "qcx_column": "CK2_FL",
+    "sort_order": 31,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.2.CLINKER.C3S",
+    "area_id": "K.2",
+    "material": "clinker",
+    "name": "C3S",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 30,
+    "valid_max": 80,
+    "samples_per_day": null,
+    "qcx_column": "CK2_C3S",
+    "sort_order": 32,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.2.CLINKER.C2S",
+    "area_id": "K.2",
+    "material": "clinker",
+    "name": "C2S",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 40,
+    "samples_per_day": null,
+    "qcx_column": "CK2_C2S",
+    "sort_order": 33,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.2.HOT_MEAL.SO3",
+    "area_id": "K.2",
+    "material": "hot_meal",
+    "name": "SO3",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 10,
+    "samples_per_day": null,
+    "qcx_column": "HM2_SO3",
+    "sort_order": 34,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.2.HOT_MEAL.CL",
+    "area_id": "K.2",
+    "material": "hot_meal",
+    "name": "Cl",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 3,
+    "samples_per_day": null,
+    "qcx_column": "HM2_CL",
+    "sort_order": 35,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "K.2.HOT_MEAL.VOLATILITY",
+    "area_id": "K.2",
+    "material": "hot_meal",
+    "name": "SO3 volatility",
+    "unit": "-",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 1,
+    "samples_per_day": null,
+    "qcx_column": "HM2_Volatility",
+    "sort_order": 36,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "FM.1.COAL.SIEVE",
+    "area_id": "FM.1",
+    "material": "coal",
+    "name": "Sieve residue",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 40,
+    "samples_per_day": null,
+    "qcx_column": "COAL1_Sieve",
+    "sort_order": 37,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "FM.1.PETCOKE.SIEVE",
+    "area_id": "FM.1",
+    "material": "petcoke",
+    "name": "Sieve residue",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 40,
+    "samples_per_day": null,
+    "qcx_column": "PETCOKE1_Sieve",
+    "sort_order": 38,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "FM.2.COAL.SIEVE",
+    "area_id": "FM.2",
+    "material": "coal",
+    "name": "Sieve residue",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 40,
+    "samples_per_day": null,
+    "qcx_column": "COAL2_Sieve",
+    "sort_order": 39,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "FM.2.PETCOKE.SIEVE",
+    "area_id": "FM.2",
+    "material": "petcoke",
+    "name": "Sieve residue",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 40,
+    "samples_per_day": null,
+    "qcx_column": "PETCOKE2_Sieve",
+    "sort_order": 40,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "CM.1.CEMENT.SIEVE",
+    "area_id": "CM.1",
+    "material": "cement",
+    "name": "Sieve residue",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 40,
+    "samples_per_day": null,
+    "qcx_column": "CM1_Sieve",
+    "sort_order": 41,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "CM.1.CEMENT.SO3",
+    "area_id": "CM.1",
+    "material": "cement",
+    "name": "SO3",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 10,
+    "samples_per_day": null,
+    "qcx_column": "CM1_SO3",
+    "sort_order": 42,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "CM.1.CEMENT.BLAINE",
+    "area_id": "CM.1",
+    "material": "cement",
+    "name": "Blaine",
+    "unit": "cm²/g",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 2000,
+    "valid_max": 6000,
+    "samples_per_day": null,
+    "qcx_column": "CM1_Blaine",
+    "sort_order": 43,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "CM.2.CEMENT.SIEVE",
+    "area_id": "CM.2",
+    "material": "cement",
+    "name": "Sieve residue",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 40,
+    "samples_per_day": null,
+    "qcx_column": "CM2_Sieve",
+    "sort_order": 44,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "CM.2.CEMENT.SO3",
+    "area_id": "CM.2",
+    "material": "cement",
+    "name": "SO3",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 10,
+    "samples_per_day": null,
+    "qcx_column": "CM2_SO3",
+    "sort_order": 45,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "CM.2.CEMENT.BLAINE",
+    "area_id": "CM.2",
+    "material": "cement",
+    "name": "Blaine",
+    "unit": "cm²/g",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 2000,
+    "valid_max": 6000,
+    "samples_per_day": null,
+    "qcx_column": "CM2_Blaine",
+    "sort_order": 46,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "CM.3.CEMENT.SIEVE",
+    "area_id": "CM.3",
+    "material": "cement",
+    "name": "Sieve residue",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 40,
+    "samples_per_day": null,
+    "qcx_column": "CM3_Sieve",
+    "sort_order": 47,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "CM.3.CEMENT.SO3",
+    "area_id": "CM.3",
+    "material": "cement",
+    "name": "SO3",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 10,
+    "samples_per_day": null,
+    "qcx_column": "CM3_SO3",
+    "sort_order": 48,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "CM.3.CEMENT.BLAINE",
+    "area_id": "CM.3",
+    "material": "cement",
+    "name": "Blaine",
+    "unit": "cm²/g",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 2000,
+    "valid_max": 6000,
+    "samples_per_day": null,
+    "qcx_column": "CM3_Blaine",
+    "sort_order": 49,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "CM.4.CEMENT.SIEVE",
+    "area_id": "CM.4",
+    "material": "cement",
+    "name": "Sieve residue",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 40,
+    "samples_per_day": null,
+    "qcx_column": "CM4_Sieve",
+    "sort_order": 50,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "CM.4.CEMENT.SO3",
+    "area_id": "CM.4",
+    "material": "cement",
+    "name": "SO3",
+    "unit": "%",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 0,
+    "valid_max": 10,
+    "samples_per_day": null,
+    "qcx_column": "CM4_SO3",
+    "sort_order": 51,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   },
+   {
+    "param_id": "CM.4.CEMENT.BLAINE",
+    "area_id": "CM.4",
+    "material": "cement",
+    "name": "Blaine",
+    "unit": "cm²/g",
+    "spec_min": null,
+    "spec_max": null,
+    "target": null,
+    "valid_min": 2000,
+    "valid_max": 6000,
+    "samples_per_day": null,
+    "qcx_column": "CM4_Blaine",
+    "sort_order": 52,
+    "active": true,
+    "notes": "Specification limits to be entered by the quality department; valid range is a starting value to confirm"
+   }
+  ],
+  "checkRules": [
+   {
+    "rule_id": "DT-ORDER",
+    "section": "downtime",
+    "check_type": "order",
+    "name": "Restart before stop",
+    "description": "The restart time is before the stop time",
+    "applies_to": "all",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "block",
+    "owner_duty": "shift_entry",
+    "active": true
+   },
+   {
+    "rule_id": "DT-CLASS",
+    "section": "downtime",
+    "check_type": "missing",
+    "name": "No classification",
+    "description": "PRO, MEC, ELE, AUT, PL or CIR is missing",
+    "applies_to": "all",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "block",
+    "owner_duty": "shift_entry",
+    "active": true
+   },
+   {
+    "rule_id": "DT-CODE",
+    "section": "downtime",
+    "check_type": "missing",
+    "name": "Unknown equipment code",
+    "description": "The code is not in the equipment master of the area",
+    "applies_to": "all",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "warn",
+    "owner_duty": "reliability_validation",
+    "active": true
+   },
+   {
+    "rule_id": "DT-REASON",
+    "section": "downtime",
+    "check_type": "missing",
+    "name": "No reason",
+    "description": "The reason is blank or not in the reason list",
+    "applies_to": "all",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "warn",
+    "owner_duty": "reliability_validation",
+    "active": true
+   },
+   {
+    "rule_id": "DT-OVERLAP",
+    "section": "downtime",
+    "check_type": "order",
+    "name": "Overlapping stops",
+    "description": "Two stops of one area overlap; the hours are counted once",
+    "applies_to": "all",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "info",
+    "owner_duty": "reliability_validation",
+    "active": true
+   },
+   {
+    "rule_id": "DT-OPEN",
+    "section": "downtime",
+    "check_type": "change",
+    "name": "Long open stop",
+    "description": "A stop is still open after this many hours; the current shift confirms it is still stopped",
+    "applies_to": "all",
+    "threshold": 24,
+    "threshold_unit": "h",
+    "severity": "warn",
+    "owner_duty": "shift_entry",
+    "active": true
+   },
+   {
+    "rule_id": "DT-DUP",
+    "section": "downtime",
+    "check_type": "duplicate",
+    "name": "Same stop twice",
+    "description": "Same area, equipment and stop time entered twice",
+    "applies_to": "all",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "block",
+    "owner_duty": "shift_entry",
+    "active": true
+   },
+   {
+    "rule_id": "PR-MISSING",
+    "section": "production",
+    "check_type": "missing",
+    "name": "Value missing",
+    "description": "A required production value is missing for the day",
+    "applies_to": "all",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "warn",
+    "owner_duty": "production_data",
+    "active": true
+   },
+   {
+    "rule_id": "PR-NEG",
+    "section": "production",
+    "check_type": "range",
+    "name": "Negative value",
+    "description": "Production, running hours, power, fuel and water cannot be negative",
+    "applies_to": "all",
+    "threshold": 0,
+    "threshold_unit": "",
+    "severity": "block",
+    "owner_duty": "production_data",
+    "active": true
+   },
+   {
+    "rule_id": "PR-RANGE",
+    "section": "production",
+    "check_type": "range",
+    "name": "Outside the limits",
+    "description": "The value is outside the min / max of the metric (production_metrics)",
+    "applies_to": "all",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "warn",
+    "owner_duty": "production_data",
+    "active": true
+   },
+   {
+    "rule_id": "PR-RH24",
+    "section": "production",
+    "check_type": "range",
+    "name": "Running hours above the day",
+    "description": "Running hours of an area above 24 h in a day",
+    "applies_to": "all",
+    "threshold": 24,
+    "threshold_unit": "h",
+    "severity": "block",
+    "owner_duty": "production_data",
+    "active": true
+   },
+   {
+    "rule_id": "PR-NORH",
+    "section": "production",
+    "check_type": "reconcile",
+    "name": "Production without running",
+    "description": "Production above 0 while the running hours are 0, or the opposite",
+    "applies_to": "all",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "warn",
+    "owner_duty": "production_data",
+    "active": true
+   },
+   {
+    "rule_id": "PR-RATE",
+    "section": "production",
+    "check_type": "range",
+    "name": "Rate far from target",
+    "description": "Production rate differs from the target rate by more than this",
+    "applies_to": "all",
+    "threshold": 25,
+    "threshold_unit": "%",
+    "severity": "warn",
+    "owner_duty": "production_review",
+    "active": true
+   },
+   {
+    "rule_id": "PR-JUMP",
+    "section": "production",
+    "check_type": "change",
+    "name": "Sudden change",
+    "description": "The value changed by more than this against the day before",
+    "applies_to": "all",
+    "threshold": 50,
+    "threshold_unit": "%",
+    "severity": "info",
+    "owner_duty": "production_data",
+    "active": true
+   },
+   {
+    "rule_id": "PR-CORR",
+    "section": "production",
+    "check_type": "change",
+    "name": "Large correction",
+    "description": "A correction above this share of the raw value needs a reason and the production manager's approval",
+    "applies_to": "all",
+    "threshold": 5,
+    "threshold_unit": "%",
+    "severity": "warn",
+    "owner_duty": "production_review",
+    "active": true
+   },
+   {
+    "rule_id": "EN-SPC",
+    "section": "energy",
+    "check_type": "range",
+    "name": "SPC above the limit",
+    "description": "Specific power above the metric limit: flagged for review, never set to 0",
+    "applies_to": "all",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "warn",
+    "owner_duty": "production_data",
+    "active": true
+   },
+   {
+    "rule_id": "EN-NOPROD",
+    "section": "energy",
+    "check_type": "reconcile",
+    "name": "Power without production",
+    "description": "Process power used while production is 0 (standby losses)",
+    "applies_to": "all",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "info",
+    "owner_duty": "production_data",
+    "active": true
+   },
+   {
+    "rule_id": "EN-METER",
+    "section": "energy",
+    "check_type": "balance",
+    "name": "Meters do not add up",
+    "description": "Sum of the area meters differs from the transformer meters by more than this",
+    "applies_to": "all",
+    "threshold": 5,
+    "threshold_unit": "%",
+    "severity": "warn",
+    "owner_duty": "production_data",
+    "active": true
+   },
+   {
+    "rule_id": "FU-SHC",
+    "section": "fuel",
+    "check_type": "range",
+    "name": "SHC above the limit",
+    "description": "Specific heat above the limit: flagged, never set to 0",
+    "applies_to": "K.1,K.2",
+    "threshold": 1500,
+    "threshold_unit": "kcal/kg",
+    "severity": "warn",
+    "owner_duty": "production_data",
+    "active": true
+   },
+   {
+    "rule_id": "FU-CV",
+    "section": "fuel",
+    "check_type": "missing",
+    "name": "No calorific value",
+    "description": "A fuel was used on a day that has no calorific value",
+    "applies_to": "K.1,K.2",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "block",
+    "owner_duty": "production_data",
+    "active": true
+   },
+   {
+    "rule_id": "FU-TSR",
+    "section": "fuel",
+    "check_type": "range",
+    "name": "TSR outside 0-100 %",
+    "description": "Thermal substitution rate below 0 or above 100 %",
+    "applies_to": "K.1,K.2",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "block",
+    "owner_duty": "production_data",
+    "active": true
+   },
+   {
+    "rule_id": "WA-SWC",
+    "section": "water",
+    "check_type": "range",
+    "name": "SWC above the limit",
+    "description": "Specific water above the limit: flagged, never set to 0",
+    "applies_to": "all",
+    "threshold": 500,
+    "threshold_unit": "l/t",
+    "severity": "warn",
+    "owner_duty": "production_data",
+    "active": true
+   },
+   {
+    "rule_id": "ST-LEVEL",
+    "section": "stock",
+    "check_type": "range",
+    "name": "Level outside 0-100 %",
+    "description": "A silo or tank level below 0 or above 100 %",
+    "applies_to": "all",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "block",
+    "owner_duty": "production_data",
+    "active": true
+   },
+   {
+    "rule_id": "ST-JUMP",
+    "section": "stock",
+    "check_type": "change",
+    "name": "Level jump",
+    "description": "A level changed by more than this in a day without matching production or use",
+    "applies_to": "all",
+    "threshold": 30,
+    "threshold_unit": "points",
+    "severity": "warn",
+    "owner_duty": "production_data",
+    "active": true
+   },
+   {
+    "rule_id": "ST-BAL",
+    "section": "stock",
+    "check_type": "balance",
+    "name": "Stock does not balance",
+    "description": "Opening + in − out differs from closing stock by more than this",
+    "applies_to": "all",
+    "threshold": 5,
+    "threshold_unit": "%",
+    "severity": "warn",
+    "owner_duty": "production_review",
+    "active": true
+   },
+   {
+    "rule_id": "MA-CLK",
+    "section": "materials",
+    "check_type": "balance",
+    "name": "Clinker balance gap",
+    "description": "Clinker produced − used by the mills − change in stock, above this share of production",
+    "applies_to": "K.1,K.2,CM.1,CM.2,CM.3,CM.4",
+    "threshold": 3,
+    "threshold_unit": "%",
+    "severity": "warn",
+    "owner_duty": "production_review",
+    "active": true
+   },
+   {
+    "rule_id": "MA-MIX",
+    "section": "materials",
+    "check_type": "balance",
+    "name": "Mix does not add up",
+    "description": "Raw mix or cement recipe shares do not add up to 100 %",
+    "applies_to": "RM.1,RM.2,CM.1,CM.2,CM.3,CM.4",
+    "threshold": 0.5,
+    "threshold_unit": "%",
+    "severity": "block",
+    "owner_duty": "production_data",
+    "active": true
+   },
+   {
+    "rule_id": "MA-CF",
+    "section": "materials",
+    "check_type": "range",
+    "name": "Clinker factor out of range",
+    "description": "The clinker factor used for the day is outside this range (1.50 - 1.75)",
+    "applies_to": "K.1,K.2",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "warn",
+    "owner_duty": "production_review",
+    "active": true
+   },
+   {
+    "rule_id": "QU-VALID",
+    "section": "quality",
+    "check_type": "range",
+    "name": "Impossible result",
+    "description": "Result outside the valid range of the parameter: most likely a typing or analyser error",
+    "applies_to": "all",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "block",
+    "owner_duty": "quality_validation",
+    "active": true
+   },
+   {
+    "rule_id": "QU-SPEC",
+    "section": "quality",
+    "check_type": "spec",
+    "name": "Out of specification",
+    "description": "Result outside the specification limits; counted in the in-spec KPIs and shown in the daily meeting",
+    "applies_to": "all",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "warn",
+    "owner_duty": "quality_validation",
+    "active": true
+   },
+   {
+    "rule_id": "QU-COUNT",
+    "section": "quality",
+    "check_type": "count",
+    "name": "Too few samples",
+    "description": "Fewer results than samples_per_day while the area was running",
+    "applies_to": "all",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "warn",
+    "owner_duty": "quality_validation",
+    "active": true
+   },
+   {
+    "rule_id": "QU-STUCK",
+    "section": "quality",
+    "check_type": "change",
+    "name": "Same value repeated",
+    "description": "The same value this many times in a row: analyser or copy error",
+    "applies_to": "all",
+    "threshold": 4,
+    "threshold_unit": "results",
+    "severity": "info",
+    "owner_duty": "quality_validation",
+    "active": true
+   },
+   {
+    "rule_id": "QU-STOPPED",
+    "section": "quality",
+    "check_type": "reconcile",
+    "name": "Results while stopped",
+    "description": "Results recorded for an area that was stopped the whole day",
+    "applies_to": "all",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "info",
+    "owner_duty": "quality_validation",
+    "active": true
+   },
+   {
+    "rule_id": "XS-RH",
+    "section": "cross",
+    "check_type": "reconcile",
+    "name": "Running hours disagree",
+    "description": "DCS running hours differ from scheduled minus stoppage hours by more than this",
+    "applies_to": "all",
+    "threshold": 1,
+    "threshold_unit": "h/day",
+    "severity": "warn",
+    "owner_duty": "reliability_validation",
+    "active": true
+   },
+   {
+    "rule_id": "XS-STOPPROD",
+    "section": "cross",
+    "check_type": "reconcile",
+    "name": "Production during a stop",
+    "description": "Production recorded while the stoppage log shows the area stopped the whole day",
+    "applies_to": "all",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "warn",
+    "owner_duty": "production_review",
+    "active": true
+   },
+   {
+    "rule_id": "XS-LATE",
+    "section": "cross",
+    "check_type": "missing",
+    "name": "Report late",
+    "description": "A shift report, production value or lab result is past its deadline",
+    "applies_to": "all",
+    "threshold": null,
+    "threshold_unit": "",
+    "severity": "info",
+    "owner_duty": "daily_meeting",
+    "active": true
    }
   ]
  }

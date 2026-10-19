@@ -26,7 +26,24 @@ Shift leader enters ──► Production manager reviews ──► Reliability v
 | `validated` | System | Posts the stoppages to `events` (origin `shift`) |
 | `posted` | Reliability (reopen only) | Reopening voids the posted events and returns the report to `prod_approved`; the reason is required |
 
-One report = one **date × shift × area**. A stop that runs over a shift change stays one stoppage, entered by the shift in which it started; the next shift sees it as “still stopped” and enters only the restart time.
+One report = one **date × shift × area**. Shifts: **Day 08:00–20:00** and **Night 20:00–08:00**; the night shift belongs to the date it starts.
+
+## Long stoppages (across shifts)
+
+A stoppage is entered **once**, by the shift in which it started, with its stop time. If the equipment is still stopped when that shift ends, the stoppage stays **open** (no restart time):
+
+```
+Day 18 (08–20)        Night 18 (20–08)        Day 19 (08–20)
+stop 15:40 ──────────────── still stopped ──────────── restart 10:25
+entered here          confirms "still stopped"   enters the restart time
+(open)                (open)                     (closed)
+```
+
+* Every later shift report of the area lists the **open stoppages** at the top. The shift leader either enters the restart time or confirms “still stopped”. This is the only change allowed on a stoppage that belongs to an earlier report, and it is recorded (`closed_report_id`, `closed_by`, `closed_at`).
+* The report of the starting shift can be submitted and reviewed with the stoppage still open. The stoppage itself is posted to the downtime analysis only when it is **closed and the closing report is validated**, so the restart time also passes the production and reliability reviews.
+* Hours are split by shift and by day from the stop and restart times (the app already counts hours inside any period), so each shift's and each day's figures are right without entering continuation rows. This replaces today's practice of a new row with Freq = 0 on every shift or day.
+* While open, the daily meeting counts the stop up to the current time and shows it as **still stopped**.
+* An open stoppage older than 24 h without a confirmation raises check `DT-OPEN`.
 
 ## What every change keeps
 
@@ -48,7 +65,7 @@ Overdue reports appear in the bell and in the daily meeting view.
 
 Two separate things decide what a person can do:
 
-1. **Role** (as today): which tabs they see and whether they can edit them. Three roles are added: **Shift leader**, **Production manager**, **Reliability engineer**.
+1. **Role** (as today): which tabs they see and whether they can edit them. Four roles are added: **Shift leader**, **Production manager**, **Reliability engineer**, **Quality engineer**.
 2. **Responsibilities** (new, table `responsibilities`): which duty they hold **for which part of the plant**.
 
 | Duty | Meaning |
@@ -56,6 +73,8 @@ Two separate things decide what a person can do:
 | `shift_entry` | Enters shift reports for the scope |
 | `production_review` | Reviews and approves shift reports for the scope |
 | `reliability_validation` | Validates shift reports for the scope |
+| `production_data` | Enters and corrects production, power, fuel, water and stock values for the scope |
+| `quality_validation` | Enters and validates laboratory results and quality limits for the scope |
 | `targets` | Edits KPI targets for the scope |
 | `master_data` | Edits equipment, reasons and production metrics for the scope |
 | `daily_meeting` | Sees the daily meeting view and its alerts for the scope |
@@ -79,5 +98,4 @@ Scope is **plant**, a **line** (L.1, L.2) or one **area**. A responsibility can 
 
 ## What is open
 
-* Shift pattern and hours: seeded as two 12-hour shifts (07:00–19:00, 19:00–07:00) — **confirm**.
 * Whether the production values (production, running hours, power, fuel) are also entered on the shift report or only come from the DCS report (Stage 2, waiting for the DCS report).

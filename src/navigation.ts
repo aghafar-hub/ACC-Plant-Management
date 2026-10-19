@@ -87,6 +87,7 @@ export const ROLE_LABELS: Record<string, string> = {
   'ROLE-SHIFT': 'Shift leader',
   'ROLE-PROD': 'Production manager',
   'ROLE-REL': 'Reliability engineer',
+  'ROLE-QC': 'Quality engineer',
 };
 
 // The Settings page's subtabs. To add one (for example Validate), add a line here, a

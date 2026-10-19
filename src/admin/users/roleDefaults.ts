@@ -12,6 +12,7 @@ export const ROLE_DEFAULTS: Record<string, Access> = {
   // Schema v7 (plant system): the shift report roles. Their Shift reports and Daily meeting tabs come with Stage 1.
   'ROLE-SHIFT': { overview: V, pareto: V, repeats: V, reliability: V, reports: V, actions: V, events: V, upload: H, master: H, settings: H, users: H },
   'ROLE-PROD': { overview: V, pareto: V, repeats: V, reliability: V, reports: E, actions: E, events: V, upload: H, master: H, settings: H, users: H },
+  'ROLE-QC': { overview: V, pareto: V, repeats: V, reliability: V, reports: V, actions: V, events: V, upload: H, master: H, settings: H, users: H },
   'ROLE-REL': { overview: V, pareto: V, repeats: V, reliability: V, reports: V, actions: E, events: E, upload: E, master: E, settings: H, users: H },
 };
 export const ROLE_IDS = Object.keys(ROLE_DEFAULTS);

@@ -60,6 +60,8 @@ def build_rows(args):
     # schema v7 (plant system): shifts and the draft KPI definitions for the Stage 0 review
     rows["shifts"] = [dict(r) for r in SCHEMA.get("shiftSeeds", [])]
     rows["kpi_definitions"] = [dict(r) for r in SCHEMA.get("kpiDefinitionSeeds", [])]
+    rows["quality_parameters"] = [dict(r) for r in SCHEMA.get("qualityParameterSeeds", [])]
+    rows["check_rules"] = [dict(r) for r in SCHEMA.get("checkRuleSeeds", [])]
 
     area_ids = {a["area_id"] for a in rows["areas"]}
 
@@ -202,14 +204,15 @@ def build(args):
         ["notifications", "notifications, notification_state and notification_prefs are empty on purpose: the server fills them (alerts, updates, per-person state and preferences). The notif_* settings and app_url are seeded with their defaults."],
         ["Kept as entered", "events has three columns the app fills when someone presses 'Keep as entered' on the Validate page: accepted_flags (the data-check flags kept), accepted_by and accepted_at. They are blank until then; do not type into them. The reason is kept in event_edits (field accepted_flags)."],
         ["Saved views and targets", "notification_prefs also holds each person's saved_views (JSON text). settings holds availability_target_pct, target_mtbf_h and target_mttr_h (blank = no target)."],
-        ["Plant system (v7)", "Shift reports (shift_reports, shift_stoppages, shift_stoppage_edits, workflow_log), who does what (responsibilities), KPI definitions and targets (kpi_definitions, kpi_targets) and production data (production_metrics, production_values, production_corrections, dcs_import_batches). A shift report goes Draft > Submitted > Production approved > Validated > Posted; only posted stoppages become events (origin = shift). See docs/plant-system/."],
+        ["Plant system (v7)", "Shift reports (shift_reports, shift_stoppages, shift_stoppage_edits, workflow_log), who does what (responsibilities), KPI definitions and targets (kpi_definitions, kpi_targets) production data (production_metrics, production_values, production_corrections, dcs_import_batches), laboratory data (quality_parameters, quality_results) and the data checks of every section (check_rules, data_checks). A shift report goes Draft > Submitted > Production approved > Validated > Posted; only posted stoppages become events (origin = shift). See docs/plant-system/."],
         ["events: origin", "events gains origin (upload | shift | history), time_precision (exact | day) and shift_stop_id. Blank origin = uploaded as today; history rows imported from the NRS workbook only know the date (time_precision = day)."],
-        ["kpi_definitions", "Seeded as draft from the NRS workbook for the Stage 0 review; each one is approved by its owner before the app uses it."],
+        ["kpi_definitions", "The 24 KPIs reviewed on 2026-10-19 are approved; the quality, materials, stock and data KPIs added after it are drafts for the next review."],
+        ["check_rules", "A check never changes a value: it raises a row in data_checks that the duty named in owner_duty accepts, corrects or dismisses. Thresholds are starting values to confirm."],
         ["events", (f"{len(rows['events'])} events already loaded (see upload_batches). Add new months by uploading the monthly workbook in the app; rows already here are skipped, never duplicated." if rows["events"] else "Empty on purpose. Fill it by uploading the monthly downtime workbook in the app.")],
         ["", ""],
         ["Seeded rows", ""],
     ]
-    for name in ("lines", "areas", "classifications", "reasons", "equipment", "equipment_areas", "equipment_aliases", "roles", "tab_access", "settings", "shifts", "kpi_definitions"):
+    for name in ("lines", "areas", "classifications", "reasons", "equipment", "equipment_areas", "equipment_aliases", "roles", "tab_access", "settings", "shifts", "kpi_definitions", "quality_parameters", "check_rules"):
         lines.append([name, len(rows[name])])
     lines += [["", ""], ["Rows flagged needs_review", sum(1 for r in rows["equipment"] if r["needs_review"])],
               ["Codes with several areas", len({r["equipment_id"] for r in rows["equipment_areas"] if sum(1 for x in rows["equipment_areas"] if x["equipment_id"] == r["equipment_id"]) > 1})]]

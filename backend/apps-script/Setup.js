@@ -86,6 +86,9 @@ function seedDefaults() {
     seed(T.SHIFTS, function (r) { return r.shift_id; }, seeds.shifts || []);
     // schema v7: the draft KPI definitions for the Stage 0 review (an existing kpi id is never touched)
     seed(T.KPI_DEFINITIONS, function (r) { return r.kpi_id; }, seeds.kpiDefinitions || []);
+    // schema v7: laboratory parameters (from the QCX export columns) and the data-check rules of every section
+    seed(T.QUALITY_PARAMETERS, function (r) { return r.param_id; }, seeds.qualityParameters || []);
+    seed(T.CHECK_RULES, function (r) { return r.rule_id; }, seeds.checkRules || []);
     // 1.10.0: new defaults for settings nobody has changed since setup (keep me signed in 30 -> 14 days, the longest
     // wait after wrong passwords 15 -> 30 minutes); a value someone saved is left alone
     added.settings_updated = updateUntouchedSettings_({ session_hours_keep: ['720', '336'], lockout_minutes: ['15', '30'] });

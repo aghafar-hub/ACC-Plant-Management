@@ -45,6 +45,8 @@ export function buildSchema(src) {
       taskTemplates: src.taskTemplateSeeds || [],
       shifts: src.shiftSeeds || [],
       kpiDefinitions: src.kpiDefinitionSeeds || [],
+      qualityParameters: src.qualityParameterSeeds || [],
+      checkRules: src.checkRuleSeeds || [],
     },
   };
 }

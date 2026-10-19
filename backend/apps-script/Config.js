@@ -71,7 +71,8 @@ var T = {
   SHIFTS: 'shifts', SHIFT_REPORTS: 'shift_reports', SHIFT_STOPPAGES: 'shift_stoppages', SHIFT_STOPPAGE_EDITS: 'shift_stoppage_edits',
   WORKFLOW_LOG: 'workflow_log', RESPONSIBILITIES: 'responsibilities', KPI_DEFINITIONS: 'kpi_definitions', KPI_TARGETS: 'kpi_targets',
   PRODUCTION_METRICS: 'production_metrics', PRODUCTION_VALUES: 'production_values', PRODUCTION_CORRECTIONS: 'production_corrections',
-  DCS_IMPORT_BATCHES: 'dcs_import_batches'
+  DCS_IMPORT_BATCHES: 'dcs_import_batches', QUALITY_PARAMETERS: 'quality_parameters', QUALITY_RESULTS: 'quality_results',
+  CHECK_RULES: 'check_rules', DATA_CHECKS: 'data_checks'
 };
 
 // Script Property names.
