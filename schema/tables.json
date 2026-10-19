@@ -566,7 +566,8 @@
       "columns": [
         {"name": "resp_id", "type": "text", "required": true, "description": ""},
         {"name": "user_id", "type": "text", "required": true, "description": "References users.user_id"},
-        {"name": "duty", "type": "enum", "required": true, "enum": ["shift_entry", "production_review", "reliability_validation", "production_data", "quality_validation", "targets", "master_data", "daily_meeting"], "description": ""},
+        {"name": "duty", "type": "enum", "required": true, "enum": ["shift_entry", "production_review", "reliability_validation", "production_data", "quality_validation", "month_review", "month_signoff", "targets", "master_data", "daily_meeting"], "description": ""},
+        {"name": "section", "type": "enum", "required": false, "enum": ["downtime", "production", "quality", "plant"], "description": "For month_review and month_signoff: which section the person closes (downtime covers reliability; production covers energy, fuel, water, stocks and materials). Blank for other duties"},
         {"name": "scope_type", "type": "enum", "required": true, "enum": ["plant", "line", "area"], "description": ""},
         {"name": "scope_id", "type": "text", "required": false, "description": "line_id or area_id; blank for plant"},
         {"name": "is_backup", "type": "bool", "required": true, "description": "Covers when the main person is away"},
@@ -784,6 +785,28 @@
         {"name": "raised_at", "type": "timestamp", "required": false, "description": ""},
         {"name": "resolved_by", "type": "text", "required": false, "description": ""},
         {"name": "resolved_at", "type": "timestamp", "required": false, "description": ""}
+      ]
+    },
+    {
+      "name": "month_closings",
+      "description": "Month-end closing of each section (v7): the section engineer reviews, then the section manager signs off; a signed-off month is locked and any later change needs a reopen with a reason.",
+      "key": ["section", "year", "month"],
+      "columns": [
+        {"name": "section", "type": "enum", "required": true, "enum": ["downtime", "production", "quality", "plant"], "description": ""},
+        {"name": "year", "type": "int", "required": true, "description": ""},
+        {"name": "month", "type": "int", "required": true, "description": "1-12"},
+        {"name": "status", "type": "enum", "required": true, "enum": ["open", "reviewed", "signed_off", "reopened"], "description": "open = still changing; reviewed = engineer checked it; signed_off = manager approved, month locked; reopened = unlocked for a correction"},
+        {"name": "open_checks", "type": "int", "required": false, "description": "Data checks still open when reviewed"},
+        {"name": "reviewed_by", "type": "text", "required": false, "description": "Section engineer (duty month_review)"},
+        {"name": "reviewed_at", "type": "timestamp", "required": false, "description": ""},
+        {"name": "review_comment", "type": "text", "required": false, "description": ""},
+        {"name": "signed_off_by", "type": "text", "required": false, "description": "Section manager (duty month_signoff); must not be the reviewer"},
+        {"name": "signed_off_at", "type": "timestamp", "required": false, "description": ""},
+        {"name": "signoff_comment", "type": "text", "required": false, "description": ""},
+        {"name": "reopened_by", "type": "text", "required": false, "description": ""},
+        {"name": "reopened_at", "type": "timestamp", "required": false, "description": ""},
+        {"name": "reopen_reason", "type": "text", "required": false, "description": ""},
+        {"name": "updated_at", "type": "timestamp", "required": false, "description": ""}
       ]
     }
   ],

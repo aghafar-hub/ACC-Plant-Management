@@ -75,6 +75,8 @@ Two separate things decide what a person can do:
 | `reliability_validation` | Validates shift reports for the scope |
 | `production_data` | Enters and corrects production, power, fuel, water and stock values for the scope |
 | `quality_validation` | Enters and validates laboratory results and quality limits for the scope |
+| `month_review` | Section engineer: reviews the month of a section (downtime, production, quality) |
+| `month_signoff` | Section manager: signs off and locks the month of a section; plant manager for the plant report |
 | `targets` | Edits KPI targets for the scope |
 | `master_data` | Edits equipment, reasons and production metrics for the scope |
 | `daily_meeting` | Sees the daily meeting view and its alerts for the scope |

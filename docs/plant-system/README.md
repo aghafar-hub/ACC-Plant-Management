@@ -28,6 +28,10 @@ The app becomes the one place where data is entered once, reviewed, and reported
 
 Schema v7 and how to set it up without touching the live app: [03-database-v7.md](03-database-v7.md).
 
+## Open questions
+
+Questions waiting for an answer: [05-open-questions.md](05-open-questions.md).
+
 ## Rules
 
-Calculation rules: [01-kpi-definitions.md](01-kpi-definitions.md). Data checks and review duties for every section (downtime, production, energy, fuel, water, stocks, materials, quality): [04-rules-all-sections.md](04-rules-all-sections.md).
+Calculation rules: [01-kpi-definitions.md](01-kpi-definitions.md). Data checks, review duties and month-end closing for every section (downtime, production, energy, fuel, water, stocks, materials, quality): [04-rules-all-sections.md](04-rules-all-sections.md).

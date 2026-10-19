@@ -45,7 +45,8 @@ var SCHEMA = {
   "quality_parameters",
   "quality_results",
   "check_rules",
-  "data_checks"
+  "data_checks",
+  "month_closings"
  ],
  "tables": {
   "lines": {
@@ -2194,9 +2195,22 @@ var SCHEMA = {
       "reliability_validation",
       "production_data",
       "quality_validation",
+      "month_review",
+      "month_signoff",
       "targets",
       "master_data",
       "daily_meeting"
+     ]
+    },
+    {
+     "name": "section",
+     "type": "enum",
+     "required": false,
+     "enum": [
+      "downtime",
+      "production",
+      "quality",
+      "plant"
      ]
     },
     {
@@ -3151,6 +3165,103 @@ var SCHEMA = {
     },
     {
      "name": "resolved_at",
+     "type": "timestamp",
+     "required": false
+    }
+   ]
+  },
+  "month_closings": {
+   "description": "Month-end closing of each section (v7): the section engineer reviews, then the section manager signs off; a signed-off month is locked and any later change needs a reopen with a reason.",
+   "key": [
+    "section",
+    "year",
+    "month"
+   ],
+   "columns": [
+    {
+     "name": "section",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "downtime",
+      "production",
+      "quality",
+      "plant"
+     ]
+    },
+    {
+     "name": "year",
+     "type": "int",
+     "required": true
+    },
+    {
+     "name": "month",
+     "type": "int",
+     "required": true
+    },
+    {
+     "name": "status",
+     "type": "enum",
+     "required": true,
+     "enum": [
+      "open",
+      "reviewed",
+      "signed_off",
+      "reopened"
+     ]
+    },
+    {
+     "name": "open_checks",
+     "type": "int",
+     "required": false
+    },
+    {
+     "name": "reviewed_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "reviewed_at",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "review_comment",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "signed_off_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "signed_off_at",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "signoff_comment",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "reopened_by",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "reopened_at",
+     "type": "timestamp",
+     "required": false
+    },
+    {
+     "name": "reopen_reason",
+     "type": "text",
+     "required": false
+    },
+    {
+     "name": "updated_at",
      "type": "timestamp",
      "required": false
     }

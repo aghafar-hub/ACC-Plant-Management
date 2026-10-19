@@ -20,6 +20,25 @@ The first version of the rules covered downtime and reliability only. This page 
 | Quality | Laboratory / QCX import (`quality_validation`) | Quality engineer (`quality_validation`) | Quality manager (`quality_validation`, scope plant) |
 | Targets and limits | `targets` / `master_data` | — | Logged with who and when |
 
+## Month-end closing
+
+Each section has an **engineer** and a **manager** (duties `month_review` and `month_signoff` in `responsibilities`, with the section). Every day the engineer can review the section's data together with the manager. At month end the closing goes in two steps (table `month_closings`):
+
+| Step | Who | What |
+|---|---|---|
+| 1. Review | Section engineer | Checks the month: open data checks, late reports, figures against targets. Marks it **reviewed** with a comment. |
+| 2. Sign-off | Section manager (not the same person) | Approves. The month is **signed off** and locked. |
+| Reopen | Section manager | Unlocks a signed-off month for a correction. A reason is required, and the month must be reviewed and signed off again. |
+
+| Section | Engineer reviews | Manager signs off |
+|---|---|---|
+| Downtime and reliability | Reliability engineer | Reliability manager |
+| Production (incl. energy, fuel, water, stocks, materials) | Production / process engineer | Production manager |
+| Quality | Quality engineer | Quality manager |
+| Plant report | — | Plant manager, after the three sections are signed off |
+
+The monthly report shows which sections are signed off; a report built from a month that is not signed off is marked **provisional**.
+
 ## The checks, section by section
 
 Thresholds confirmed by the owner on 2026-10-19; each can be changed later in the app. A blank threshold means the limit comes from the metric or parameter itself (its min / max or specification).
@@ -156,4 +175,6 @@ Thresholds confirmed by the owner on 2026-10-19; each can be changed later in th
 
 1. Specification limits and aims for each quality parameter: entered later in the app (Settings › Quality limits, to be built with Stage 2) by the quality department.
 2. Whether QCX can export each sample with its time, or only daily averages.
-3. Who signs off the month for each section (proposed: production manager for production, quality manager for quality, reliability for downtime).
+3. Names of the engineer and manager of each section (entered on the Users page as responsibilities).
+
+The QCX questions are in [05-open-questions.md](05-open-questions.md).
