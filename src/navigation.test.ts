@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { TAB_IDS } from './api/types';
 import { ICON_NAMES } from './icons';
-import { BOTTOM_BAR_ORDER, bottomBarPages, pageById, pageForPath, pagesInSection, PAGES, SECTIONS, type PageId } from './navigation';
+import { BOTTOM_BAR_ORDER, bottomBarPages, landingPath, pageById, pageForPath, pagesInSection, PAGES, SECTIONS, type PageId } from './navigation';
 
 const only = (ids: PageId[]) => PAGES.filter((p) => ids.includes(p.id));
 const ids = (ps: { id: string }[]) => ps.map((p) => p.id);
@@ -31,9 +31,12 @@ describe('navigation sections', () => {
     for (const tab of TAB_IDS) expect(() => pageById(tab)).not.toThrow();
     expect(pageById('reports').label).toBe('Reports');
   });
-  it('the phone bar starts with Shift reports (plant system), then Dashboard, Pareto, Actions', () => {
-    expect(ids(bottomBarPages(PAGES))).toEqual(['shift', 'overview', 'pareto', 'actions']);
-    expect(ids(bottomBarPages(PAGES.filter((p) => p.id !== 'shift')))).toEqual(['overview', 'pareto', 'actions', 'events']);
+  it('the phone bar is Dashboard, Pareto, Actions, Events; the shift roles get Shift reports first (plant system)', () => {
+    expect(ids(bottomBarPages(PAGES))).toEqual(['overview', 'pareto', 'actions', 'events']);
+    expect(ids(bottomBarPages(PAGES, 'ROLE-SHIFT'))).toEqual(['shift', 'overview', 'pareto', 'actions']);
+    expect(landingPath(PAGES, 'ROLE-ADMIN')).toBe('/dashboard');
+    expect(landingPath(PAGES, 'ROLE-PROD')).toBe('/shift');
+    expect(landingPath(only(['daily']), 'ROLE-PROD')).toBe('/daily');
   });
   it('takes the next visible page when one of the four is hidden', () => {
     expect(ids(bottomBarPages(only(['overview', 'events', 'reliability', 'repeats', 'upload'])))).toEqual(['overview', 'events', 'reliability', 'repeats']);

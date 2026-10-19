@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { tapHaptic } from '../haptics';
 import { useVisiblePages } from '../hooks/useVisiblePages';
+import { useAuth } from '../auth/AuthContext';
 import { t } from '../i18n/t';
 import { Icon } from '../icons';
 import { bottomBarPages, isSettingsPath, pageShort } from '../navigation';
@@ -18,7 +19,8 @@ function ActionsCount() {
 export default function BottomNav({ onOpenMore, moreOpen }: { onOpenMore: () => void; moreOpen: boolean }) {
   const pages = useVisiblePages();
   const location = useLocation();
-  const slots = bottomBarPages(pages);
+  const { user } = useAuth();
+  const slots = bottomBarPages(pages, user?.role_id);
   // the gear in the header owns /settings, so no bottom-bar item is lit there
   const onSlot = slots.some((p) => location.pathname.startsWith(p.path)) || isSettingsPath(location.pathname);
   return (

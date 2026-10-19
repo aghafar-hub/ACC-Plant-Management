@@ -16,7 +16,7 @@ import { ENV_LABEL } from './config';
 import { useIsMobile } from './hooks/useIsMobile';
 import { useVisiblePages } from './hooks/useVisiblePages';
 import { useRail } from './hooks/useRail';
-import { pageForPath } from './navigation';
+import { landingPath, pageForPath } from './navigation';
 import { t } from './i18n/t';
 import MoreSheet, { OPEN_MORE_EVENT } from './mobile/MoreSheet';
 import ScrollKeeper from './mobile/ScrollKeeper';
@@ -149,8 +149,10 @@ function OldOverview() {
 // "/" goes to the first page this person may open.
 function Home() {
   const pages = useVisiblePages();
-  if (pages.length === 0) return <NoPages />;
-  return <Navigate to={pages[0].path} replace />;
+  const { user } = useAuth();
+  const to = landingPath(pages, user?.role_id);
+  if (!to) return <NoPages />;
+  return <Navigate to={to} replace />;
 }
 
 function NoPages() {

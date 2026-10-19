@@ -36,8 +36,6 @@ export interface PageDef {
 }
 
 export const PAGES: PageDef[] = [
-  { id: 'shift', access: 'shift', path: '/shift', label: 'Shift reports', tab: 'Shift reports', short: 'Shift', icon: 'clock', group: 'operate' },
-  { id: 'daily', access: 'daily', path: '/daily', label: 'Daily meeting', tab: 'Daily meeting', short: 'Daily', icon: 'calendar', group: 'operate' },
   // The Dashboard keeps the id (and access tab) `overview`; its address is /dashboard (/overview redirects there).
   { id: 'overview', access: 'overview', path: '/dashboard', label: 'Dashboard', tab: 'Dashboard', short: 'Dashboard', icon: 'dashboard', group: 'analyze' },
   { id: 'pareto', access: 'pareto', path: '/pareto', label: 'Causes', tab: 'Causes', short: 'Causes', icon: 'limits', group: 'analyze' },
@@ -49,6 +47,10 @@ export const PAGES: PageDef[] = [
   { id: 'validate', access: 'events', path: '/validate', label: 'Validate', tab: 'Validate', short: 'Validate', icon: 'compliance', group: 'data' },
   { id: 'upload', access: 'upload', path: '/upload', label: 'Upload', tab: 'Upload', short: 'Upload', icon: 'upload', group: 'data' },
   { id: 'master', access: 'master', path: '/master', label: 'Master Data', tab: 'Master Data', short: 'Master data', icon: 'database', group: 'setup' },
+  // plant system (backend 2.1.0): last in the list, so the start page and the phone bar stay as they were for everyone
+  // but the shift roles (see landingPath and bottomBarPages); the rail shows them first, in their Operate section.
+  { id: 'shift', access: 'shift', path: '/shift', label: 'Shift reports', tab: 'Shift reports', short: 'Shift', icon: 'clock', group: 'operate' },
+  { id: 'daily', access: 'daily', path: '/daily', label: 'Daily meeting', tab: 'Daily meeting', short: 'Daily', icon: 'calendar', group: 'operate' },
 ];
 
 // Settings and Users are not in the main navigation: they are reached from the
@@ -75,11 +77,20 @@ export const pageTab = (p: PageDef): string => t(p.tab);
 export const pageShort = (p: PageDef): string => t(p.short);
 
 /** The first four of these that the person may see go on the phone bottom bar, left to right; More is the fifth slot (mobile-actions.png). */
-export const BOTTOM_BAR_ORDER: PageId[] = ['shift', 'overview', 'pareto', 'actions', 'events', 'daily', 'reliability', 'repeats', 'validate', 'upload'];
+export const BOTTOM_BAR_ORDER: PageId[] = ['overview', 'pareto', 'actions', 'events', 'reliability', 'repeats', 'validate', 'upload', 'shift', 'daily'];
+/** The roles whose work starts on Shift reports: their start page and the first slot of their phone bar. */
+export const SHIFT_FIRST_ROLES = ['ROLE-SHIFT', 'ROLE-PROD', 'ROLE-REL'];
 export const BOTTOM_BAR_SLOTS = 4;
 /** The pages on the phone bottom bar (before More), given the pages the person may see. */
-export const bottomBarPages = (visible: PageDef[]): PageDef[] =>
-  BOTTOM_BAR_ORDER.map((id) => visible.find((p) => p.id === id)).filter((p): p is PageDef => !!p).slice(0, BOTTOM_BAR_SLOTS);
+export const bottomBarPages = (visible: PageDef[], roleId = ''): PageDef[] => {
+  const order = SHIFT_FIRST_ROLES.includes(roleId) ? ['shift' as PageId, ...BOTTOM_BAR_ORDER.filter((id) => id !== 'shift')] : BOTTOM_BAR_ORDER;
+  return order.map((id) => visible.find((p) => p.id === id)).filter((p): p is PageDef => !!p).slice(0, BOTTOM_BAR_SLOTS);
+};
+/** Where '/' leads: Shift reports for the shift roles, otherwise the first page the person may see. */
+export const landingPath = (visible: PageDef[], roleId = ''): string | null => {
+  if (SHIFT_FIRST_ROLES.includes(roleId) && visible.some((p) => p.id === 'shift')) return '/shift';
+  return visible[0]?.path ?? null;
+};
 /** The visible pages of one section, in navigation order. */
 export const pagesInSection = (visible: PageDef[], section: SectionId): PageDef[] => visible.filter((p) => p.group === section);
 
