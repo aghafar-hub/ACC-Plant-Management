@@ -1,6 +1,6 @@
 # Plant system — from downtime app to the plant's single source of truth
 
-Branch: `claude/plant-system`. The live app (`main`, `live`, `test-site`) is not changed by this work.
+Repository `ACC-Plant-Management`, branch `main` (moved from branch `claude/plant-system` of ACC-DownTime-Analysis on 2026-10-20, full history kept). The live downtime app stays in ACC-DownTime-Analysis and is not changed by this work. A push to `main` publishes the app (.github/workflows/deploy.yml, variable `PLANT_API_URL`).
 
 ## Where we are going
 

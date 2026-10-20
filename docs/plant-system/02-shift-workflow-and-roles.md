@@ -1,6 +1,6 @@
 # Stage 1 — Shift reports, review chain and responsibilities
 
-**Status (backend 2.1.0, branch `claude/plant-system`):** built. Settings › Users › Responsibilities and "Who does what" (2.0.0);
+**Status (backend 2.1.0):** built. Settings › Users › Responsibilities and "Who does what" (2.0.0);
 Shift reports (My shift · Review · All reports) and Daily meeting (2.1.0). What was decided while building is listed at the end.
 
 ## Goal

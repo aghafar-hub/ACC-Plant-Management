@@ -39,7 +39,7 @@ Also added: 4 roles (Shift leader, Production manager, Reliability engineer, Qua
 The new work runs on its own copy of the database and its own Apps Script project, so the live app keeps working whatever happens on the new branch.
 
 1. **Copy the live database.** In Google Drive, right-click the live database spreadsheet › *Make a copy*. Name it e.g. `ACC Plant System Database (test)`. The copy has every event, user, action and setting as they are today.
-2. **Make a second Apps Script project.** Open the copy › *Extensions › Apps Script*, or create a stand-alone project. Paste `deploy/plant-apps-script/Code.gs` and `deploy/plant-apps-script/appsscript.json` from branch `claude/plant-system` (see the README in that folder).
+2. **Make a second Apps Script project.** Open the copy › *Extensions › Apps Script*, or create a stand-alone project. Paste `deploy/plant-apps-script/Code.gs` and `deploy/plant-apps-script/appsscript.json` from this repository (see the README in that folder).
 3. **Script properties.** Set `SPREADSHEET_ID` to the id of the **copy** (only needed for a stand-alone project), and new values for `SESSION_SIGNING_SECRET` and `PASSWORD_PEPPER`. A new pepper means the passwords in the copy no longer match; reset them from the copy, or reuse the live pepper if you want the same passwords on the test copy.
 4. **Run `ensureSchema`, then `seedDefaults`.** They add the 17 tables, the 3 event columns, the roles, settings, shifts, KPI definitions, quality parameters and check rules. They never change or remove existing rows.
 5. **Deploy as a web app** and keep its URL private; the test site of the plant-system branch will point to it.
