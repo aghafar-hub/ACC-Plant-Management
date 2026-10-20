@@ -81,7 +81,7 @@ export default function TopBar() {
           <div className="shell-topbar-crumb" data-testid="breadcrumb">
             {onInbox && (
               <>
-                <span className="shell-topbar-page" data-testid="breadcrumb-section">{sectionLabel('act')}</span>
+                <span className="shell-topbar-page" data-testid="breadcrumb-section">{sectionLabel('downtime')}</span>
                 <span className="shell-topbar-sep" aria-hidden="true">›</span>
               </>
             )}

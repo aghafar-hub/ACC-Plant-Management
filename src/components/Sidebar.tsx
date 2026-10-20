@@ -4,7 +4,7 @@ import { Icon } from '../icons';
 import { useRail } from '../hooks/useRail';
 import { useVisiblePages } from '../hooks/useVisiblePages';
 import { t } from '../i18n/t';
-import { pageForPath, pageLabel, pagesInSection, SECTIONS, sectionLabel } from '../navigation';
+import { ONE_ITEM_SECTIONS, pageForPath, pageLabel, pagesInSection, SECTIONS, sectionLabel } from '../navigation';
 import { ActionsBadge } from '../actions/ActionsContext';
 import ValidateBadge from '../validate/NavBadge';
 import './Sidebar.css';
@@ -39,10 +39,10 @@ export default function Sidebar() {
           {SECTIONS.map((sec) => {
             const items = pagesInSection(pages, sec.id);
             if (items.length === 0) return null;
-            // Data (Event Explorer, Validate, Upload) is ONE rail item; its pages are the tabs under the top bar
-            const one = sec.id === 'data';
+            // Downtime analysis is ONE rail item; its pages are the tabs under the top bar
+            const one = ONE_ITEM_SECTIONS[sec.id];
             const first = items[0]!;
-            const inData = activePage?.group === 'data';
+            const inSection = activePage?.group === sec.id;
             return (
               <section key={sec.id} className="sidebar-section" aria-labelledby={`sidebar-sec-${sec.id}`} data-section={sec.id}>
                 <h2 className="sidebar-section-title" id={`sidebar-sec-${sec.id}`} data-testid={`rail-section-${sec.id}`}>{sectionLabel(sec.id)}</h2>
@@ -50,11 +50,12 @@ export default function Sidebar() {
                   {one ? (
                     <li>
                       <NavLink
-                        to={first.path} className={inData ? 'sidebar-link sidebar-link--active' : 'sidebar-link'} aria-current={inData ? 'page' : undefined}
-                        title={pinned ? undefined : sectionLabel('data')} data-testid="rail-link-data"
+                        to={first.path} className={inSection ? 'sidebar-link sidebar-link--active' : 'sidebar-link'} aria-current={inSection ? 'page' : undefined}
+                        title={pinned ? undefined : sectionLabel(sec.id)} data-testid={`rail-link-${sec.id}`}
                       >
-                        <span className="sidebar-link-icon"><Icon name="list" size={18} /></span>
-                        <span className="sidebar-link-label">{t('Events & data')}</span>
+                        <span className="sidebar-link-icon"><Icon name={one} size={18} /></span>
+                        <span className="sidebar-link-label">{sectionLabel(sec.id)}</span>
+                        {items.some((p) => p.id === 'actions') && <ActionsBadge testid="actions-badge-rail" />}
                         {items.some((p) => p.id === 'validate') && <ValidateBadge testid="validate-badge-rail" />}
                       </NavLink>
                     </li>

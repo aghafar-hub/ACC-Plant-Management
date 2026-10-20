@@ -44,10 +44,11 @@ test.describe('validate (desktop)', () => {
   for (const [role, fixes] of [['viewer', false], ['manager', false], ['engineer', true], ['admin', true]] as [Role, boolean][]) {
     test(`${role}: sees the Validate tab and ${fixes ? 'can fix records' : 'reads only'}`, async ({ page }) => {
       await signInAndWait(page, role);
-      // Validate lives in the Data section: ONE rail item (with the count) opens Event Explorer; Validate is its tab
-      const railLink = page.getByTestId('rail-link-data');
+      // Validate is a tab of Downtime analysis: ONE rail item (with the count) opens the Dashboard; Validate is its tab
+      const railLink = page.getByTestId('rail-link-downtime');
       await expect(railLink).toBeVisible();
       await railLink.click();
+      await page.getByTestId('page-tabs').locator('[data-page="events"]').click();
       await expect(page.getByTestId('page-events')).toBeVisible();
       await expect(railLink).toHaveClass(/sidebar-link--active/);
       const tabs = page.getByRole('navigation', { name: 'Pages' });
@@ -469,7 +470,7 @@ test.describe('validate (desktop)', () => {
     await expect(page.getByTestId('page-validate')).toBeVisible();
     await expect(page.getByTestId('v-count-blocked')).toBeVisible({ timeout: 20000 });
     await expect(rows(page).first()).toBeVisible();
-    await expect(page.getByTestId('rail-link-data')).toHaveClass(/sidebar-link--active/);
+    await expect(page.getByTestId('rail-link-downtime')).toHaveClass(/sidebar-link--active/);
     // beside the icon rail the Data page tabs show, Validate lit
     await expect(page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: /^Validate/ })).toHaveClass(/module-tab--active/);
     await expect(page.getByTestId('validate-badge-tab')).toBeVisible();
@@ -758,7 +759,7 @@ for (const width of [360, 390]) {
       await page.getByTestId('bottom-more').click();
       await expect(page.getByTestId('more-tile-validate')).toContainText('Validate');
       await expect(page.getByTestId('validate-badge-more')).toBeVisible();
-      await expect(page.getByTestId('more-section-data')).toHaveText('Data');
+      await expect(page.getByTestId('more-section-downtime')).toHaveText('Downtime analysis');
       await page.keyboard.press('Escape');
       await page.goBack().catch(() => undefined);
       await page.goto('/#/validate');

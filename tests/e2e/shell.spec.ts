@@ -3,17 +3,16 @@ import { closePanel, noSidewaysScroll, openType, PASSWORD, pickPeriod, signIn, s
 
 // Runs against `vite preview` of a production build in mock mode (made-up data).
 
-const ANALYZE = ['Dashboard', 'Causes', 'Repeated failures', 'Reliability'];
-const ANALYZE_RAIL = ['Dashboard', 'Causes', 'Repeated failures', 'Reliability'];
+const ANALYZE = ['Dashboard', 'Pareto', 'Repeated failures', 'Reliability', 'Reports', 'Actions', 'Events', 'Validate', 'Upload'];
 // the left rail: every page the role may open, grouped under Analyze / Data / Setup; Data is ONE item (its pages are
 // the tabs under the top bar) and Notifications is reached from the bell
-const DATA_RAIL = ['Events & data'];
+// plant system: Operate (Shift reports for Admin / Manager / Engineer, Daily meeting for everyone), Downtime analysis
+// (ONE rail item; its pages are the tabs under the top bar), Setup
 const RAIL: Record<Role, Record<string, string[]>> = {
-  // plant system (backend 2.1.0): Operate = Shift reports (Admin Edit, Manager / Engineer View) and Daily meeting (everyone)
-  admin: { Operate: ['Shift reports', 'Daily meeting'], Analyze: ANALYZE_RAIL, Reports: ['Reports'], Act: ['Actions'], Data: DATA_RAIL, Setup: ['Master Data'] },
-  manager: { Operate: ['Shift reports', 'Daily meeting'], Analyze: ANALYZE_RAIL, Reports: ['Reports'], Act: ['Actions'], Data: DATA_RAIL, Setup: ['Master Data'] },
-  engineer: { Operate: ['Shift reports', 'Daily meeting'], Analyze: ANALYZE_RAIL, Reports: ['Reports'], Act: ['Actions'], Data: DATA_RAIL, Setup: ['Master Data'] },
-  viewer: { Operate: ['Daily meeting'], Analyze: ANALYZE_RAIL, Reports: ['Reports'], Act: ['Actions'], Data: DATA_RAIL },
+  admin: { Operate: ['Shift reports', 'Daily meeting'], 'Downtime analysis': ['Downtime analysis'], Setup: ['Master Data'] },
+  manager: { Operate: ['Shift reports', 'Daily meeting'], 'Downtime analysis': ['Downtime analysis'], Setup: ['Master Data'] },
+  engineer: { Operate: ['Shift reports', 'Daily meeting'], 'Downtime analysis': ['Downtime analysis'], Setup: ['Master Data'] },
+  viewer: { Operate: ['Daily meeting'], 'Downtime analysis': ['Downtime analysis'] },
 };
 
 test.describe('desktop', () => {
@@ -47,7 +46,7 @@ test.describe('desktop', () => {
     test(`${role}: sees exactly the pages the role allows, under the right sections`, async ({ page }) => {
       await signInAndWait(page, role);
       await expect(page.getByTestId('user-name')).toContainText(`Demo ${role[0].toUpperCase()}${role.slice(1)}`);
-      await expect(page.getByTestId('breadcrumb')).toHaveText('Analyze›Dashboard');
+      await expect(page.getByTestId('breadcrumb')).toHaveText('Downtime analysis›Dashboard');
       await expect(page.getByTestId('topbar-title')).toHaveText('Dashboard');
       await expect(page.getByTestId('online-dot')).toBeVisible();
       // the left rail: section headings in order, each with its pages; empty sections are gone
@@ -56,7 +55,8 @@ test.describe('desktop', () => {
       const headings = await rail.locator('.sidebar-section-title').evaluateAll((els) => els.map((el) => (el.textContent ?? '').trim()));
       expect(headings).toEqual(Object.keys(want));
       for (const [section, labels] of Object.entries(want)) {
-        const names = await rail.locator(`[data-section="${section.toLowerCase()}"] a`).evaluateAll((els) => els.map((el) => (el.querySelector('.sidebar-link-label')?.textContent ?? '').trim()));
+        const sec = section === 'Downtime analysis' ? 'downtime' : section.toLowerCase();
+        const names = await rail.locator(`[data-section="${sec}"] a`).evaluateAll((els) => els.map((el) => (el.querySelector('.sidebar-link-label')?.textContent ?? '').trim()));
         expect(names, section).toEqual(labels);
       }
       if (!want.Setup) await expect(rail.locator('[data-section="setup"]')).toHaveCount(0);
@@ -71,16 +71,15 @@ test.describe('desktop', () => {
     expect(await tabNames()).toEqual(ANALYZE);
     await page.goto('/#/events');
     await expect(page.getByTestId('page-events')).toBeVisible();
-    expect(await tabNames()).toEqual(['Events', 'Validate', 'Upload']);
-    await expect(page.getByTestId('breadcrumb')).toHaveText('Data›Events');
+    expect(await tabNames()).toEqual(ANALYZE);
+    await expect(page.getByTestId('breadcrumb')).toHaveText('Downtime analysis›Events');
     await page.goto('/#/master');
     await expect(page.getByTestId('page-master')).toBeVisible();
     await expect(page.getByTestId('page-tabs')).toHaveCount(0);
     await expect(page.getByRole('navigation', { name: 'Pages' })).toHaveCount(0);
     await expect(page.getByTestId('breadcrumb')).toHaveText('Setup›Master Data');
-    // a page named like its section is not said twice ('Reports › Reports')
     await page.goto('/#/reports');
-    await expect(page.getByTestId('breadcrumb')).toHaveText('Reports');
+    await expect(page.getByTestId('breadcrumb')).toHaveText('Downtime analysis›Reports');
     // Settings sits behind the gear: no section, no tabs
     await page.getByTestId('settings-btn').click();
     await expect(page.getByTestId('page-tabs')).toHaveCount(0);
@@ -88,18 +87,18 @@ test.describe('desktop', () => {
 
   test('the rail shows section headings when open and a thin divider when narrow', async ({ page }) => {
     await signInAndWait(page, 'admin');
-    const title = page.getByTestId('rail-section-data');
+    const title = page.getByTestId('rail-section-downtime');
     // the icon rail: headings show while it is open (hover), a divider when it closes by itself
     await page.getByTestId('rail-panel').hover();
     await expect(title).toBeVisible();
     await page.mouse.move(800, 500);
     await expect(title).toBeHidden();
-    const border = await page.locator('[data-section="data"]').evaluate((el) => getComputedStyle(el).borderTopWidth);
+    const border = await page.locator('[data-section="downtime"]').evaluate((el) => getComputedStyle(el).borderTopWidth);
     expect(border).toBe('1px');
     await page.getByTestId('rail-panel').hover();
     await expect(title).toBeVisible();
-    await expect(page.getByTestId('rail-section-analyze')).toHaveText('Analyze');
-    await expect(title).toHaveText('Data');
+    await expect(page.getByTestId('rail-section-operate')).toHaveText('Operate');
+    await expect(title).toHaveText('Downtime analysis');
     await expect(page.getByTestId('rail-section-setup')).toHaveText('Setup');
   });
 
@@ -118,7 +117,7 @@ test.describe('desktop', () => {
     const nav = page.getByRole('navigation', { name: 'Primary' });
     const pages: [string, string][] = [
       ['Dashboard', 'page-overview'],
-      ['Causes', 'page-pareto'],
+      ['Pareto', 'page-pareto'],
       ['Repeated failures', 'page-repeats'],
       ['Reliability', 'page-reliability'],
       ['Events', 'page-events'],
@@ -126,11 +125,10 @@ test.describe('desktop', () => {
       ['Upload', 'page-upload'],
       ['Master Data', 'page-master'],
     ];
-    const dataPages = ['Events', 'Validate', 'Upload'];
     for (const [label, id] of pages) {
-      if (dataPages.includes(label)) {
-        // one rail item for Data; its pages are the tabs under the top bar
-        await page.getByTestId('rail-link-data').click();
+      if (label !== 'Master Data') {
+        // one rail item for Downtime analysis; its pages are the tabs under the top bar
+        await page.getByTestId('rail-link-downtime').click();
         await page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: new RegExp(`^${label}`) }).click();
       } else await nav.getByRole('link', { name: label }).first().click();
       await expect(page.getByTestId(id)).toBeVisible({ timeout: 20000 });
@@ -150,7 +148,7 @@ test.describe('desktop', () => {
 
   test('Event Explorer: list, paging, filters, year switch', async ({ page }) => {
     await signInAndWait(page, 'viewer');
-    await page.getByTestId('rail-link-data').click();
+    await page.goto('/#/events');
     await expect(page.getByTestId('event-row')).toHaveCount(50);
     await page.getByTestId('show-more').click();
     await expect(page.getByTestId('event-row')).toHaveCount(100);
@@ -343,11 +341,11 @@ test.describe('desktop', () => {
     await panel.hover();
     await expect.poll(async () => (await panel.boundingBox())!.width).toBe(232);
     await expect(page.locator('.sidebar-logo-full')).toBeVisible();
-    await expect(page.getByTestId('rail-link-overview')).toContainText('Dashboard');
+    await expect(page.getByTestId('rail-link-downtime')).toContainText('Downtime analysis');
     expect(await mainLeft()).toBe(68);
     // choosing a page with the mouse closes it at once, even with the pointer still on the rail
-    await page.getByTestId('rail-link-pareto').click();
-    await expect(page.getByTestId('page-pareto')).toBeVisible();
+    await page.getByTestId('rail-link-daily').click();
+    await expect(page.getByTestId('page-daily')).toBeVisible();
     await expect.poll(async () => (await panel.boundingBox())!.width).toBe(68);
     // it opens again once the pointer has left and comes back
     await page.mouse.move(900, 500);
@@ -369,15 +367,15 @@ test.describe('desktop', () => {
     const mainLeft = async () => (await page.locator('#main').boundingBox())!.x;
     expect(await mainLeft()).toBe(68);
     // keyboard: tabbing onto a link opens the labels
-    await page.getByTestId('rail-link-overview').focus();
+    await page.getByTestId('rail-link-daily').focus();
     await page.keyboard.press('Tab');
-    await expect(page.getByTestId('rail-link-pareto')).toBeFocused();
+    await expect(page.getByTestId('rail-link-downtime')).toBeFocused();
     await expect.poll(async () => (await panel.boundingBox())!.width).toBe(232);
-    await expect(page.getByTestId('rail-link-pareto').locator('.sidebar-link-label')).toBeVisible();
+    await expect(page.getByTestId('rail-link-downtime').locator('.sidebar-link-label')).toBeVisible();
     expect(await mainLeft()).toBe(68);
-    await page.getByTestId('rail-link-pareto').blur();
+    await page.getByTestId('rail-link-downtime').blur();
     // hover: light text on a lighter navy, never on a light grey
-    const link = page.getByTestId('rail-link-reliability');
+    const link = page.getByTestId('rail-link-daily');
     await link.hover();
     await expect.poll(async () => (await panel.boundingBox())!.width).toBe(232);
     // the hover tint is a see-through light over the navy, and the text stays the light rail ink
@@ -412,10 +410,10 @@ test.describe('phone', () => {
   test('bottom bar, page chips and the More sheet follow the role', async ({ page }) => {
     await signInAndWait(page, 'viewer');
     await expect(page.getByTestId('bottom-nav')).toBeVisible();
-    // exactly five slots: Dashboard, Causes (Pareto), Actions, Events, More (mobile-actions.png)
+    // exactly five slots: Dashboard, Pareto, Actions, Events, More (mobile-actions.png)
     const bar = page.getByTestId('bottom-nav');
     await expect(bar.locator('a, button')).toHaveCount(5);
-    await expect(bar.locator('a, button')).toHaveText([/^Dashboard$/, /^Causes$/, /Actions$/, /^Events$/, /More$/]);
+    await expect(bar.locator('a, button')).toHaveText([/^Dashboard$/, /^Pareto$/, /Actions$/, /^Events$/, /More$/]);
     await expect(page.getByTestId('bottom-overview')).toHaveAttribute('href', /#\/dashboard$/);
     await expect(page.getByTestId('topbar-title')).toHaveText('Dashboard');
     await expect(page.getByTestId('bottom-pareto')).toHaveAttribute('href', /#\/pareto$/);
@@ -426,9 +424,9 @@ test.describe('phone', () => {
     const sheet = page.getByTestId('more-sheet');
     await expect(sheet).toBeVisible();
     // pages grouped under Analyze / Data (no Setup for a viewer)
-    await expect(sheet.locator('.more-group-title')).toHaveText(['Operate', 'Analyze', 'Reports', 'Act', 'Data']);
-    await expect(sheet.locator('[data-section="analyze"] .more-tile')).toHaveCount(4);
-    await expect(sheet.locator('[data-section="data"] .more-tile')).toHaveCount(2);
+    await expect(sheet.locator('.more-group-title')).toHaveText(['Operate', 'Downtime analysis']);
+    // Dashboard, Pareto, Repeated failures, Reliability, Reports, Actions, Events, Validate (no Upload for a viewer)
+    await expect(sheet.locator('[data-section="downtime"] .more-tile[data-testid^="more-tile-"]:not([data-testid="more-tile-notifications"])')).toHaveCount(8);
     for (const id of ['overview', 'pareto', 'repeats', 'reliability', 'events', 'validate']) await expect(sheet.getByTestId(`more-tile-${id}`)).toBeVisible();
     for (const id of ['upload', 'master', 'settings', 'users']) await expect(sheet.getByTestId(`more-tile-${id}`)).toHaveCount(0);
     await expect(sheet.getByTestId('more-appearance')).toHaveCount(0);
@@ -446,9 +444,9 @@ test.describe('phone', () => {
     await expect(page.getByTestId('login-form')).toBeVisible();
   });
 
-  test('the bar always has Dashboard, Causes, Actions, Events and More, whatever the role; admin sees every page in More', async ({ page }) => {
+  test('the bar always has Dashboard, Pareto, Actions, Events and More, whatever the role; admin sees every page in More', async ({ page }) => {
     await signInAndWait(page, 'engineer');
-    await expect(page.getByTestId('bottom-nav').locator('a, button')).toHaveText([/^Dashboard$/, /^Causes$/, /Actions$/, /^Events$/, /More$/]);
+    await expect(page.getByTestId('bottom-nav').locator('a, button')).toHaveText([/^Dashboard$/, /^Pareto$/, /Actions$/, /^Events$/, /More$/]);
     await expect(page.getByTestId('bottom-upload')).toHaveCount(0);
     await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
     await page.goto('/');
@@ -459,8 +457,7 @@ test.describe('phone', () => {
       await expect(page.getByTestId(`more-tile-${id}`)).toBeVisible();
     }
     for (const id of ['settings', 'users']) await expect(page.getByTestId(`more-tile-${id}`)).toHaveCount(0);
-    await expect(page.locator('.more-group-title')).toHaveText(['Operate', 'Analyze', 'Reports', 'Act', 'Data', 'Setup']);
-    await expect(page.locator('[data-section="data"] .more-tile')).toHaveCount(3);
+    await expect(page.locator('.more-group-title')).toHaveText(['Operate', 'Downtime analysis', 'Setup']);
     await expect(page.locator('[data-section="setup"] .more-tile')).toHaveCount(1);
     await expect(page.getByTestId('more-tile-master')).toContainText('Can edit');
   });
@@ -468,10 +465,13 @@ test.describe('phone', () => {
   test('the phone chip strip shows the siblings of the open section only', async ({ page }) => {
     await signInAndWait(page, 'admin');
     const chips = () => page.getByTestId('page-strip').locator('a').allTextContents();
-    expect((await chips()).map((c) => c.trim())).toEqual(['Dashboard', 'Causes', 'Repeats', 'Reliability']);
+    const DOWNTIME_CHIPS = ['Dashboard', 'Pareto', 'Repeats', 'Reliability', 'Reports', 'Actions', 'Events', 'Validate', 'Upload'];
+    expect((await chips()).map((c) => c.replace(/[^A-Za-z ]/g, '').trim())).toEqual(DOWNTIME_CHIPS);
     await page.goto('/#/events');
     await expect(page.getByTestId('page-events')).toBeVisible();
-    expect((await chips()).map((c) => c.replace(/[^A-Za-z ]/g, '').trim())).toEqual(['Events', 'Validate', 'Upload']);
+    expect((await chips()).map((c) => c.replace(/[^A-Za-z ]/g, '').trim())).toEqual(DOWNTIME_CHIPS);
+    // the strip scrolls sideways inside itself (nine chips); the page does not
+    await expect(page.getByTestId('page-strip').locator('[data-phone-page="events"]')).toBeInViewport();
     await page.goto('/#/master');
     await expect(page.getByTestId('page-master')).toBeVisible();
     await expect(page.getByTestId('page-strip')).toHaveCount(0);

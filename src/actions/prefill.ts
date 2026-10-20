@@ -45,7 +45,7 @@ export type ParetoDim = 'equipment' | 'reason' | 'area' | 'line' | 'class';
 
 /** From a Pareto bar: equipment bars are equipment actions, area / line bars are area / line actions, reasons keep the reason. */
 export function paretoPrefill(input: { dim: ParetoDim; key: string; label: string; eventIds: string[]; hours?: number; chart: string; equipment?: string; area?: string }): ActionPrefill {
-  const trail = [t('Causes'), input.chart, input.label];
+  const trail = [t('Pareto'), input.chart, input.label];
   const base: ActionPrefill = { source: 'pareto', source_ref: `${input.chart}: ${input.label}`.slice(0, 200), trail, eventIds: input.eventIds.slice(0, 200), hours: input.hours };
   switch (input.dim) {
     case 'equipment':

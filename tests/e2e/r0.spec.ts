@@ -210,7 +210,7 @@ test.describe('R1: Overview is now the Dashboard', () => {
     await expect(page.getByTestId('page-overview')).toBeVisible();
     await expect(page.getByTestId('page-title')).toHaveText('Dashboard');
     await expect(page.getByTestId('breadcrumb')).toHaveText('Analyze›Dashboard');
-    await expect(page.getByTestId('rail-link-overview')).toHaveAttribute('href', '#/dashboard');
+    await expect(page.getByTestId('page-tabs').locator('[data-page="overview"]')).toHaveAttribute('href', '#/dashboard');
     await expect(page.getByTestId('scope-period')).toContainText('Last 30 days');
     await expect(page.getByTestId('fb-chip-area-K.1')).toBeVisible();
     // signing in lands on the Dashboard

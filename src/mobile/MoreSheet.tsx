@@ -46,7 +46,7 @@ export default function MoreSheet({ open, onClose }: { open: boolean; onClose: (
     </button>
   );
   const notifHit = !term || t('Notifications').toLowerCase().includes(term);
-  const sections = SECTIONS.map((sec) => ({ sec, items: pagesInSection(hits, sec.id) })).filter((g) => g.items.length > 0 || (g.sec.id === 'act' && notifHit));
+  const sections = SECTIONS.map((sec) => ({ sec, items: pagesInSection(hits, sec.id) })).filter((g) => g.items.length > 0 || (g.sec.id === 'downtime' && notifHit));
   const notifTile = (
     <button key="notifications" type="button" className="more-tile" onClick={() => go(NOTIFICATIONS_PATH)} data-testid="more-tile-notifications">
       <span className="more-tile-icon more-tile-icon--other"><Icon name="bell" size={22} /></span>
@@ -68,7 +68,7 @@ export default function MoreSheet({ open, onClose }: { open: boolean; onClose: (
           {sections.map(({ sec, items }) => (
             <section key={sec.id} className="more-group" aria-labelledby={`more-sec-${sec.id}`} data-section={sec.id}>
               <h2 className="more-group-title" id={`more-sec-${sec.id}`} data-testid={`more-section-${sec.id}`}>{sectionLabel(sec.id)}</h2>
-              <div className="more-tiles">{items.map(tile)}{sec.id === 'act' && notifHit && notifTile}</div>
+              <div className="more-tiles">{items.map(tile)}{sec.id === 'downtime' && notifHit && notifTile}</div>
             </section>
           ))}
           {hits.length === 0 && !notifHit && <p className="more-muted more-empty">{t('Nothing found.')}</p>}

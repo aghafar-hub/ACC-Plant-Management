@@ -36,11 +36,11 @@ test.describe('desktop', () => {
 
   test('Actions is in the Act section of the rail with the overdue count; the board has a column per status', async ({ page }) => {
     await signInAndWait(page, 'admin');
-    await expect(page.getByTestId('rail-section-act')).toHaveText('Act');
+    await expect(page.getByTestId('rail-section-downtime')).toHaveText('Downtime analysis');
     await expect(page.getByTestId('rail-link-notifications')).toHaveCount(0); // the bell opens the inbox
-    await page.getByTestId('rail-link-actions').click();
+    await page.getByTestId('page-tabs').locator('[data-page="actions"]').click();
     await expect(page.getByTestId('page-title')).toHaveText('Actions');
-    await expect(page.getByTestId('breadcrumb')).toContainText('Act');
+    await expect(page.getByTestId('breadcrumb')).toContainText('Downtime analysis');
     // backend 1.7.0: the badge counts the overdue tasks of the demo (CR 2, RM.1 1, AFR 1)
     await expect(page.getByTestId('actions-badge-rail')).toContainText('4');
     for (const s of ['draft', 'open', 'in-progress', 'closed']) {
@@ -190,13 +190,13 @@ test.describe('desktop', () => {
     await page.getByTestId('pareto-eq-hours-action').click();
     await page.getByTestId('bar-action').first().click();
     await expect(dialog(page)).toBeVisible();
-    await expect(page.getByTestId('ca-from')).toContainText('Causes');
+    await expect(page.getByTestId('ca-from')).toContainText('Pareto');
     await expect(page.getByTestId('ca-from')).toContainText(key ?? '-');
     await expect(page.getByTestId('ca-from')).toContainText('Equipment by failure hours');
     await expect(page.getByTestId('ca-scope-equipment')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByTestId('ca-equipment')).toHaveValue(key ?? '');
     await expect(page.getByTestId('ca-evidence')).toContainText(/\d+ linked records? · \d/);
-    await expect(page.getByTestId('ca-source')).toContainText('Causes');
+    await expect(page.getByTestId('ca-source')).toContainText('Pareto');
     await page.getByTestId('ca-draft').click();
     await expect(toast(page)).toContainText(/(Created AC-\d{6}-\d{4} \(Draft\)|Added to existing action)/);
 
@@ -378,7 +378,7 @@ test.describe('phone 390', () => {
 
   test('Actions on the bottom bar; status tabs, cards, filters and New', async ({ page }) => {
     await signInAndWait(page, 'engineer');
-    await expect(page.getByTestId('bottom-nav').locator('a, button')).toHaveText([/^Dashboard$/, /^Causes$/, /Actions$/, /^Events$/, /More$/]);
+    await expect(page.getByTestId('bottom-nav').locator('a, button')).toHaveText([/^Dashboard$/, /^Pareto$/, /Actions$/, /^Events$/, /More$/]);
     await expect(page.getByTestId('actions-badge-bottom')).toBeVisible();
     await page.getByTestId('bottom-actions').click();
     await expect(page.getByTestId('actions-tabs')).toBeVisible();

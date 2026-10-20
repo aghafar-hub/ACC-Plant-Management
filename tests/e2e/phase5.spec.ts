@@ -31,7 +31,7 @@ test.describe('desktop', () => {
   test('the browser tab title follows the page', async ({ page }) => {
     await signInAndWait(page, 'admin');
     for (const [path, title] of [
-      ['/dashboard', 'Dashboard · ACC Downtime'], ['/pareto', 'Causes · ACC Downtime'], ['/repeats', 'Repeated failures · ACC Downtime'],
+      ['/dashboard', 'Dashboard · ACC Downtime'], ['/pareto', 'Pareto · ACC Downtime'], ['/repeats', 'Repeated failures · ACC Downtime'],
       ['/reliability', 'Reliability · ACC Downtime'], ['/actions/tasks', 'Actions › Tasks · ACC Downtime'], ['/events', 'Events · ACC Downtime'],
       ['/validate', 'Validate · ACC Downtime'], ['/settings/users', 'Settings › Users and access · ACC Downtime'],
     ] as const) {

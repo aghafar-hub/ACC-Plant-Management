@@ -8,22 +8,19 @@ const ids = (ps: { id: string }[]) => ps.map((p) => p.id);
 
 describe('navigation sections', () => {
   it('groups every page into Analyze, Reports, Act, Data or Setup in the agreed order', () => {
-    expect(SECTIONS.map((s) => s.label)).toEqual(['Operate', 'Analyze', 'Reports', 'Act', 'Data', 'Setup']);
+    expect(SECTIONS.map((s) => s.label)).toEqual(['Operate', 'Downtime analysis', 'Setup']);
     expect(ids(pagesInSection(PAGES, 'operate'))).toEqual(['shift', 'daily']);
-    expect(ids(pagesInSection(PAGES, 'analyze'))).toEqual(['overview', 'pareto', 'repeats', 'reliability']);
-    expect(ids(pagesInSection(PAGES, 'reports'))).toEqual(['reports']);
-    expect(ids(pagesInSection(PAGES, 'act'))).toEqual(['actions']);
-    expect(ids(pagesInSection(PAGES, 'data'))).toEqual(['events', 'validate', 'upload']);
+    expect(ids(pagesInSection(PAGES, 'downtime'))).toEqual(['overview', 'pareto', 'repeats', 'reliability', 'reports', 'actions', 'events', 'validate', 'upload']);
     expect(ids(pagesInSection(PAGES, 'setup'))).toEqual(['master']);
+    expect(pageById('pareto')).toMatchObject({ label: 'Pareto', tab: 'Pareto', short: 'Pareto' });
   });
   it('Reports is one page of its own section: path, access tab, labels and icon', () => {
     const p = pageById('reports');
-    expect(p).toMatchObject({ path: '/reports', access: 'reports', label: 'Reports', tab: 'Reports', short: 'Reports', group: 'reports' });
+    expect(p).toMatchObject({ path: '/reports', access: 'reports', label: 'Reports', tab: 'Reports', short: 'Reports', group: 'downtime' });
     expect(pageForPath('/reports')?.id).toBe('reports');
     expect(pageForPath('/reports/anything')?.id).toBe('reports');
     expect(ICON_NAMES).toContain(p.icon);
-    // a single page needs no tab row, and it is not on the phone bottom bar
-    expect(pagesInSection(PAGES, 'reports')).toHaveLength(1);
+    // it is a tab of Downtime analysis, and it is not on the phone bottom bar
     expect(BOTTOM_BAR_ORDER).not.toContain('reports');
     expect(ids(bottomBarPages(PAGES))).not.toContain('reports');
   });
@@ -44,7 +41,7 @@ describe('navigation sections', () => {
     expect(ids(bottomBarPages(only(['pareto', 'repeats', 'upload', 'validate', 'master'])))).toEqual(['pareto', 'repeats', 'validate', 'upload']);
   });
   it('Actions is a page of its own Act section; the Notifications inbox has no tab id', () => {
-    expect(pageById('actions')).toMatchObject({ path: '/actions', access: 'actions', group: 'act' });
+    expect(pageById('actions')).toMatchObject({ path: '/actions', access: 'actions', group: 'downtime' });
     expect(pageForPath('/actions')?.id).toBe('actions');
     expect(pageForPath('/notifications')).toBeUndefined();
     expect(ICON_NAMES).toContain(pageById('actions').icon);

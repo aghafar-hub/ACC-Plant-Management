@@ -76,7 +76,7 @@ function ShellLayout() {
   const visiblePages = useVisiblePages();
   // '/' is about to become the first page (Home): lay the shell out for that page already, so nothing jumps
   const page = location.pathname === '/' ? visiblePages[0] : pageForPath(location.pathname);
-  const scoped = !!page && (page.group === 'analyze' || page.id === 'events');
+  const scoped = !!page && ['overview', 'pareto', 'repeats', 'reliability', 'events'].includes(page.id);
 
   useEffect(() => {
     const on = () => setMoreOpen(true);
@@ -165,7 +165,7 @@ function NoPages() {
   );
 }
 
-// The browser tab's title follows the page ('Causes · ACC Downtime'). It sits before the routes, so a page that sets
+// The browser tab's title follows the page ('Pareto · ACC Downtime'). It sits before the routes, so a page that sets
 // its own title (the report, for printing) runs after it and wins while it is open.
 function DocumentTitle() {
   const { pathname } = useLocation();

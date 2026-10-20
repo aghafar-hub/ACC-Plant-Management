@@ -92,11 +92,11 @@ describe('Event records: the drill context banner', () => {
 
   it('says where the list came from in one line', () => {
     const f = drillFigures(rows, drill);
-    expect(drillPageName(drill)).toBe('Causes');
+    expect(drillPageName(drill)).toBe('Pareto');
     expect(drillItem(drill.label)).toBe('141.VL170');
     expect(drillItem('the event EV-9')).toBe('Event EV-9');
     expect(drillSummaryText(drill, f)).toBe('141.VL170 · 1–31 Aug 2026 · 2 events (4 rows), 3.5 h');
-    expect(drillBannerText(drill, f)).toBe('From: Causes › 141.VL170 · 1–31 Aug 2026 · 2 events (4 rows), 3.5 h');
+    expect(drillBannerText(drill, f)).toBe('From: Pareto › 141.VL170 · 1–31 Aug 2026 · 2 events (4 rows), 3.5 h');
     expect(drillShortText(drill, f)).toBe('141.VL170 · 1–31 Aug 2026 · 2 events');
   });
 

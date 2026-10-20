@@ -6,7 +6,7 @@ describe('browser tab title per page', () => {
   it('uses the side-bar names', () => {
     expect(documentTitle('/dashboard')).toBe('Dashboard · ACC Downtime');
     expect(documentTitle('/overview')).toBe('Dashboard · ACC Downtime');
-    expect(documentTitle('/pareto')).toBe('Causes · ACC Downtime');
+    expect(documentTitle('/pareto')).toBe('Pareto · ACC Downtime');
     expect(documentTitle('/repeats')).toBe('Repeated failures · ACC Downtime');
     expect(documentTitle('/reliability')).toBe('Reliability · ACC Downtime');
     expect(documentTitle('/events')).toBe('Events · ACC Downtime');

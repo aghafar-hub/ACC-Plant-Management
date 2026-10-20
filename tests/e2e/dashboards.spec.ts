@@ -76,7 +76,7 @@ test.describe('dashboards (desktop)', () => {
 
     // one sticky scope bar: each chip opens its own small panel
     await expect(page.getByTestId('scope-note')).toContainText('Shared filters');
-    await expect(page.getByTestId('scope-note')).toHaveAttribute('title', /Shared by Dashboard, Causes, Repeated failures, Reliability, Events/);
+    await expect(page.getByTestId('scope-note')).toHaveAttribute('title', /Shared by Dashboard, Pareto, Repeated failures, Reliability, Events/);
     await page.getByTestId('fb-area').click();
     const before = await page.getByTestId('fb-area-opt').count();
     await page.keyboard.press('Escape');
@@ -115,7 +115,7 @@ test.describe('dashboards (desktop)', () => {
     await expect(page.getByTestId('fb-active')).toBeVisible();
 
     // shared across the Analyze pages
-    await page.getByTestId('rail-link-pareto').click();
+    await page.getByTestId('page-tabs').locator('[data-page="pareto"]').click();
     await expect(page.getByTestId('page-pareto')).toBeVisible();
     await expect(page.getByTestId('fb-active')).toBeVisible();
     await expect(page.getByTestId('scope-period')).toContainText('Last 30 days');
@@ -248,7 +248,7 @@ test.describe('dashboards (desktop)', () => {
     await card.getByTestId('pareto-bar').first().click();
     await expect(page).toHaveURL(/#\/events/);
     await expect(page.getByTestId('drill-chip')).toBeVisible();
-    await expect(page.getByTestId('drill-text')).toContainText(/^Causes › \S+ · .+ · \d+ events?( \([\d,]+ rows\))?, [\d,.]+ h$/);
+    await expect(page.getByTestId('drill-text')).toContainText(/^Pareto › \S+ · .+ · \d+ events?( \([\d,]+ rows\))?, [\d,.]+ h$/);
     const n = num((await page.getByTestId('drill-text').textContent())!.match(/ ([\d,]+) events?/)![1]!);
     expect(n).toBeGreaterThan(0);
     await expect(page.getByTestId('event-row').first()).toBeVisible();
@@ -425,7 +425,7 @@ test.describe('Phase 3: shared filters, compact bar, Overview rework (desktop)',
     await expect(page.getByTestId('fb-badge')).toHaveText('2');
     await expect(page.getByTestId('scope-type')).toContainText('MEC, ELE +1');
     for (const id of ['pareto', 'repeats', 'reliability', 'overview'] as const) {
-      await page.getByTestId(`rail-link-${id}`).click();
+      await page.getByTestId('page-tabs').locator(`[data-page="${id}"]`).click();
       await expect(page.getByTestId(`page-${id}`)).toBeVisible();
       await expect(page.getByTestId('scope-period')).toContainText('Last 30 days');
       await expect(page.getByTestId('fb-chip-cls-MEC')).toBeVisible();
@@ -442,21 +442,21 @@ test.describe('Phase 3: shared filters, compact bar, Overview rework (desktop)',
     await expect(page.getByTestId('fb-badge')).toHaveText('1');
     const chip = await page.getByTestId('fb-chip-cls-MEC').boundingBox();
     expect(chip!.height).toBeGreaterThanOrEqual(43.5);
-    await page.getByTestId('rail-link-pareto').click();
+    await page.getByTestId('page-tabs').locator('[data-page="pareto"]').click();
     await expect(page.getByTestId('fb-chip-cls-MEC')).toBeVisible();
     // Event records share the same scope: the chips are there, and the list follows them
-    await page.getByTestId('rail-link-data').click();
+    await page.getByTestId('page-tabs').locator('[data-page="events"]').click();
     await expect(page.getByTestId('page-events')).toBeVisible();
     await expect(page.getByTestId('fb-chip-cls-MEC')).toBeVisible();
     await expect(page.getByTestId('scope-period')).toContainText('Last 30 days');
     await expect(page.getByTestId('event-row').first().locator('.badge--class')).toHaveText('MEC');
-    await page.getByTestId('rail-link-pareto').click();
+    await page.getByTestId('page-tabs').locator('[data-page="pareto"]').click();
     await expect(page.getByTestId('fb-chip-cls-MEC')).toBeVisible();
     await page.getByTestId('fb-reset').click();
     await expect(page.getByTestId('fb-active')).toHaveCount(0);
     await expect(page.getByTestId('fb-badge')).toHaveCount(0);
     await expect(page.getByTestId('scope-period')).toContainText('Last 90 days');
-    await page.getByTestId('rail-link-reliability').click();
+    await page.getByTestId('page-tabs').locator('[data-page="reliability"]').click();
     await expect(page.getByTestId('fb-active')).toHaveCount(0);
     expect(errors, errors.join('\n')).toEqual([]);
   });

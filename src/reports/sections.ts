@@ -9,7 +9,7 @@ export type SectionGroupId = 'summary' | 'performance' | 'causes' | 'reliability
 export const SECTION_GROUPS: { id: SectionGroupId; label: string }[] = [
   { id: 'summary', label: 'Summary' },
   { id: 'performance', label: 'Performance' },
-  { id: 'causes', label: 'Causes' },
+  { id: 'causes', label: 'Pareto' },
   { id: 'reliability', label: 'Reliability' },
   { id: 'detail', label: 'Detail' },
 ];

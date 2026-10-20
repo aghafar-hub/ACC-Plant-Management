@@ -4,7 +4,7 @@ import { useIsMobile } from '../hooks/useIsMobile';
 import { useRail } from '../hooks/useRail';
 import { useVisiblePages } from '../hooks/useVisiblePages';
 import { t } from '../i18n/t';
-import { pageForPath, pagesInSection, pageShort, pageTab, sectionLabel } from '../navigation';
+import { ONE_ITEM_SECTIONS, pageForPath, pagesInSection, pageShort, pageTab, sectionLabel } from '../navigation';
 import ValidateBadge from '../validate/NavBadge';
 import './PageTabs.css';
 
@@ -22,7 +22,7 @@ export default function PageTabs() {
   const active = location.pathname === '/' ? pages[0] : pageForPath(location.pathname);
   if (!active) return null;
   // the pinned, labelled rail already lists every page: no second row of tabs (the icon rail keeps them)
-  if (!mobile && pinned) return null;
+  if (!mobile && pinned && !ONE_ITEM_SECTIONS[active.group]) return null;
   const siblings = pagesInSection(pages, active.group);
   if (siblings.length < 2 || !siblings.some((p) => p.id === active.id)) return null;
   const label = t('{section} pages', { section: sectionLabel(active.group) });
@@ -45,9 +45,9 @@ export default function PageTabs() {
   return (
     <div className="module-tabs" data-testid="page-tabs" data-section={active.group}>
       <div className="module-tabs-phone">
-        <nav className="mt-strip mt-strip--fit" aria-label={label} data-testid="page-strip">
+        <nav className={siblings.length > 4 ? 'mt-strip' : 'mt-strip mt-strip--fit'} aria-label={label} data-testid="page-strip">
           {siblings.map((p) => (
-            <NavLink key={p.id} to={p.path} onClick={tapHaptic} className={({ isActive }) => (isActive ? 'mt-chip mt-chip--on' : 'mt-chip')} data-phone-page={p.id}>
+            <NavLink key={p.id} to={p.path} onClick={tapHaptic} ref={p.id === active.id ? (el) => el?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' }) : undefined} className={({ isActive }) => (isActive ? 'mt-chip mt-chip--on' : 'mt-chip')} data-phone-page={p.id}>
               {pageShort(p)}
               {p.id === 'validate' && <ValidateBadge testid="validate-badge-chip" />}
             </NavLink>

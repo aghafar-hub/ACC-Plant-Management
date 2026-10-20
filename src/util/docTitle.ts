@@ -23,7 +23,7 @@ export function pageNameForPath(pathname: string): string {
   return t('Page not found');
 }
 
-/** 'Causes · ACC Downtime'; the app's name alone where there is no page name. */
+/** 'Pareto · ACC Downtime'; the app's name alone where there is no page name. */
 export function documentTitle(pathname: string): string {
   const name = pageNameForPath(pathname);
   return name ? `${name} · ${APP_TITLE}` : APP_TITLE;

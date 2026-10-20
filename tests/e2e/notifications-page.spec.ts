@@ -37,7 +37,7 @@ test.describe('desktop', () => {
     await openInbox(page, 'admin');
     await expect(page).toHaveURL(/#\/notifications$/);
     await expect(page.getByTestId('page-title')).toHaveText('Notifications');
-    await expect(page.getByTestId('breadcrumb')).toContainText('Act');
+    await expect(page.getByTestId('breadcrumb')).toContainText('Downtime analysis');
     // reached from the bell only: the rail has no Notifications link
     await expect(page.getByTestId('rail-link-notifications')).toHaveCount(0);
     const total = await rows(page).count();
@@ -127,7 +127,7 @@ test.describe('phone 390', () => {
   test('category chips and the list; See all from the full-screen panel; the More sheet lists it', async ({ page }) => {
     await signInAndWait(page, 'engineer');
     await page.getByTestId('bottom-more').click();
-    await expect(page.getByTestId('more-section-act')).toHaveText('Act');
+    await expect(page.getByTestId('more-section-downtime')).toHaveText('Downtime analysis');
     await expect(page.getByTestId('more-tile-notifications')).toBeVisible();
     await expect(page.getByTestId('more-tile-actions')).toBeVisible();
     await page.goBack();

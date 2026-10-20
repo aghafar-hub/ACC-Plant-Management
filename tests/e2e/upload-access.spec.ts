@@ -24,7 +24,7 @@ test('View access sees the history but cannot upload; Edit can', async ({ page }
   await page.getByTestId('login-password').fill(PASSWORD);
   await page.getByTestId('login-submit').click();
   await expect(page.getByTestId('page-title')).toBeVisible();
-  await page.getByTestId('rail-link-data').click(); // Data is one rail item; Upload is its tab
+  await page.getByTestId('rail-link-downtime').click(); // Downtime analysis is one rail item; Upload is its tab
   await page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: /^Upload/ }).click();
   await expect(page.getByTestId('page-upload')).toBeVisible();
   await expect(page.getByTestId('access-level')).toHaveText('View only');

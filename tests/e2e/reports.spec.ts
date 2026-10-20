@@ -32,18 +32,14 @@ test.describe('desktop', () => {
   });
 
   for (const role of ['admin', 'manager', 'engineer', 'viewer'] as Role[]) {
-    test(`${role}: Reports is in the left rail under its own heading and the builder opens`, async ({ page }) => {
+    test(`${role}: Reports is a tab of Downtime analysis and the builder opens`, async ({ page }) => {
       await signInAndWait(page, role);
-      const rail = page.getByRole('navigation', { name: 'Primary' });
-      await expect(page.getByTestId('rail-section-reports')).toHaveText('Reports');
-      await expect(rail.locator('[data-section="reports"] a')).toHaveCount(1);
-      await rail.locator('[data-section="reports"] a').click();
+      await page.getByTestId('rail-link-downtime').click();
+      await page.getByTestId('page-tabs').locator('[data-page="reports"]').click();
       await expect(page).toHaveURL(/#\/reports/);
       await expect(page.getByTestId('page-reports')).toBeVisible();
       await expect(page.getByTestId('builder')).toBeVisible();
-      // one page in its section: no tab row
-      await expect(page.getByTestId('page-tabs')).toHaveCount(0);
-      await expect(page.getByTestId('breadcrumb')).toContainText('Reports');
+      await expect(page.getByTestId('breadcrumb')).toContainText('Downtime analysis›Reports');
     });
   }
 
@@ -63,7 +59,7 @@ test.describe('desktop', () => {
     await page.getByTestId('login-password').fill('Demo-Pass-1234');
     await page.getByTestId('login-submit').click();
     await expect(page.getByTestId('page-title')).toBeVisible();
-    await expect(page.getByTestId('rail-section-reports')).toHaveCount(0);
+    await expect(page.getByTestId('page-tabs').locator('[data-page="reports"]')).toHaveCount(0);
     await page.evaluate(() => { window.location.hash = '#/reports'; });
     await expect(page.getByTestId('no-access')).toBeVisible();
     // engineer (View) can build
@@ -171,7 +167,7 @@ test.describe('desktop', () => {
     await signInAndWait(page, 'manager');
     await page.goto('/#/dashboard?r=month&m=2026-08&line=L.1&area=K.1&cls=MEC&fail=1&reason=belt');
     await expect(page.getByTestId('scope-period')).toContainText('Aug 2026');
-    await page.getByTestId('rail-link-reports').click();
+    await page.getByTestId('page-tabs').locator('[data-page="reports"]').click();
     await expect(page.getByTestId('builder')).toBeVisible();
     await expect(page.getByTestId('rb-active')).toHaveCount(0);
     await page.getByTestId('rb-use-dash').click();
@@ -378,7 +374,7 @@ test.describe('phone', () => {
         await signInAndWait(page, 'manager');
         await expect(page.getByTestId('bottom-reports')).toHaveCount(0);
         await page.getByTestId('bottom-more').click();
-        await expect(page.getByTestId('more-section-reports')).toHaveText('Reports');
+        await expect(page.getByTestId('more-section-downtime')).toHaveText('Downtime analysis');
         await page.getByTestId('more-tile-reports').click();
         await expect(page.getByTestId('builder')).toBeVisible();
         await expect(page.getByTestId('rb-scope')).toContainText('area-hours in scope');
