@@ -1,6 +1,7 @@
 // Upload › History import (backend 2.2.0, Admin role): the date-only stoppages of the NRS workbook (sheet MS.Downtime).
 // Read in the browser, checked and summarised first; months that already hold stoppages are left out so nothing is
 // counted twice; sending is safe to repeat (rows already stored are skipped). See historyImport.ts for the rules.
+// 2.3.0: the months to import can be chosen (for example only December 2025 from a newer workbook).
 import { useState } from 'react';
 import { api } from '../api';
 import { useAuth } from '../auth/AuthContext';
@@ -14,7 +15,7 @@ import { runUpload, type Progress } from './uploadRunner';
 type Stage =
   | { kind: 'idle' }
   | { kind: 'reading'; name: string }
-  | { kind: 'ready'; name: string; plan: HistoryPlan; taken: string[] }
+  | { kind: 'ready'; name: string; plan: HistoryPlan; taken: string[]; picked: string[] }
   | { kind: 'sending'; name: string; progress: Progress | null }
   | { kind: 'done'; name: string; added: number; identical: number; rejected: number }
   | { kind: 'error'; message: string };
@@ -37,12 +38,12 @@ export default function HistoryImport({ onDone }: { onDone: () => void }) {
     } catch (e) {
       return setStage({ kind: 'error', message: e instanceof Error ? e.message : String(e) });
     }
-    setStage({ kind: 'ready', name: file.name, plan: res.plan, taken: res.plan.months.filter((m) => taken.has(m)) });
+    setStage({ kind: 'ready', name: file.name, plan: res.plan, taken: res.plan.months.filter((m) => taken.has(m)), picked: res.plan.months.filter((m) => !taken.has(m)) });
   }
 
-  async function send(name: string, plan: HistoryPlan, taken: string[]) {
+  async function send(name: string, plan: HistoryPlan, taken: string[], picked: string[]) {
     if (!token) return;
-    const rows = plan.rows.filter((r) => !taken.includes(r.event_date.slice(0, 7)));
+    const rows = plan.rows.filter((r) => !taken.includes(r.event_date.slice(0, 7)) && picked.includes(r.event_date.slice(0, 7)));
     setStage({ kind: 'sending', name, progress: null });
     try {
       const hash = await sha256Hex(rows.map((r) => r.fingerprint).join(''));
@@ -72,8 +73,14 @@ export default function HistoryImport({ onDone }: { onDone: () => void }) {
       {stage.kind === 'reading' && <p className="muted" data-testid="history-reading">{t('Reading {name}… a large workbook can take a minute.', { name: stage.name })}</p>}
       {stage.kind === 'error' && <div className="callout callout--danger" role="alert" data-testid="history-error" style={{ marginTop: 10 }}><Icon name="alert" size={16} /><span>{stage.message}</span></div>}
       {stage.kind === 'ready' && (() => {
-        const { plan, taken } = stage;
-        const sendable = plan.rows.filter((r) => !taken.includes(r.event_date.slice(0, 7))).length;
+        const { plan, taken, picked } = stage;
+        const perMonth = new Map<string, number>();
+        for (const r of plan.rows) perMonth.set(r.event_date.slice(0, 7), (perMonth.get(r.event_date.slice(0, 7)) ?? 0) + 1);
+        const sendable = plan.rows.filter((r) => !taken.includes(r.event_date.slice(0, 7)) && picked.includes(r.event_date.slice(0, 7))).length;
+        const free = plan.months.filter((m) => !taken.includes(m));
+        const pick = (next: string[]) => setStage({ ...stage, picked: plan.months.filter((m) => next.includes(m) && !taken.includes(m)) });
+        const toggle = (m: string) => pick(picked.includes(m) ? picked.filter((x) => x !== m) : [...picked, m]);
+        const years = [...new Set(plan.months.map((m) => m.slice(0, 4)))];
         return (
           <div data-testid="history-summary">
             <div className="hi-figures" style={{ marginTop: 10 }}>
@@ -88,8 +95,29 @@ export default function HistoryImport({ onDone }: { onDone: () => void }) {
               {(plan.fixes.classification + plan.fixes.failure + plan.fixes.trimmed) > 0 && <li>{t('Spelling put right: classification case {a}, failure Yes / yes {b}, spaces around the reason {c}.', { a: plan.fixes.classification, b: plan.fixes.failure, c: plan.fixes.trimmed })}</li>}
               {taken.length > 0 && <li data-testid="history-taken"><b>{t('Left out because these months already hold stoppages: {list}.', { list: taken.map(monthText).join(', ') })}</b></li>}
             </ul>
+            <fieldset className="hi-months" data-testid="history-months">
+              <legend>{t('Months to import ({a} of {b})', { a: picked.length, b: free.length })}</legend>
+              <div className="chip-row">
+                <button type="button" className="btn btn-sm" onClick={() => pick(free)} data-testid="history-months-all">{t('All')}</button>
+                <button type="button" className="btn btn-sm" onClick={() => pick([])} data-testid="history-months-none">{t('None')}</button>
+              </div>
+              {years.map((y) => (
+                <div key={y} className="hi-year">
+                  <span className="hi-year-label">{y}</span>
+                  {plan.months.filter((m) => m.startsWith(y)).map((m) => {
+                    const isTaken = taken.includes(m);
+                    return (
+                      <label key={m} className={`hi-month${isTaken ? ' hi-month--taken' : ''}`} title={isTaken ? t('This month already holds stoppages') : undefined}>
+                        <input type="checkbox" checked={picked.includes(m)} disabled={isTaken} onChange={() => toggle(m)} data-testid={`history-month-${m}`} />
+                        {monthText(m).split(' ')[0]} <span className="adm-muted-sm">{num(perMonth.get(m) ?? 0)}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              ))}
+            </fieldset>
             <div className="chip-row" style={{ marginTop: 8 }}>
-              <button type="button" className="btn-primary" disabled={sendable === 0} onClick={() => void send(stage.name, plan, taken)} data-testid="history-send">{t('Import {n} stoppages as history', { n: num(sendable) })}</button>
+              <button type="button" className="btn-primary" disabled={sendable === 0} onClick={() => void send(stage.name, plan, taken, picked)} data-testid="history-send">{t('Import {n} stoppages as history', { n: num(sendable) })}</button>
               <button type="button" className="btn" onClick={() => setStage({ kind: 'idle' })}>{t('Cancel')}</button>
             </div>
           </div>

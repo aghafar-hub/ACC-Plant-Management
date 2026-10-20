@@ -61,6 +61,33 @@ test.describe('history import', () => {
     await expect(page.getByTestId('v-history-toggle')).toBeChecked();
   });
 
+  test('only the months ticked are imported (e.g. one month from a newer workbook)', async ({ page }) => {
+    await signInAndWait(page, 'admin');
+    await page.goto('/#/upload');
+    const box = page.getByTestId('history-import');
+    const book = () => Buffer.from(buildXlsx([{ name: 'MS.Downtime', rows: [
+      HEAD,
+      [d('2022-05-03'), 'L.1', 'K.1', '131.BC100', 2, 'MEC', 'INC', 'Bearing failure', 'YES', null],
+      [d('2022-06-07'), 'L.1', 'K.1', '131.BC100', 3, 'MEC', 'INC', 'Bearing failure', 'YES', null],
+      [d('2022-06-08'), 'L.1', 'CR', 'N/A', 1, 'CIR', 'NO_INC', 'Full Silos', 'NO', null],
+    ] }]));
+    await box.getByTestId('history-file').setInputFiles({ name: 'NRS2.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: book() });
+    await expect(box.getByTestId('history-months')).toContainText('Months to import (2 of 2)');
+    await box.getByTestId('history-months-none').click();
+    await expect(box.getByTestId('history-send')).toBeDisabled();
+    await box.getByTestId('history-month-2022-06').check();
+    await expect(box.getByTestId('history-send')).toHaveText('Import 2 stoppages as history');
+    await box.getByTestId('history-send').click();
+    await expect(box.getByTestId('history-done')).toContainText('2 stoppages added');
+    // the same file again: June is already stored, May is still free
+    await box.getByTestId('history-file').setInputFiles({ name: 'NRS2.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: book() });
+    await expect(box.getByTestId('history-months')).toContainText('Months to import (2 of 2)');
+    await box.getByTestId('history-month-2022-06').uncheck();
+    await expect(box.getByTestId('history-send')).toHaveText('Import 1 stoppages as history');
+    await box.getByTestId('history-send').click();
+    await expect(box.getByTestId('history-done')).toContainText('1 stoppages added');
+  });
+
   test('the engineer (not an Admin) has no history import', async ({ page }) => {
     await signInAndWait(page, 'engineer');
     await page.goto('/#/upload');
