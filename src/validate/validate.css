@@ -636,3 +636,5 @@
 .q-details > .v-hint {
   padding: 0 14px;
 }
+.v-history-toggle { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 10px; font-size: 13px; cursor: pointer; overflow-wrap: anywhere; }
+.v-history-toggle input { width: 18px; height: 18px; margin-top: 1px; flex: none; }

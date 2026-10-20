@@ -131,14 +131,17 @@ export function compareRecords(a: ValidationRecord, b: ValidationRecord): number
   return b.event.stop_ts.localeCompare(a.event.stop_ts) || a.event.event_id.localeCompare(b.event.event_id);
 }
 
-/** The list for every loaded event (all years). */
-export function buildValidation(events: readonly EventRow[]): ValidationList {
+/** Imported date-only NRS history (2.2.0): left out of the list unless asked for (`history: true`, the Validate page's switch). */
+export const isHistory = (e: Pick<EventRow, 'origin'>): boolean => e.origin === 'history';
+
+/** The list for every loaded event (all years). Imported history is left out unless `opts.history` is true. */
+export function buildValidation(all: readonly EventRow[], opts: { history?: boolean } = {}): ValidationList {
+  const events = opts.history ? all : all.filter((e) => !isHistory(e));
   const overlaps = findOverlaps(events);
   const records: ValidationRecord[] = [];
   const overlapRecords: ValidationRecord[] = [];
   for (const e of events) {
     if (e.is_void) continue;
-    if (e.origin === 'history') continue; // 2.2.0: imported date-only history is reference data, not a record to validate
     const partners = overlaps.partners.get(e.event_id) ?? [];
     const full = fullRecordOf(e, partners);
     if (full.problems.length) records.push(full);
@@ -192,29 +195,32 @@ export interface ValidateFilter {
   /** keep records that have ANY of these problems (empty: all) */
   flags: string[];
   area: string;
+  /** 'YYYY' */
+  year: string;
   /** 'YYYY-MM' */
   month: string;
   /** free text over code, reason, description (and event id) */
   q: string;
   blockingOnly: boolean;
 }
-export const EMPTY_FILTER: ValidateFilter = { flags: [], area: '', month: '', q: '', blockingOnly: false };
+export const EMPTY_FILTER: ValidateFilter = { flags: [], area: '', year: '', month: '', q: '', blockingOnly: false };
 
 /** How many filters are on (the search text counts as one). */
-export const filterCount = (f: ValidateFilter): number => f.flags.length + [f.area, f.month, f.q.trim(), f.blockingOnly].filter(Boolean).length;
+export const filterCount = (f: ValidateFilter): number => f.flags.length + [f.area, f.year, f.month, f.q.trim(), f.blockingOnly].filter(Boolean).length;
 
 /**
- * The filter named by a link's query: `flag` (comma separated problems), `area`, `month` (YYYY-MM), `q` and `blocking=1`.
+ * The filter named by a link's query: `flag` (comma separated problems), `area`, `year` (YYYY), `month` (YYYY-MM), `q` and `blocking=1`.
  * null when the query names none of them (so opening the page by hand keeps whatever the person had set).
  */
 export function filterFromParams(sp: URLSearchParams): ValidateFilter | null {
   const flags = (sp.get('flag') ?? '').split(',').map((x) => x.trim()).filter(Boolean);
   const area = (sp.get('area') ?? '').trim();
   const month = /^\d{4}-\d{2}$/.test(sp.get('month') ?? '') ? sp.get('month')! : '';
+  const year = /^\d{4}$/.test(sp.get('year') ?? '') ? sp.get('year')! : month.slice(0, 4);
   const q = (sp.get('q') ?? '').trim();
   const blockingOnly = sp.get('blocking') === '1';
-  if (!flags.length && !area && !month && !q && !blockingOnly) return null;
-  return { flags, area, month, q, blockingOnly };
+  if (!flags.length && !area && !year && !month && !q && !blockingOnly) return null;
+  return { flags, area, year, month, q, blockingOnly };
 }
 
 export function applyValidateFilter(records: readonly ValidationRecord[], f: ValidateFilter): ValidationRecord[] {
@@ -224,6 +230,7 @@ export function applyValidateFilter(records: readonly ValidationRecord[], f: Val
     if (f.blockingOnly && !r.blocking) return false;
     if (f.flags.length && !f.flags.some((x) => r.problems.includes(x))) return false;
     if (f.area && e.area_id !== f.area) return false;
+    if (f.year && !r.month.startsWith(`${f.year}-`)) return false;
     if (f.month && r.month !== f.month) return false;
     if (needle) {
       const hay = `${e.code_raw} ${e.equipment_id ?? ''} ${e.reason_raw ?? ''} ${e.description ?? ''} ${e.event_id}`.toLowerCase();
@@ -240,6 +247,7 @@ export function applyKeptFilter(records: readonly KeptRecord[], f: ValidateFilte
     const e = r.event;
     if (f.flags.length && !f.flags.some((x) => r.flags.includes(x))) return false;
     if (f.area && e.area_id !== f.area) return false;
+    if (f.year && !r.month.startsWith(`${f.year}-`)) return false;
     if (f.month && r.month !== f.month) return false;
     if (needle) {
       const hay = `${e.code_raw} ${e.equipment_id ?? ''} ${e.reason_raw ?? ''} ${e.description ?? ''} ${e.event_id}`.toLowerCase();
@@ -250,6 +258,7 @@ export function applyKeptFilter(records: readonly KeptRecord[], f: ValidateFilte
 }
 
 export const areasOf = (records: readonly Pick<ValidationRecord, 'event'>[]): string[] => [...new Set(records.map((r) => r.event.area_id))].sort();
+export const yearsOf = (records: readonly Pick<ValidationRecord, 'month'>[]): string[] => [...new Set(records.map((r) => r.month.slice(0, 4)))].sort().reverse();
 export const monthsOf = (records: readonly Pick<ValidationRecord, 'month'>[]): string[] => [...new Set(records.map((r) => r.month))].sort().reverse();
 
 /** The flags that occur in the records, with their counts, in catalogue order (unknown names last). */

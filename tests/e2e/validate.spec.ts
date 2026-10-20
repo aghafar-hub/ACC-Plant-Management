@@ -123,8 +123,14 @@ test.describe('validate (desktop)', () => {
     const afterArea = await rows(page).count();
     expect(afterArea).toBeGreaterThan(0);
     expect(afterArea).toBeLessThanOrEqual(total);
+    await page.getByTestId('d-year').selectOption({ index: 1 });
+    const year = await page.getByTestId('d-year').inputValue();
+    const afterYear = await rows(page).count();
+    expect(afterYear).toBeLessThanOrEqual(afterArea);
+    // the month list keeps to the chosen year
+    for (const m of await page.getByTestId('d-month').locator('option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value).filter(Boolean))) expect(m.startsWith(`${year}-`)).toBe(true);
     await page.getByTestId('d-month').selectOption({ index: 1 });
-    expect(await rows(page).count()).toBeLessThanOrEqual(afterArea);
+    expect(await rows(page).count()).toBeLessThanOrEqual(afterYear);
     expect(areaId.length).toBeGreaterThan(0);
     await page.getByTestId('v-reset').click();
     await page.getByTestId('v-search').fill('zzzz-no-such-text');

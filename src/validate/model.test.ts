@@ -156,6 +156,15 @@ describe('buildValidation', () => {
     expect(storedProblems({ flags: 'blank_reason, unknown_code,missing_classification,unknown_code' })).toEqual(['missing_classification', 'unknown_code', 'blank_reason']);
     expect(storedProblems({})).toEqual([]);
   });
+  it('leaves imported history out unless asked for, in the list and in every count', () => {
+    const hist = ev('h', 'K.1', '2024-05-01 00:00:00', '2024-05-01 02:00:00', { origin: 'history', time_precision: 'day', flags: 'unknown_code' } as Partial<EventRow>);
+    const off = buildValidation([...DATA, hist]);
+    expect(off.records.map((r) => r.event.event_id)).not.toContain('h');
+    expect(off.summary).toEqual(l.summary);
+    const on = buildValidation([...DATA, hist], { history: true });
+    expect(on.records.map((r) => r.event.event_id)).toContain('h');
+    expect(on.summary.total).toBe(l.summary.total + 1);
+  });
   it('compareRecords is a total order', () => {
     const [a, b] = l.records;
     expect(compareRecords(a, b)).toBeLessThan(0);
@@ -208,6 +217,9 @@ describe('filters', () => {
     expect(ids({ flags: [OVERLAP_FLAG] })).toEqual([]);
     expect(ids({ area: 'K.3' })).toEqual(['rev']);
     expect(ids({ month: '2026-03' })).toEqual(['nocls']);
+    expect(ids({ year: '2026', month: '2026-03' })).toEqual(['nocls']);
+    expect(ids({ year: '2025' })).toEqual([]);
+    expect(ids({ year: '2026' })).toEqual(ids({}));
     expect(ids({ blockingOnly: true })).toEqual(['nocls', 'rev']);
     expect(ids({ area: 'K.3', flags: ['end_before_start'], blockingOnly: true })).toEqual(['rev']);
     // the Overlaps view (information) is filtered the same way
@@ -218,7 +230,8 @@ describe('filters', () => {
   });
   it('counts active filters', () => {
     expect(filterCount(EMPTY_FILTER)).toBe(0);
-    expect(filterCount({ flags: ['a', 'b'], area: 'K.1', month: '', q: ' x ', blockingOnly: true })).toBe(5);
+    expect(filterCount({ flags: ['a', 'b'], area: 'K.1', year: '', month: '', q: ' x ', blockingOnly: true })).toBe(5);
+    expect(filterCount({ ...EMPTY_FILTER, year: '2026', month: '2026-03' })).toBe(2);
   });
   it('flagCounts lists the flags that occur in catalogue order with symbols decided by the blocking rule', () => {
     expect(flagCounts(l.records)).toEqual([
@@ -298,10 +311,11 @@ describe('bulk planner', () => {
 describe('filterFromParams', () => {
   it('reads a link\'s query into a filter, and null when it names none', () => {
     expect(filterFromParams(new URLSearchParams('flag=unknown_code,placeholder&q=AFR2&area=K.1&month=2026-03&blocking=1'))).toEqual({
-      flags: ['unknown_code', 'placeholder'], area: 'K.1', month: '2026-03', q: 'AFR2', blockingOnly: true,
+      flags: ['unknown_code', 'placeholder'], area: 'K.1', year: '2026', month: '2026-03', q: 'AFR2', blockingOnly: true,
     });
     expect(filterFromParams(new URLSearchParams('flag=placeholder'))).toEqual({ ...EMPTY_FILTER, flags: ['placeholder'] });
     expect(filterFromParams(new URLSearchParams('month=bogus'))).toBeNull();
+    expect(filterFromParams(new URLSearchParams('year=2024'))).toEqual({ ...EMPTY_FILTER, year: '2024' });
     expect(filterFromParams(new URLSearchParams(''))).toBeNull();
   });
 });

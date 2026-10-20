@@ -44,6 +44,17 @@ test.describe('history import', () => {
     await box.getByTestId('history-send').click();
     await expect(box.getByTestId('history-done')).toContainText('0 stoppages added, 4 already stored');
     await expect(page.getByTestId('upload-history')).toContainText('History NRS.xlsm');
+    // Validate leaves the history out until it is switched on; then its records can be filtered by year
+    await page.goto('/#/validate');
+    await page.getByTestId('v-refresh').click(); // the years list comes with the start-up data: read it again after the import
+    const toggle = page.getByTestId('v-history-toggle');
+    await expect(page.getByTestId('v-history')).toContainText('4 records');
+    const before = await page.getByTestId('d-year').locator('option').allTextContents();
+    expect(before).not.toContain('2023');
+    await toggle.check();
+    await page.getByTestId('d-year').selectOption('2023');
+    await expect(page.getByTestId('v-row').first()).toBeVisible();
+    for (const m of await page.getByTestId('d-month').locator('option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value).filter(Boolean))) expect(m.startsWith('2023-')).toBe(true);
   });
 
   test('the engineer (not an Admin) has no history import', async ({ page }) => {

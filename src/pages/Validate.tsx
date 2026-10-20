@@ -22,7 +22,7 @@ import { duration, hours, num, shortTs } from '../util/format';
 import BulkModal, { BULK_NOTE } from '../validate/BulkModal';
 import KeepModal, { type KeepTarget } from '../validate/KeepModal';
 import {
-  applyKeptFilter, applyValidateFilter, areasOf, BULK_CAP, EMPTY_FILTER, filterCount, filterFromParams, firstFixHint, flagCounts, monthsOf,
+  applyKeptFilter, applyValidateFilter, areasOf, BULK_CAP, EMPTY_FILTER, filterCount, filterFromParams, firstFixHint, flagCounts, monthsOf, yearsOf, buildValidation, isHistory,
   type BulkResult, type KeptRecord, type ValidateFilter, type ValidationRecord,
 } from '../validate/model';
 import { QualityTable } from '../validate/Quality';
@@ -116,7 +116,11 @@ export default function Validate() {
   const mobile = useIsMobile();
   const online = useOnlineStatus();
   const editor = canEdit('events');
-  const { list, rows, ready, st, loadAll } = v;
+  const { rows, ready, st, loadAll } = v;
+  // imported NRS history (2024-2025, date only) is checked here only when switched on; the badges elsewhere never count it
+  const [withHistory, setWithHistory] = useState(false);
+  const historyCount = useMemo(() => rows.filter(isHistory).length, [rows]);
+  const list = useMemo(() => (withHistory && historyCount ? buildValidation(rows, { history: true }) : v.list), [withHistory, historyCount, rows, v.list]);
   // this page needs every year's records: no waiting for idle time
   useEffect(() => loadAll(), [loadAll]);
   const startup = st.startup;
@@ -157,7 +161,8 @@ export default function Validate() {
   const flags = useMemo(() => flagCounts(list.records), [list.records]);
   const both = useMemo(() => [...list.records, ...list.keptRecords], [list.records, list.keptRecords]);
   const areas = useMemo(() => areasOf(both), [both]);
-  const months = useMemo(() => monthsOf(both), [both]);
+  const years = useMemo(() => yearsOf(both), [both]);
+  const months = useMemo(() => monthsOf(both).filter((m) => !f.year || m.startsWith(`${f.year}-`)), [both, f.year]);
   const areaName = useMemo(() => new Map(startup?.areas.map((a) => [a.area_id, a.name]) ?? []), [startup]);
   const recordById = useMemo(() => new Map(list.records.map((r) => [r.event.event_id, r])), [list.records]);
   const infoById = useMemo(() => new Map(list.overlapRecords.map((r) => [r.event.event_id, r])), [list.overlapRecords]);
@@ -245,7 +250,7 @@ export default function Validate() {
       : t('You can read this list. Someone with Edit access to Events fixes the records.')
   }`;
   const filtersOn = filterCount(f);
-  const sheetCount = [f.area, f.month].filter(Boolean).length + f.flags.length;
+  const sheetCount = [f.area, f.year, f.month].filter(Boolean).length + f.flags.length;
 
   const areaSelect = (id: string) => (
     <div className="field">
@@ -256,10 +261,19 @@ export default function Validate() {
       </select>
     </div>
   );
+  const yearSelect = (id: string) => (
+    <div className="field">
+      <label htmlFor={`${id}-year`}>{t('Year')}</label>
+      <select id={`${id}-year`} className="select" value={f.year} onChange={(e) => set({ year: e.target.value, month: e.target.value && f.month.startsWith(`${e.target.value}-`) ? f.month : '' })} data-testid={`${id}-year`}>
+        <option value="">{t('All years')}</option>
+        {years.map((y) => <option key={y} value={y}>{y}</option>)}
+      </select>
+    </div>
+  );
   const monthSelect = (id: string) => (
     <div className="field">
       <label htmlFor={`${id}-month`}>{t('Month')}</label>
-      <select id={`${id}-month`} className="select" value={f.month} onChange={(e) => set({ month: e.target.value })} data-testid={`${id}-month`}>
+      <select id={`${id}-month`} className="select" value={f.month} onChange={(e) => set({ month: e.target.value, year: e.target.value ? e.target.value.slice(0, 4) : f.year })} data-testid={`${id}-month`}>
         <option value="">{t('All months')}</option>
         {months.map((m) => <option key={m} value={m}>{monthName(m)}</option>)}
       </select>
@@ -352,6 +366,15 @@ export default function Validate() {
           {' '}({inactiveAreas(startup).map((a) => a.area_id).join(', ')}). {t('They come back when an Admin switches the area on again.')}
         </p>
       )}
+      {ready && historyCount > 0 && (
+        <label className="v-history-toggle" data-testid="v-history">
+          <input type="checkbox" checked={withHistory} onChange={(e) => setWithHistory(e.target.checked)} data-testid="v-history-toggle" />
+          <span>
+            {t('Also check the imported history (NRS 2024–2025, date only)')}
+            <span className="muted"> · {tn(historyCount, '{n} record', '{n} records').replace('{n}', num(historyCount))}. {t('Its line comes from the NRS sheet; fixing it here changes the stored record.')}</span>
+          </span>
+        </label>
+      )}
       <details className="v-help" data-testid="v-hint">
         <summary>{t('What do ◆ and ▲ mean?')}</summary>
         <p>{hintText}</p>
@@ -390,7 +413,7 @@ export default function Validate() {
         </div>
       ))}
 
-      {dataReady && <QualityTable onPickMonth={(m) => { setF({ ...EMPTY_FILTER, month: m }); setView('open'); }} />}
+      {dataReady && <QualityTable onPickMonth={(m) => { setF({ ...EMPTY_FILTER, year: m.slice(0, 4), month: m }); setView('open'); }} />}
 
       {dataReady && (summary.total > 0 || summary.kept.count > 0 || summary.overlapping > 0) && (
         <div className="v-seg" role="group" aria-label={t('Which records')} data-testid="v-view">
@@ -413,6 +436,7 @@ export default function Validate() {
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
             {searchBox}
             {areaSelect('d')}
+            {yearSelect('d')}
             {monthSelect('d')}
             <button type="button" className="btn" onClick={reset} disabled={filtersOn === 0} data-testid="v-reset" style={{ minHeight: 40 }}>{t('Reset filters')}</button>
           </div>
@@ -448,6 +472,7 @@ export default function Validate() {
               }
             >
               {areaSelect('s')}
+              {yearSelect('s')}
               {monthSelect('s')}
               {view === 'open' && <div className="field">
                 <span className="field-label">{t('Problems')}</span>
