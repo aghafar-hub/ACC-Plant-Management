@@ -3,7 +3,7 @@ import { noSidewaysScroll, PASSWORD, setTheme, signInAndWait, smallTargets, stub
 
 // Settings: the gear in the top bar and its subtabs (Appearance, Calculations, Security,
 // Users and access), by role. Runs against the mock build with made-up data.
-const SUBS = ['Appearance', 'Notifications', 'Calculations', 'Actions & targets', 'Areas', 'Security', 'Users and access', 'Active users', 'Activity log'];
+const SUBS = ['Appearance', 'Notifications', 'Calculations', 'Actions & targets', 'KPI targets', 'Quality limits', 'Month closing', 'Areas', 'Security', 'Users and access', 'Active users', 'Activity log'];
 const subTabs = (page: Page) => page.getByTestId('settings-tabs').getByRole('link');
 
 test.describe('desktop', () => {
@@ -46,7 +46,7 @@ test.describe('desktop', () => {
   test('viewer sees Appearance and Notifications and the theme choice survives a reload', async ({ page }) => {
     await signInAndWait(page, 'viewer');
     await page.getByTestId('settings-btn').click();
-    await expect(subTabs(page)).toHaveText(['Appearance', 'Notifications']);
+    await expect(subTabs(page)).toHaveText(['Appearance', 'Notifications', 'KPI targets', 'Quality limits', 'Month closing']);
     await expect(page.getByTestId('theme-picker')).toBeVisible();
     await page.getByRole('radio', { name: /Carbon Dark/ }).click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'Carbon Dark');
@@ -58,7 +58,7 @@ test.describe('desktop', () => {
   test('engineer (settings and users Hidden) sees Appearance and Notifications', async ({ page }) => {
     await signInAndWait(page, 'engineer');
     await page.goto('/#/settings');
-    await expect(subTabs(page)).toHaveText(['Appearance', 'Notifications']);
+    await expect(subTabs(page)).toHaveText(['Appearance', 'Notifications', 'KPI targets', 'Quality limits', 'Month closing']);
     for (const sub of ['calculations', 'security', 'users']) {
       await page.goto(`/#/settings/${sub}`);
       await expect(page.getByTestId('no-access')).toBeVisible();
@@ -122,7 +122,7 @@ test.describe('desktop', () => {
     await page.getByTestId('login-submit').click();
     await expect(page.getByTestId('page-title')).toBeVisible();
     await page.getByTestId('settings-btn').click();
-    await expect(subTabs(page)).toHaveText(['Appearance', 'Notifications', 'Users and access']);
+    await expect(subTabs(page)).toHaveText(['Appearance', 'Notifications', 'KPI targets', 'Quality limits', 'Month closing', 'Users and access']);
     await subTabs(page).filter({ hasText: 'Users and access' }).click();
     await expect(page.getByTestId('access-level')).toHaveText('View only');
     await expect(page.getByTestId('user-row').first()).toBeVisible();
