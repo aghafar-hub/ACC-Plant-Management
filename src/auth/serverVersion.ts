@@ -24,3 +24,6 @@ export const SERVER_2_1 = '2.1.0';
 
 /** Backend 2.2.0 (plant system): date-only history import (upload kind 'history'). */
 export const SERVER_2_2 = '2.2.0';
+
+/** Backend 2.3.0 (plant system): KPI targets (Settings › KPI targets), quality limits, month-end closing. */
+export const SERVER_2_3 = '2.3.0';

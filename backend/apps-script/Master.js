@@ -6,7 +6,9 @@ function getStartup_() {
   readColumn_(T.EVENTS, 'event_date').forEach(function (d) {
     if (/^\d{4}/.test(d)) years[d.slice(0, 4)] = true;
   });
+  var kpi = kpiStartup_();
   return {
+    kpi_definitions: kpi.kpi_definitions, kpi_targets: kpi.kpi_targets,
     lines: readTable_(T.LINES), areas: readTable_(T.AREAS), equipment: readTable_(T.EQUIPMENT),
     equipment_areas: readTable_(T.EQUIPMENT_AREAS), aliases: readTable_(T.ALIASES),
     classifications: readTable_(T.CLASSIFICATIONS), reasons: readTable_(T.REASONS),

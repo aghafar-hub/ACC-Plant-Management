@@ -223,7 +223,7 @@ test('listAuditLog reads a bounded number of rows per call and continues with th
 const NOT_LOGGED = {
   personal: ['setNotificationState', 'saveNotificationPrefs'],
   read: ['getMyAccess', 'getStartup', 'getEvents', 'getEventEdits', 'getUploadHistory', 'getUploadWarnings', 'listUsers', 'getNotifications',
-    'listActions', 'getAreaTargets', 'listActiveUsers', 'listAuditLog', 'listTasks', 'listTaskTemplates', 'listResponsibilities', 'listMyResponsibilities', 'listShiftReports', 'getShiftReportHistory'],
+    'listActions', 'getAreaTargets', 'listActiveUsers', 'listAuditLog', 'listTasks', 'listTaskTemplates', 'listResponsibilities', 'listMyResponsibilities', 'listShiftReports', 'getShiftReportHistory', 'listQualityParameters'],
 };
 
 function writeCases(w) {
@@ -262,6 +262,8 @@ function writeCases(w) {
     ['reviewShiftReport', () => ({ params: { review: { report_id: 'SR-20261011-D-K.1', decision: 'approve', comment: '', edits: [] } } }), 'shift_report_approve'],
     // 2.0.0 (plant system)
     ['saveResponsibilities', () => ({ params: { userId: w.eng.user_id, rows: [{ duty: 'shift_entry', scope_type: 'area', scope_id: 'K.1' }] } }), 'set_responsibilities', /^\+ shift_entry @ K\.1$/],
+    ['saveQualityLimits', () => ({ params: { rows: [{ param_id: 'K.1.CLINKER.FL', spec_min: 0.5, spec_max: 2, valid_min: 0, valid_max: 6, active: true, notes: '' }] } }), 'save_quality_limits', /^K\.1\.CLINKER\.FL spec_min: \(blank\) -> 0\.5, spec_max: \(blank\) -> 2, notes: /],
+    ['saveKpiTargets', () => ({ params: { year: 2026, scope_type: 'plant', rows: [{ kpi_id: 'RF', month: 0, target_value: 95 }] } }), 'save_kpi_targets', /^\+ Reliability factor \(RF\) \(2026\) 95$/],
     ['runNotificationChecks', () => ({ params: {} }), 'notification_check'],
     ['createAction', () => ({ params: { input: { title: 'Audit action', scope_kind: 'area', area_id: 'K.1', owner: 'MEC', status: 'Open' } } }), 'create_action'],
     ['updateAction', () => ({ params: { actionId: w.actionId(), changes: { priority: 'High' } } }), 'update_action', /priority: .* -> High/],

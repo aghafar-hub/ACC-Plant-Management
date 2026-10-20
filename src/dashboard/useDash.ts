@@ -11,7 +11,7 @@ import { useStartup, type StartupHook } from '../data/useStartup';
 import { formatDate } from '../calc';
 import { defaultFilters, hasFilterParams, nonFilterParams, parseFilters, resolveRange, serializeFilters, type DashFilters } from './filters';
 import { forgetDashFilters, rememberedQuery, rememberQuery } from './sharedFilters';
-import { buildBase, buildEventScope, buildKpis, buildMaster, buildWindows, coverageOf, notUploadedOf, yearsNeeded, type DashCtx } from './scope';
+import { buildBase, buildEventScope, buildKpis, buildMaster, buildWindows, coverageOf, notUploadedOf, withKpiTargets, yearsNeeded, type DashCtx } from './scope';
 
 // ---------------------------------------------------------------- filters in the URL
 
@@ -223,9 +223,11 @@ export function useDash(opts: { extraYearsBack?: number } = {}): Dash {
     () => (scope && base && win && master ? buildKpis(scope, base, win, coverage, master, notUploaded) : null),
     [scope, base, win, coverage, master, notUploaded],
   );
+  // the targets of the period (Settings › KPI targets, backend 2.3.0) on top of the settings the screens read
+  const tmaster = useMemo(() => (master && win ? withKpiTargets(master, win.range) : master), [master, win]);
   const ctx = useMemo<DashCtx | null>(
-    () => (scope && base && win && master && kpis ? { master, base, scope, win, coverage, notUploaded, kpis } : null),
-    [scope, base, win, master, kpis, coverage, notUploaded],
+    () => (scope && base && win && tmaster && kpis ? { master: tmaster, base, scope, win, coverage, notUploaded, kpis } : null),
+    [scope, base, win, tmaster, kpis, coverage, notUploaded],
   );
   const reload = useCallback(() => {
     st.reload();

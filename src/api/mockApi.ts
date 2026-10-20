@@ -19,6 +19,9 @@ import { codeKey, eventIdOf, fingerprintOf, isValidDate, matchKey, parseTs } fro
 import { THEME_NAMES } from '../theme/themes';
 import { store } from '../storagePrefix';
 import { respKey, validateSet, type Responsibility } from '../plant/responsibilities';
+import { cleanTargetSave, type KpiDefinition, type KpiTarget } from '../plant/kpiTargets';
+import { changedLimitFields, limitProblem, type QualityParameter } from '../plant/quality';
+import schemaTables from '../../schema/tables.json';
 import {
   DEFAULT_SHIFTS, SHIFT_STOP_FIELDS, blockingFlags, reportIdOf, shiftWindow,
   type ShiftHistory, type ShiftReport, type ShiftStage, type ShiftStoppage, type ShiftStopField,
@@ -114,7 +117,7 @@ export interface SentMockMail { from: string; to: string[]; cc: string[]; subjec
  * outlives a reload and a fresh sign-in like on a real server (everything else in the mock starts again on a reload).
  */
 /** The backend version the demo behaves like. */
-export const MOCK_SERVER_VERSION = '2.2.0';
+export const MOCK_SERVER_VERSION = '2.3.0';
 
 export function createMockApi(opts: { seed?: number; demoActions?: boolean; keepAccountThemes?: boolean } = {}): MockApi {
   let db: SyntheticDb | null = null;
@@ -394,6 +397,16 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
   const RESOLVABLE = ['long_stop', 'repeat_group', 'upload_gap', 'action_due', 'action_ready_to_close', 'task_overdue'];
   const SNOOZE_MAX_DAYS = 366;
   let responsibilities: (Responsibility & { active: boolean })[] = [];
+  // KPI definitions and targets (backend 2.3.0; mirrors Targets.js)
+  const kpiDefs: KpiDefinition[] = (schemaTables as unknown as { kpiDefinitionSeeds: KpiDefinition[] }).kpiDefinitionSeeds.map((d) => ({
+    kpi_id: d.kpi_id, name: d.name, category: d.category, unit: d.unit ?? '', better: d.better, decimals: Number(d.decimals ?? 1), aggregation: d.aggregation, status: d.status,
+  }));
+  let kpiTargets: KpiTarget[] = [];
+  // quality limits (backend 2.3.0; mirrors Quality.js)
+  const qualityParams: QualityParameter[] = (schemaTables as unknown as { qualityParameterSeeds: QualityParameter[] }).qualityParameterSeeds.map((p) => ({
+    ...p, spec_min: p.spec_min ?? null, spec_max: p.spec_max ?? null, target: p.target ?? null, valid_min: p.valid_min ?? null, valid_max: p.valid_max ?? null,
+    samples_per_day: p.samples_per_day ?? null, qcx_column: p.qcx_column ?? '', notes: p.notes ?? '', active: p.active !== false, updated_by: '', updated_at: '',
+  }));
   // shift reports (backend 2.1.0; mirrors ShiftReports.js)
   const shiftReports: ShiftReport[] = [];
   const shiftStops: ShiftStoppage[] = [];
@@ -985,6 +998,7 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
       return clone({
         lines: d.lines, areas: d.areas, equipment: d.equipment, equipment_areas: d.equipment_areas, aliases: d.aliases,
         classifications: d.classifications, reasons: d.reasons, settings: d.settings, years,
+        kpi_definitions: kpiDefs, kpi_targets: kpiTargets,
       });
     },
     async getEvents(token, year) {
@@ -1415,6 +1429,66 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
     async listResponsibilities(token) {
       need(token, ['users'], 'View');
       return clone(responsibilities.filter((r) => r.active).map(({ active: _a, ...r }) => r));
+    },
+    async saveKpiTargets(token, save) {
+      const a = auth(token);
+      const d = get();
+      const res = cleanTargetSave(save, kpiDefs, new Set(d.lines.map((l) => l.line_id)), new Set(d.areas.map((x) => x.area_id)));
+      if ('problem' in res) throw new ApiError(res.problem, 'bad_request');
+      const scopeId = save.scope_type === 'plant' ? '' : save.scope_id;
+      const day = nowTs().slice(0, 10);
+      const lineOf = save.scope_type === 'area' ? d.areas.find((x) => x.area_id === scopeId)?.line_id : undefined;
+      const may = a.user.role_id === 'ROLE-ADMIN' || responsibilities.some((r) => r.user_id === a.user.user_id && r.active && r.duty === 'targets' &&
+        (!r.valid_from || r.valid_from <= day) && (!r.valid_to || day <= r.valid_to) &&
+        (r.scope_type === 'plant' || (r.scope_type === 'line' && (r.scope_id === scopeId || r.scope_id === lineOf)) || (r.scope_type === 'area' && save.scope_type === 'area' && r.scope_id === scopeId)));
+      if (!may) throw new ApiError(`You do not hold the duty "Targets" for ${save.scope_type === 'plant' ? 'the plant' : scopeId}. An Admin can add it in Settings > Users > Responsibilities.`, 'forbidden');
+      const same = (t: KpiTarget) => t.scope_type === save.scope_type && t.scope_id === scopeId && t.year === save.year;
+      const stamp = nowTs();
+      const before = kpiTargets.filter(same);
+      const next: KpiTarget[] = res.rows.map((r) => {
+        const old = before.find((b) => b.kpi_id === r.kpi_id && b.month === r.month);
+        const unchanged = old && old.target_value === r.target_value && old.lower_limit === (r.lower_limit ?? null) && old.upper_limit === (r.upper_limit ?? null) && old.source === (r.source ?? '');
+        return unchanged ? old : {
+          scope_type: save.scope_type, scope_id: scopeId, kpi_id: r.kpi_id, year: save.year, month: r.month, target_value: r.target_value,
+          lower_limit: r.lower_limit ?? null, upper_limit: r.upper_limit ?? null, source: r.source ?? '', updated_by: a.user.user_id, updated_at: stamp,
+        };
+      });
+      const changed = next.length !== before.length || next.some((n) => !before.includes(n));
+      if (changed) {
+        kpiTargets = [...kpiTargets.filter((t) => !same(t)), ...next];
+        audit(a.user.user_id, 'save_kpi_targets', 'kpi_targets', `${save.scope_type === 'plant' ? 'plant' : scopeId} ${save.year}`, `${next.length} targets`);
+      }
+      return clone(kpiTargets.filter(same));
+    },
+    async listQualityParameters(token) {
+      auth(token);
+      return clone(qualityParams.slice().sort((x, y) => x.sort_order - y.sort_order));
+    },
+    async saveQualityLimits(token, rows) {
+      const a = auth(token);
+      if (!Array.isArray(rows) || !rows.length) throw new ApiError('Send at least one parameter.', 'bad_request');
+      const d = get();
+      const day = nowTs().slice(0, 10);
+      const seen = new Set<string>();
+      const plan = rows.map((r) => {
+        const cur = qualityParams.find((p) => p.param_id === r.param_id);
+        if (!cur) throw new ApiError(`There is no quality parameter ${String(r.param_id).slice(0, 60)}.`, 'bad_request');
+        if (seen.has(cur.param_id)) throw new ApiError(`${cur.param_id} is listed twice.`, 'bad_request');
+        seen.add(cur.param_id);
+        const area = d.areas.find((x) => x.area_id === cur.area_id);
+        const may = a.user.role_id === 'ROLE-ADMIN' || responsibilities.some((x) => x.user_id === a.user.user_id && x.active && x.duty === 'quality_validation' &&
+          (!x.valid_from || x.valid_from <= day) && (!x.valid_to || day <= x.valid_to) &&
+          (x.scope_type === 'plant' || (x.scope_type === 'line' && x.scope_id === area?.line_id) || (x.scope_type === 'area' && x.scope_id === cur.area_id)));
+        if (!may) throw new ApiError(`You do not hold the duty "Quality validation" for ${cur.area_id}. An Admin can add it in Settings > Users > Responsibilities.`, 'forbidden');
+        const next = { ...r, active: r.active !== false, notes: (r.notes ?? '').trim().slice(0, 300) };
+        const problem = limitProblem({ ...cur, ...next });
+        if (problem) throw new ApiError(problem, 'bad_request');
+        return { cur, next, changed: changedLimitFields(cur, next) };
+      }).filter((x) => x.changed.length);
+      const stamp = nowTs();
+      for (const x of plan) Object.assign(x.cur, x.next, { updated_by: a.user.user_id, updated_at: stamp });
+      if (plan.length) audit(a.user.user_id, 'save_quality_limits', 'quality_parameters', plan.map((x) => x.cur.param_id).join(','), plan.map((x) => `${x.cur.param_id} ${x.changed.join(', ')}`).join('; '));
+      return clone(qualityParams.slice().sort((x, y) => x.sort_order - y.sort_order));
     },
     async listMyResponsibilities(token) {
       const a = auth(token);

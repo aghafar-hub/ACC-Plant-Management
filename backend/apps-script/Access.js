@@ -77,6 +77,11 @@ var ACTION_RULES = {
   saveResponsibilities: { auth: 'tabs', tabs: ['users'], level: 'Edit' },
   // 2.1.0: shift reports (ShiftReports.js). Each step also needs the person's duty for the area (checked in the handler).
   listMyResponsibilities: { auth: 'session' },
+  // 2.3.0: KPI targets (Targets.js); who may save is checked inside (Admin or the duty "targets" for the scope)
+  saveKpiTargets: { auth: 'session' },
+  // 2.3.0: quality limits (Quality.js); saving needs the Admin role or the duty "quality_validation" for the area (checked inside)
+  listQualityParameters: { auth: 'session' },
+  saveQualityLimits: { auth: 'session' },
   listShiftReports: { auth: 'tabs', tabs: ['shift', 'daily'], level: 'View' },
   getShiftReportHistory: { auth: 'tabs', tabs: ['shift', 'daily'], level: 'View' },
   saveShiftReport: { auth: 'tabs', tabs: ['shift'], level: 'Edit' },

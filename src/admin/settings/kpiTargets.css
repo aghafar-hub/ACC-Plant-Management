@@ -1,0 +1,21 @@
+/* Settings › KPI targets (backend 2.3.0) */
+.kt-head { display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; }
+.kt-head h2 { margin: 0 0 4px; font-size: 17px; }
+.kt-head > div:first-child { flex: 1 1 320px; min-width: 0; }
+.kt-pick { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; }
+.kt-pick .field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; min-width: 0; }
+.kt-pick .select { max-width: 100%; }
+.kt-check { display: flex; align-items: center; gap: 6px; font-size: 13px; min-height: 40px; }
+.kt-table th[scope='row'] { text-align: left; font-weight: 500; min-width: 180px; }
+.kt-name { font-weight: 600; }
+.kt-group th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--tk-text-secondary); padding-top: 14px; }
+.kt-better { text-align: center; color: var(--tk-text-secondary); }
+.kt-num { width: 9ch; min-width: 7ch; text-align: right; font-variant-numeric: tabular-nums; }
+.kt-num::placeholder { color: var(--tk-text-muted); }
+.kt-months { display: grid; gap: 8px 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 96px), 1fr)); padding: 4px 0 8px; }
+.kt-month { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--tk-text-secondary); }
+.kt-month .kt-num { width: 100%; }
+.kt-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.kt-num[aria-invalid='true'] { border-color: var(--tk-danger); outline: 1px solid var(--tk-danger); }
+.ql-problems { margin: 10px 0 0; padding-left: 28px; display: block; }
+.ql-row--bad th { color: var(--tk-danger); }

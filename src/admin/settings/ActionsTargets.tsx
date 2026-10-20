@@ -306,7 +306,8 @@ function AreaTargets({ edit, onSaved }: { edit: boolean; onSaved: (text: string)
   return (
     <section className="card at-sec" aria-labelledby="at-targets" data-testid="area-targets">
       <header className="at-sec-head"><span className="at-letter" aria-hidden="true">e</span><div><h2 id="at-targets">{t('Area targets')}</h2>
-        <p className="adm-note">{t('Availability, reliability factor (RF) and utilization factor (UF) targets and the planned-stop allowance per area per year. A blank RF or UF uses the plant-wide target (shown in grey). The year is split evenly by month unless you change a month; an overhaul is marked in the month it is planned. Used by the rules Availability below target and Planned overrun, and by the Dashboard.')}</p></div>
+        <p className="adm-note">{t('Availability, reliability factor (RF) and utilization factor (UF) targets and the planned-stop allowance per area per year. A blank RF or UF uses the plant-wide target (shown in grey). The year is split evenly by month unless you change a month; an overhaul is marked in the month it is planned. Used by the rules Availability below target and Planned overrun, and by the Dashboard.')}</p>
+        <p className="adm-note" data-testid="area-targets-kpi-note">{t('RF and UF targets set in Settings › KPI targets (for this area or its line) take the place of the RF and UF here.')}</p></div>
         <label className="af-pill at-head-btn">
           <span className="af-pill-label">{t('Year')}:</span>
           <select value={year} onChange={(e) => setYear(Number(e.target.value))} aria-label={t('Year')} data-testid="targets-year">

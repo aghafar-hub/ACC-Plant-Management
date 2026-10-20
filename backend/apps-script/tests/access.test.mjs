@@ -29,7 +29,7 @@ const REQ = {
   sendReport: [['reports'], 'Edit'], sendTestEmail: 'admin',
   signOutEverywhere: 'session', signOutUserEverywhere: 'admin', acceptEventFlagsBulk: [['events'], 'Edit'],
   listResponsibilities: [['users'], 'View'], saveResponsibilities: [['users'], 'Edit'],
-  listMyResponsibilities: 'session', listShiftReports: [['shift', 'daily'], 'View'], getShiftReportHistory: [['shift', 'daily'], 'View'],
+  listMyResponsibilities: 'session', saveKpiTargets: 'session', listQualityParameters: 'session', saveQualityLimits: 'session', listShiftReports: [['shift', 'daily'], 'View'], getShiftReportHistory: [['shift', 'daily'], 'View'],
   saveShiftReport: [['shift'], 'Edit'], closeShiftStoppage: [['shift'], 'Edit'], reviewShiftReport: [['shift'], 'Edit'],
   addTask: [['actions'], 'Edit'], updateTask: [['actions'], 'Edit'], applyTemplate: [['actions'], 'Edit'], listTasks: [['actions'], 'View'],
   listTaskTemplates: 'session', saveTaskTemplates: [['settings'], 'Edit'],

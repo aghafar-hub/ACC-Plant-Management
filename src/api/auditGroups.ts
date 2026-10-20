@@ -5,7 +5,7 @@ import type { AuditGroup } from './types';
 export const AUDIT_GROUP_ACTIONS: Record<AuditGroup, readonly string[]> = {
   signin: ['login', 'login_failed', 'login_locked', 'login_throttled', 'logout', 'change_password', 'sign_out_everywhere'],
   users: ['create_user', 'update_user', 'reset_password', 'set_tab_access', 'create_first_admin', 'sign_out_user_everywhere', 'set_responsibilities'],
-  settings: ['save_setting', 'save_contractors', 'save_area_targets', 'save_task_templates'],
+  settings: ['save_setting', 'save_contractors', 'save_area_targets', 'save_task_templates', 'save_kpi_targets', 'save_quality_limits'],
   master: ['add_equipment', 'update_equipment', 'add_area', 'update_area', 'add_reason', 'update_reason', 'add_alias', 'update_alias', 'delete_alias'],
   events: ['edit_event', 'void_event', 'unvoid_event', 'accept_event_flags', 'revalidate_events'],
   upload: ['upload_start', 'upload_chunk', 'upload_finish'],

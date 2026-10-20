@@ -7,6 +7,7 @@ import {
   emptyFilter, filterChains, intersectRanges, isAnalysable, notUploadedMonths, parseSettings, type Attribution, type CalcSettings, type ChainedEvent,
   type DateRange, type Filter, type KpiComparison, type KpiResult, type MasterIndex,
 } from '../calc';
+import { periodMonth, resolveKpiTarget, type KpiTarget } from '../plant/kpiTargets';
 import { areasInScope, compareKind, eventLevelFilter, hasEventLevelFilter, type CompareMode, type DashFilters } from './filters';
 
 export interface Master {
@@ -14,6 +15,10 @@ export interface Master {
   /** display name of each line (line_id -> name) */
   lineNames: Map<string, string>;
   settings: CalcSettings;
+  /** backend 2.3.0: every stored KPI target (Settings › KPI targets); empty on older servers */
+  kpiTargets?: readonly KpiTarget[];
+  /** the period these settings were resolved for (set by withKpiTargets), so per-area targets use the same year and month */
+  targetPeriod?: { year: number; month: number | null };
 }
 
 // ---- R5: memo of the heavy stages, shared by every page (Dashboard -> Pareto -> Repeats reuse one build)
@@ -65,7 +70,30 @@ export function clearScopeMemo() {
 }
 
 function buildMasterNow(startup: Startup): Master {
-  return { index: buildIndex(startup), lineNames: new Map(startup.lines.map((l) => [l.line_id, l.name])), settings: parseSettings(startup.settings) };
+  return {
+    index: buildIndex(startup), lineNames: new Map(startup.lines.map((l) => [l.line_id, l.name])), settings: parseSettings(startup.settings),
+    kpiTargets: startup.kpi_targets ?? [],
+  };
+}
+
+const PLANT_FIELDS = [['RF', 'reliabilityTargetPct'], ['UF', 'utilizationTargetPct'], ['MTBF', 'targetMtbfH'], ['MTTR', 'targetMttrH']] as const;
+
+/**
+ * The master with the plant-wide targets of the period taken from Settings › KPI targets (backend 2.3.0): RF, UF, MTBF and
+ * MTTR use the plant target of the month (a one-month period) or of the year when one is stored; otherwise the older
+ * setting stays. Returns the same object when there is nothing to change, so the memo of later stages keeps working.
+ */
+export function withKpiTargets(master: Master, period: DateRange | null): Master {
+  if (!period) return master;
+  const p = periodMonth(period.from, period.to);
+  const targets = master.kpiTargets ?? [];
+  if (!targets.length) return master;
+  const settings = { ...master.settings };
+  for (const [kpi, field] of PLANT_FIELDS) {
+    const hit = resolveKpiTarget(targets, kpi, { type: 'plant', id: '' }, p.year, p.month);
+    if (hit && hit.target_value !== null) settings[field] = hit.target_value;
+  }
+  return { ...master, settings, targetPeriod: p };
 }
 
 /** Master index, line names and settings of one start-up payload (built once per payload). */

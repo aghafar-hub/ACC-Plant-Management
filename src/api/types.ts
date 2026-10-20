@@ -14,6 +14,8 @@
 import type { Responsibility, ResponsibilityInput } from '../plant/responsibilities';
 import type { ShiftBundle, ShiftHistory, ShiftList, ShiftReportInput, ShiftRestartInput, ShiftReviewInput } from '../plant/shift';
 
+import type { KpiDefinition, KpiTarget, KpiTargetSave } from '../plant/kpiTargets';
+import type { QualityLimitInput, QualityParameter } from '../plant/quality';
 export type TabId =
   | 'overview' | 'pareto' | 'repeats' | 'reliability' | 'reports' | 'actions' | 'events'
   | 'upload' | 'master' | 'settings' | 'users' | 'shift' | 'daily';
@@ -125,6 +127,9 @@ export interface Startup {
   lines: Line[]; areas: Area[]; equipment: Equipment[]; equipment_areas: EquipmentArea[];
   aliases: EquipmentAlias[]; classifications: Classification[]; reasons: Reason[];
   settings: Setting[]; years: number[];
+  /** backend 2.3.0 (plant system): the KPI definitions and every stored KPI target (missing from older servers) */
+  kpi_definitions?: KpiDefinition[];
+  kpi_targets?: KpiTarget[];
 }
 
 // ---- notifications (docs/notifications-design.md, docs/wire-protocol.md section 9) ----
@@ -689,6 +694,12 @@ export interface Api {
   listMyResponsibilities(token: string): Promise<Responsibility[]>;
   /** Backend 2.0.0: replaces the complete set of one user; returns that set. Users Edit; an Admin's only by the Admin role. */
   saveResponsibilities(token: string, userId: string, rows: ResponsibilityInput[]): Promise<Responsibility[]>;
+  /** Backend 2.3.0: replaces the KPI targets of one scope and year; returns them. Admin role or the duty "targets" for the scope. */
+  saveKpiTargets(token: string, save: KpiTargetSave): Promise<KpiTarget[]>;
+  /** Backend 2.3.0: every laboratory parameter with its limits. Any signed-in user. */
+  listQualityParameters(token: string): Promise<QualityParameter[]>;
+  /** Backend 2.3.0: changes the limits of the given parameters; returns all. Admin role or the duty "quality_validation" for each area. */
+  saveQualityLimits(token: string, rows: QualityLimitInput[]): Promise<QualityParameter[]>;
 
   // --- shift reports (plant system, backend 2.1.0) ---
   /** Reports dated from..to (at most 62 days), their stoppages, every open stoppage and what those reports closed. shift or daily View. */

@@ -155,6 +155,8 @@ export function auditSentence(e: AuditEntry, name: (id: string) => string): stri
     case 'apply_template': return withNote(t('Applied a task template to action {id}', { id }), d.replace(/^Template /, ''));
     case 'save_task_templates': return withNote(t('Saved task templates {ids}', { ids: id.replace(/,/g, ', ') }), d === 'No change' ? ''
       : changesText(d.replace(/\. (?=TT-)/g, '; ').replace(/(TT-\S+) ([a-z_]+): /g, (_x, tid: string, f: string) => `${tid} ${fieldWord(f)} `)));
+    case 'save_quality_limits': return withNote(t('Changed quality limits of {ids}', { ids: id.replace(/,/g, ', ') }), d);
+    case 'save_kpi_targets': return withNote(t('Saved the KPI targets of {id}', { id }), d);
     case 'migrate_actions': return withNote(t('Version 1.7.0: the action statuses Contractor informed and Waiting stoppage now live on tasks'), d);
     case 'activate_area': return t('Switched area {id} on (its records count again)', { id });
     case 'deactivate_area': return t('Switched area {id} off (its records are left out everywhere)', { id });

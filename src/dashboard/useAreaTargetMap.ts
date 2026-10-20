@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useAreaTargets } from '../actions/ActionsContext';
 import { areaOwnTargets, areaTargetMap } from '../actions/targets';
+import { areaKpiTargets } from '../plant/kpiTargets';
 import type { OwnTargets } from './targets';
 import type { DashCtx } from './scope';
 
@@ -24,13 +25,23 @@ export function useAreaTargetMap(ctx: DashCtx | null): ReadonlyMap<string, numbe
   }, [targets, year]);
 }
 
-/** All own targets of single areas (availability, RF, UF) for the year of the period, or null when no area has one. */
+/**
+ * All own targets of single areas (availability, RF, UF) for the year of the period, or null when no area has one.
+ * An area or line target of Settings › KPI targets (backend 2.3.0) wins over the older per-area target of the year.
+ */
 export function useAreaOwnTargets(ctx: DashCtx | null): ReadonlyMap<string, OwnTargets> | null {
   const { targets } = useAreaTargets();
   const year = ctxYear(ctx);
+  const master = ctx?.master;
   return useMemo(() => {
     if (year === null) return null;
     const m = areaOwnTargets(targets, year);
+    const kpi = master?.kpiTargets ?? [];
+    if (kpi.length && master) {
+      const lines = new Map([...master.index.areaById.values()].map((a) => [a.area_id, a.line_id]));
+      const p = master.targetPeriod ?? { year, month: null };
+      for (const [area, o] of areaKpiTargets(kpi, lines, p.year, p.month)) m.set(area, { ...m.get(area), ...o });
+    }
     return m.size ? m : null;
-  }, [targets, year]);
+  }, [targets, year, master]);
 }
