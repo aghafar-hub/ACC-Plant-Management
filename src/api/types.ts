@@ -16,6 +16,7 @@ import type { ShiftBundle, ShiftHistory, ShiftList, ShiftReportInput, ShiftResta
 
 import type { KpiDefinition, KpiTarget, KpiTargetSave } from '../plant/kpiTargets';
 import type { QualityLimitInput, QualityParameter } from '../plant/quality';
+import type { MonthClosing, MonthClosingStep } from '../plant/closing';
 export type TabId =
   | 'overview' | 'pareto' | 'repeats' | 'reliability' | 'reports' | 'actions' | 'events'
   | 'upload' | 'master' | 'settings' | 'users' | 'shift' | 'daily';
@@ -130,6 +131,8 @@ export interface Startup {
   /** backend 2.3.0 (plant system): the KPI definitions and every stored KPI target (missing from older servers) */
   kpi_definitions?: KpiDefinition[];
   kpi_targets?: KpiTarget[];
+  /** backend 2.3.0: the month-end closing of each section and month (missing from older servers) */
+  month_closings?: MonthClosing[];
 }
 
 // ---- notifications (docs/notifications-design.md, docs/wire-protocol.md section 9) ----
@@ -700,6 +703,8 @@ export interface Api {
   listQualityParameters(token: string): Promise<QualityParameter[]>;
   /** Backend 2.3.0: changes the limits of the given parameters; returns all. Admin role or the duty "quality_validation" for each area. */
   saveQualityLimits(token: string, rows: QualityLimitInput[]): Promise<QualityParameter[]>;
+  /** Backend 2.3.0: one step of the month-end closing (review, sign-off, reopen); returns the closing. Duty month_review / month_signoff of the section. */
+  closeMonthStep(token: string, step: MonthClosingStep): Promise<MonthClosing>;
 
   // --- shift reports (plant system, backend 2.1.0) ---
   /** Reports dated from..to (at most 62 days), their stoppages, every open stoppage and what those reports closed. shift or daily View. */

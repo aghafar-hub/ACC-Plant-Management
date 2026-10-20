@@ -125,6 +125,7 @@ export const SETTINGS_SUBS: SettingsSub[] = [
   { id: 'actions', label: 'Actions & targets', tab: 'settings', icon: 'target', blurb: 'Who can close actions, the contractors and their areas, task templates, the draft rules and the targets per area.' },
   { id: 'kpi-targets', label: 'KPI targets', tab: null, icon: 'target', blurb: 'Targets per KPI for the plant, each line and each area, by year and month. The one place targets are kept.' },
   { id: 'quality', label: 'Quality limits', tab: null, icon: 'compliance', blurb: 'The specification and valid range of each laboratory parameter, by area and material.' },
+  { id: 'closing', label: 'Month closing', tab: null, icon: 'check', blurb: 'Review and sign off each section month by month. A signed-off month is locked until it is reopened with a reason.' },
   { id: 'areas', label: 'Areas', tab: null, adminOnly: true, icon: 'database', blurb: 'Switch areas on or off for the whole plant. An inactive area and its records are left out everywhere.' },
   { id: 'security', label: 'Security', tab: 'settings', icon: 'shield', blurb: 'Sign-in limits, sessions and passwords.' },
   { id: 'users', label: 'Users and access', tab: 'users', icon: 'users', blurb: 'Who can sign in and which pages they can open.' },

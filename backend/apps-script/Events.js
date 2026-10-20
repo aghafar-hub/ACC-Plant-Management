@@ -202,6 +202,8 @@ function editEvent_(session, eventId, changes, note) {
   return withLock_(function () {
     var ev = eventOrThrow_(eventId);
     if (ev.is_void) throw apiError_(ERR.CONFLICT, 'This event is void. Restore it before editing.');
+    var locked = lockedMonths_('downtime');
+    requireDowntimeOpen_(ev, locked);
     var cand = {};
     EDITABLE_EVENT_FIELDS.forEach(function (f) { cand[f] = ev[f]; });
     fields.forEach(function (f) { cand[f] = changes[f]; });
@@ -225,6 +227,7 @@ function editEvent_(session, eventId, changes, note) {
     var norm = normalizeEvent_(ctx, cand);
     if (norm.error) throw apiError_(ERR.BAD_REQUEST, norm.error);
     var rec = norm.rec;
+    requireDowntimeOpen_(rec, locked); // a new date or stop time may not move the record into a signed-off month
     // Criticality follows a changed classification, unless the old one was blank or unknown (then the sheet's value stays).
     if ('classification' in changes && !('criticality' in changes) && ctx.classes[ev.classification] && rec.classification !== ev.classification) {
       rec.criticality = ctx.classes[rec.classification].is_incident ? 'INC' : 'NO_INC';
@@ -267,6 +270,7 @@ function voidEvent_(session, eventId, isVoid, note) {
   return withLock_(function () {
     var ev = eventOrThrow_(eventId);
     if (ev.is_void === isVoid) return ev;
+    requireDowntimeOpen_(ev);
     updateRow_(T.EVENTS, ev._row, { is_void: isVoid });
     appendRows_(T.EDITS, editRows_(session, ev, [{ field: 'is_void', oldValue: ev.is_void, newValue: isVoid }], why));
     auditLog_(session.user.user_id, isVoid ? 'void_event' : 'unvoid_event', T.EVENTS, ev.event_id, 'Note: ' + why);
@@ -297,8 +301,9 @@ function acceptFlagList_(flags) {
 }
 
 /** The change "keep as entered" makes to one event: { patch, current } or throws a plain-English error. */
-function acceptPatch_(session, ev, wanted, at) {
+function acceptPatch_(session, ev, wanted, at, locked) {
   if (ev.is_void) throw apiError_(ERR.CONFLICT, 'This event is void. Restore it before changing it.');
+  requireDowntimeOpen_(ev, locked);
   var current = canonFlags_(ev.accepted_flags);
   var stored = canonFlags_(ev.flags);
   wanted.forEach(function (f) {
@@ -360,6 +365,7 @@ function acceptEventFlagsBulk_(session, items, note) {
     var at = nowTs_();
     var stamp = compactTs_('yyyyMMddHHmmssSSS');
     var writes = [], history = [], audits = [], saved = [], failed = [], seen = {};
+    var locked = lockedMonths_('downtime');
     clean.forEach(function (c) {
       try {
         if (seen[c.id]) throw apiError_(ERR.BAD_REQUEST, 'This record is listed twice.');
@@ -368,7 +374,7 @@ function acceptEventFlagsBulk_(session, items, note) {
         if (!rowNum) throw apiError_(ERR.NOT_FOUND, 'Event not found.');
         var raw = sheet.getRange(rowNum, 1, 1, headers.length).getValues()[0];
         var ev = rowToObject_(types, headers, raw, rowNum);
-        var p = acceptPatch_(session, ev, c.wanted, at);
+        var p = acceptPatch_(session, ev, c.wanted, at, locked);
         var values = objectToRow_(T.EVENTS, headers, p.patch, raw);
         writes.push({ rowNum: rowNum, values: values, cells: ACCEPT_COLS_.map(function (h) { return values[headers.indexOf(h)]; }) });
         history.push({
@@ -409,6 +415,7 @@ function revalidateEvents_(session, year) {
   }
   return withLock_(function () {
     var ctx = eventContext_();
+    var locked = lockedMonths_('downtime');
     var sheet = getSheet_(T.EVENTS);
     var headers = sheetHeaders_(sheet);
     var last = sheet.getLastRow();
@@ -421,6 +428,7 @@ function revalidateEvents_(session, year) {
         var ev = rowToObject_(types, headers, values[i], i + 2);
         if (ev.is_void) continue;
         if (y !== null && String(ev.event_date).slice(0, 4) !== String(y)) continue;
+        if (lockedMonthOf_(ev, locked)) continue; // 2.3.0: a signed-off month keeps its flags
         checked++;
         var norm = normalizeEvent_(ctx, ev);
         if (norm.error) continue;

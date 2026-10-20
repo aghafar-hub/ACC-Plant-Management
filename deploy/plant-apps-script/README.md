@@ -24,3 +24,4 @@ Set-up steps: [docs/plant-system/03-database-v7.md](../../docs/plant-system/03-d
 | 2.0.0 | Responsibilities (Users page) | ensureSchema, seedDefaults |
 | 2.1.0 | Shift reports, Review, Daily meeting; posting validated stoppages to the downtime analysis | seedDefaults (adds the Shift reports and Daily meeting page access to every role) |
 | 2.2.0 | History import (date only) on the Upload page, Admin only | ensureSchema (adds the `kind` column to upload_batches) |
+| 2.3.0 | Settings › KPI targets, Quality limits and Month closing; a signed-off downtime month is locked; EA on the Dashboard | nothing (the tables exist since 2.0.0); run ensureSchema only if a sheet is missing |

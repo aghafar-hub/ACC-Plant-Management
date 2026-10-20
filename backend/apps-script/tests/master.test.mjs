@@ -13,7 +13,7 @@ test('getStartup returns masters and settings, but never users or the audit log'
   const { env, admin } = setup();
   const eng = makeUser(env, admin.token, 'ROLE-VIEW', 'v@example.com');
   const s = env.ok('getStartup', eng.token);
-  assert.deepEqual(Object.keys(s).sort(), ['aliases', 'areas', 'classifications', 'equipment', 'equipment_areas', 'kpi_definitions', 'kpi_targets', 'lines', 'reasons', 'settings', 'years']);
+  assert.deepEqual(Object.keys(s).sort(), ['aliases', 'areas', 'classifications', 'equipment', 'equipment_areas', 'kpi_definitions', 'kpi_targets', 'lines', 'month_closings', 'reasons', 'settings', 'years']);
   assert.equal(s.areas.length, 19);
   assert.equal(s.lines.length, 2);
   assert.equal(s.classifications.length, 6);

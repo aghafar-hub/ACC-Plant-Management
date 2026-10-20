@@ -263,6 +263,7 @@ function writeCases(w) {
     // 2.0.0 (plant system)
     ['saveResponsibilities', () => ({ params: { userId: w.eng.user_id, rows: [{ duty: 'shift_entry', scope_type: 'area', scope_id: 'K.1' }] } }), 'set_responsibilities', /^\+ shift_entry @ K\.1$/],
     ['saveQualityLimits', () => ({ params: { rows: [{ param_id: 'K.1.CLINKER.FL', spec_min: 0.5, spec_max: 2, valid_min: 0, valid_max: 6, active: true, notes: '' }] } }), 'save_quality_limits', /^K\.1\.CLINKER\.FL spec_min: \(blank\) -> 0\.5, spec_max: \(blank\) -> 2, notes: /],
+    ['closeMonthStep', () => ({ params: { section: 'quality', year: 2026, month: 1, step: 'review', comment: 'all results in' } }), 'month_review', /^Comment: all results in$/],
     ['saveKpiTargets', () => ({ params: { year: 2026, scope_type: 'plant', rows: [{ kpi_id: 'RF', month: 0, target_value: 95 }] } }), 'save_kpi_targets', /^\+ Reliability factor \(RF\) \(2026\) 95$/],
     ['runNotificationChecks', () => ({ params: {} }), 'notification_check'],
     ['createAction', () => ({ params: { input: { title: 'Audit action', scope_kind: 'area', area_id: 'K.1', owner: 'MEC', status: 'Open' } } }), 'create_action'],

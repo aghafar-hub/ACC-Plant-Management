@@ -8,7 +8,7 @@ function getStartup_() {
   });
   var kpi = kpiStartup_();
   return {
-    kpi_definitions: kpi.kpi_definitions, kpi_targets: kpi.kpi_targets,
+    kpi_definitions: kpi.kpi_definitions, kpi_targets: kpi.kpi_targets, month_closings: listMonthClosings_(),
     lines: readTable_(T.LINES), areas: readTable_(T.AREAS), equipment: readTable_(T.EQUIPMENT),
     equipment_areas: readTable_(T.EQUIPMENT_AREAS), aliases: readTable_(T.ALIASES),
     classifications: readTable_(T.CLASSIFICATIONS), reasons: readTable_(T.REASONS),

@@ -55,6 +55,7 @@ function uploadChunk_(session, batchId, rows) {
     var batch = batchOrThrow_(batchId);
     if (batch.status !== 'Started') throw apiError_(ERR.CONFLICT, 'This upload is already finished.');
     var ctx = eventContext_();
+    var locked = lockedMonths_('downtime');
     var known = {}, inBatch = {};
     var fps = readColumn_(T.EVENTS, 'fingerprint'), bids = readColumn_(T.EVENTS, 'batch_id'), srcs = readColumn_(T.EVENTS, 'source_row');
     for (var i = 0; i < fps.length; i++) {
@@ -70,6 +71,10 @@ function uploadChunk_(session, batchId, rows) {
         return;
       }
       var rec = norm.rec; // a row with a data problem is stored with flags, never dropped
+      if (lockedMonthOf_(rec, locked)) {
+        rejected.push({ source_row: toIntOr_(row.source_row, 0), reason: lockedText_(lockedMonthOf_(rec, locked)) });
+        return;
+      }
       var key = rec.area_id + '|' + rec.code_key + '|' + rec.stop_ts + '|' + rec.start_ts;
       var srcRow = toIntOr_(row.source_row, null);
       var n = verifiedHint_(key, row.fingerprint);

@@ -21,6 +21,7 @@ import { store } from '../storagePrefix';
 import { respKey, validateSet, type Responsibility } from '../plant/responsibilities';
 import { cleanTargetSave, type KpiDefinition, type KpiTarget } from '../plant/kpiTargets';
 import { changedLimitFields, limitProblem, type QualityParameter } from '../plant/quality';
+import { CLOSING_REASON_MIN, CLOSING_SECTION_TEXT, CLOSING_SECTIONS, closingOf, lockedMonthOf, lockedMonths, lockedText, monthKey, type MonthClosing } from '../plant/closing';
 import schemaTables from '../../schema/tables.json';
 import {
   DEFAULT_SHIFTS, SHIFT_STOP_FIELDS, blockingFlags, reportIdOf, shiftWindow,
@@ -402,6 +403,12 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
     kpi_id: d.kpi_id, name: d.name, category: d.category, unit: d.unit ?? '', better: d.better, decimals: Number(d.decimals ?? 1), aggregation: d.aggregation, status: d.status,
   }));
   let kpiTargets: KpiTarget[] = [];
+  // month-end closing (backend 2.3.0; mirrors Closing.js): a signed-off downtime month is locked
+  const closings: MonthClosing[] = [];
+  function requireMonthOpen(rec: { event_date?: string; stop_ts?: string }, locked = lockedMonths(closings)) {
+    const ym = lockedMonthOf(rec, locked);
+    if (ym) throw new ApiError(lockedText(ym), 'conflict');
+  }
   // quality limits (backend 2.3.0; mirrors Quality.js)
   const qualityParams: QualityParameter[] = (schemaTables as unknown as { qualityParameterSeeds: QualityParameter[] }).qualityParameterSeeds.map((p) => ({
     ...p, spec_min: p.spec_min ?? null, spec_max: p.spec_max ?? null, target: p.target ?? null, valid_min: p.valid_min ?? null, valid_max: p.valid_max ?? null,
@@ -493,7 +500,8 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
   function postReadyStops(by: string): number {
     const done = (st?: string) => st === 'validated' || st === 'posted';
     const rep = (id: string) => shiftReports.find((r) => r.report_id === id);
-    const ready = shiftStops.filter((s) => s.row_state === 'active' && !s.posted_event_id && s.stop_state === 'closed' && done(rep(s.report_id)?.status) && done(rep(s.closed_report_id || s.report_id)?.status));
+    const lockedNow = lockedMonths(closings);
+    const ready = shiftStops.filter((s) => s.row_state === 'active' && !s.posted_event_id && s.stop_state === 'closed' && !lockedNow.has(s.stop_ts.slice(0, 7)) && done(rep(s.report_id)?.status) && done(rep(s.closed_report_id || s.report_id)?.status));
     const d = get();
     const stamp = nowTs();
     for (const s of ready) {
@@ -771,6 +779,7 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
     const ev = d.events.find((e) => e.event_id === eventId);
     if (!ev) throw new ApiError('Event not found.', 'not_found');
     if (ev.is_void) throw new ApiError('This event is void. Restore it before editing.', 'conflict');
+    requireMonthOpen(ev);
     const bad = (m: string) => new ApiError(m, 'bad_request');
     const index = lookup();
     const cand: Record<string, unknown> = {};
@@ -795,6 +804,7 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
     const norm = normalizeRecord(cand, index);
     if ('error' in norm) throw bad(norm.error);
     const rec = norm.rec;
+    requireMonthOpen(rec);
     // criticality follows a changed classification, unless the old one was blank or unknown (then the sheet's value stays)
     if ('classification' in incoming && !('criticality' in incoming) && CLASS_CODES.includes(ev.classification) && rec.classification !== ev.classification) {
       rec.criticality = d.classifications.find((c) => c.code === rec.classification)!.is_incident ? 'INC' : 'NO_INC';
@@ -852,6 +862,7 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
     const ev = d.events.find((e) => e.event_id === eventId);
     if (!ev) throw new ApiError('Event not found.', 'not_found');
     if (ev.is_void) throw new ApiError('This event is void. Restore it before changing it.', 'conflict');
+    requireMonthOpen(ev);
     const current = canonicalFlags(splitFlags(ev.accepted_flags));
     const storedFlags = canonicalFlags(splitFlags(ev.flags));
     for (const f of wanted) {
@@ -887,6 +898,7 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
     if (!String(note ?? '').trim()) throw new ApiError('Please write a short note saying why.', 'bad_request');
     if (typeof isVoid !== 'boolean') throw new ApiError('Void must be yes or no.', 'bad_request');
     if (ev.is_void === isVoid) throw new ApiError(isVoid ? 'This event is already voided.' : 'This event is not voided.', 'conflict');
+    requireMonthOpen(ev);
     ev.is_void = isVoid;
     d.event_edits.push({
       edit_id: `ED-${at.replace(/\D/g, '').slice(0, 14)}-${++counter}`, event_id: ev.event_id, edited_at: at, edited_by: userId,
@@ -998,7 +1010,7 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
       return clone({
         lines: d.lines, areas: d.areas, equipment: d.equipment, equipment_areas: d.equipment_areas, aliases: d.aliases,
         classifications: d.classifications, reasons: d.reasons, settings: d.settings, years,
-        kpi_definitions: kpiDefs, kpi_targets: kpiTargets,
+        kpi_definitions: kpiDefs, kpi_targets: kpiTargets, month_closings: closings,
       });
     },
     async getEvents(token, year) {
@@ -1046,6 +1058,7 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
       const inBatch = new Map<string, number | undefined>();
       for (const e of d.events) if (e.batch_id === batch.batch_id) inBatch.set(e.fingerprint, e.source_row);
       const index = lookup();
+      const lockedNow = lockedMonths(closings);
       const rejected: { source_row: number; reason: string }[] = [];
       const base = new Map<string, (number | undefined)[]>();
       const extra = new Map<string, number>();
@@ -1054,6 +1067,7 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
         const norm = normalizeRecord(r, index);
         if ('error' in norm) { rejected.push({ source_row: Number((r as Partial<UploadRow> | null)?.source_row) || 0, reason: norm.error }); continue; }
         const rec = norm.rec;
+        if (lockedMonthOf(rec, lockedNow)) { rejected.push({ source_row: Number(r.source_row) || 0, reason: lockedText(lockedMonthOf(rec, lockedNow)) }); continue; }
         const key = `${rec.area_id}|${rec.code_key}|${rec.stop_ts}|${rec.start_ts}`;
         const srcRow = Number.isFinite(Number(r.source_row)) && String(r.source_row ?? '') !== '' ? Math.trunc(Number(r.source_row)) : undefined;
         const fpOf = (n: number) => fingerprintOf(rec.area_id, rec.code_key, rec.stop_ts, rec.start_ts, n);
@@ -1119,11 +1133,13 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
       const a = need(token, ['events'], 'Edit');
       if (year !== undefined && year !== null && (!Number.isInteger(year) || year < 1990 || year > 2200)) throw new ApiError('Year is not valid.', 'bad_request');
       const index = lookup();
+      const lockedNow = lockedMonths(closings);
       const at = nowTs();
       let checked = 0, changed = 0;
       for (const ev of get().events) {
         if (ev.is_void) continue;
         if (year !== undefined && year !== null && !ev.event_date.startsWith(`${year}-`)) continue;
+        if (lockedMonthOf(ev, lockedNow)) continue; // a signed-off month keeps its flags
         checked++;
         const norm = normalizeRecord(ev, index);
         if ('error' in norm) continue;
@@ -1459,6 +1475,64 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
         audit(a.user.user_id, 'save_kpi_targets', 'kpi_targets', `${save.scope_type === 'plant' ? 'plant' : scopeId} ${save.year}`, `${next.length} targets`);
       }
       return clone(kpiTargets.filter(same));
+    },
+    async closeMonthStep(token, p) {
+      const a = auth(token);
+      const section = p?.section;
+      if (!CLOSING_SECTIONS.includes(section)) throw new ApiError('Section must be downtime, production, quality or plant.', 'bad_request');
+      const { year, month, step } = p;
+      if (!Number.isInteger(year) || year < 2000 || year > 2100 || !Number.isInteger(month) || month < 1 || month > 12) throw new ApiError('Choose a month.', 'bad_request');
+      if (!['review', 'signoff', 'reopen'].includes(step)) throw new ApiError('Step must be review, signoff or reopen.', 'bad_request');
+      const comment = String(p.comment ?? '').trim().slice(0, 1000);
+      const ym = monthKey(year, month);
+      const today = nowTs().slice(0, 10);
+      const name = new Date(`${ym}-01T00:00:00Z`).toLocaleString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+      if (ym >= today.slice(0, 7)) throw new ApiError(`${name} has not ended yet. A month is closed after its last day.`, 'bad_request');
+      const text = CLOSING_SECTION_TEXT[section];
+      const holds = (duty: string) => a.user.role_id === 'ROLE-ADMIN' || responsibilities.some((r) => r.user_id === a.user.user_id && r.active && r.duty === duty && r.section === section &&
+        (!r.valid_from || r.valid_from <= today) && (!r.valid_to || today <= r.valid_to));
+      const dutyError = (what: string) => new ApiError(`You do not hold the duty "${what}" for ${text}. An Admin can add it in Settings > Users > Responsibilities.`, 'forbidden');
+      const cur = closingOf(closings, section, year, month);
+      const stamp = nowTs();
+      const by = a.user.user_id;
+      let next: MonthClosing;
+      if (step === 'review') {
+        if (section === 'plant') throw new ApiError('The plant report has no review step: the plant manager signs it off once the three sections are signed off.', 'bad_request');
+        if (!holds('month_review')) throw dutyError('Month review');
+        if (cur.status !== 'open' && cur.status !== 'reopened') throw new ApiError(`${text} ${name} is already ${cur.status === 'reviewed' ? 'reviewed' : 'signed off'}.`, 'conflict');
+        let open: number | null = null;
+        if (section === 'downtime') {
+          open = get().events.filter((e) => !e.is_void && e.event_date.startsWith(ym)).filter((e) => {
+            const kept = splitFlags(e.accepted_flags);
+            return splitFlags(e.flags).some((f) => f !== 'code_not_in_area' && !kept.includes(f));
+          }).length;
+        }
+        if (open && comment.length < CLOSING_REASON_MIN) {
+          throw new ApiError(`${open} records of ${name} still need checking (Validate). Fix them, or say in the comment why the month can close (at least ${CLOSING_REASON_MIN} characters).`, 'bad_request');
+        }
+        next = { ...cur, status: 'reviewed', open_checks: open, reviewed_by: by, reviewed_at: stamp, review_comment: comment, signed_off_by: '', signed_off_at: '', signoff_comment: '' };
+      } else if (step === 'signoff') {
+        if (!holds('month_signoff')) throw dutyError('Month sign-off');
+        if (section === 'plant') {
+          if (cur.status === 'signed_off') throw new ApiError(`The plant report of ${name} is already signed off.`, 'conflict');
+          const missing = (['downtime', 'production', 'quality'] as const).filter((x) => closingOf(closings, x, year, month).status !== 'signed_off');
+          if (missing.length) throw new ApiError(`Sign off ${missing.map((x) => CLOSING_SECTION_TEXT[x]).join(', ')} of ${name} first.`, 'conflict');
+        } else {
+          if (cur.status !== 'reviewed') throw new ApiError(cur.status === 'signed_off' ? `${text} ${name} is already signed off.` : `The section engineer reviews ${name} first.`, 'conflict');
+          if (cur.reviewed_by === by && a.user.role_id !== 'ROLE-ADMIN') throw new ApiError('You reviewed this month: another person (the section manager) signs it off.', 'forbidden');
+        }
+        next = { ...cur, status: 'signed_off', signed_off_by: by, signed_off_at: stamp, signoff_comment: comment };
+      } else {
+        if (!holds('month_signoff')) throw dutyError('Month sign-off');
+        if (cur.status !== 'signed_off') throw new ApiError('Only a signed-off month can be reopened.', 'conflict');
+        if (comment.length < CLOSING_REASON_MIN) throw new ApiError(`Say why the month is reopened (at least ${CLOSING_REASON_MIN} characters).`, 'bad_request');
+        next = { ...cur, status: 'reopened', reopened_by: by, reopened_at: stamp, reopen_reason: comment, reviewed_by: '', reviewed_at: '', review_comment: '', signed_off_by: '', signed_off_at: '', signoff_comment: '' };
+      }
+      next.updated_at = stamp;
+      const at = closings.findIndex((c) => c.section === section && c.year === year && c.month === month);
+      if (at >= 0) closings[at] = next; else closings.push(next);
+      audit(by, `month_${step}`, 'month_closings', `${section} ${ym}`, comment ? `Comment: ${comment}` : '');
+      return clone(next);
     },
     async listQualityParameters(token) {
       auth(token);

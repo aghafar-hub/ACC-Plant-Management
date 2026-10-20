@@ -155,6 +155,9 @@ export function auditSentence(e: AuditEntry, name: (id: string) => string): stri
     case 'apply_template': return withNote(t('Applied a task template to action {id}', { id }), d.replace(/^Template /, ''));
     case 'save_task_templates': return withNote(t('Saved task templates {ids}', { ids: id.replace(/,/g, ', ') }), d === 'No change' ? ''
       : changesText(d.replace(/\. (?=TT-)/g, '; ').replace(/(TT-\S+) ([a-z_]+): /g, (_x, tid: string, f: string) => `${tid} ${fieldWord(f)} `)));
+    case 'month_review': return withNote(t('Reviewed the month {id}', { id }), d.replace(/^Comment: /, ''));
+    case 'month_signoff': return withNote(t('Signed off the month {id} (locked)', { id }), d.replace(/^Comment: /, ''));
+    case 'month_reopen': return withNote(t('Reopened the month {id}', { id }), d.replace(/^Comment: /, ''));
     case 'save_quality_limits': return withNote(t('Changed quality limits of {ids}', { ids: id.replace(/,/g, ', ') }), d);
     case 'save_kpi_targets': return withNote(t('Saved the KPI targets of {id}', { id }), d);
     case 'migrate_actions': return withNote(t('Version 1.7.0: the action statuses Contractor informed and Waiting stoppage now live on tasks'), d);

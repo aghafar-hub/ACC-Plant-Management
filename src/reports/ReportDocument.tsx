@@ -3,7 +3,7 @@
 // so what is on screen is exactly what is printed: the same fixed-size pages, header, footer and page numbers. On a
 // narrow screen the pages are scaled down to the width ('Fit', CSS transform on screen only); '100%' and the - / +
 // buttons or a pinch show them at a fixed size, scrolling sideways inside the preview only (PreviewZoom.tsx).
-import { tsText } from '../util/dates';
+import { monthText, tsText } from '../util/dates';
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useMeasure } from '../charts/ChartKit';
 import { dayLabel } from '../dashboard/format';
@@ -36,6 +36,9 @@ function Cover({ m }: { m: ReportModel }) {
     [t('Filters'), m.filterSummary],
     [t('Data coverage'), m.coverage ? t('Data covers {a} to {b}', { a: dayLabel(m.coverage.from), b: dayLabel(m.coverage.to) }) : t('No data has been loaded')],
     [t('Generated'), `${generatedText(m.generatedAt)} ${t('by')} ${m.generatedBy}`],
+    ...(m.closing ? [[t('Status'), m.closing.final
+      ? t('Final: every month of the period is signed off')
+      : t('Provisional: not signed off yet: {list}', { list: m.closing.open.slice(0, 6).map((x) => monthText(x)).join(', ') + (m.closing.open.length > 6 ? ` +${m.closing.open.length - 6}` : '') })] as [string, string]] : []),
   ];
   return (
     <div className="rpt-cover" data-testid="rpt-cover">

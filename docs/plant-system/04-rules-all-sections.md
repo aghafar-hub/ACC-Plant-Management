@@ -39,6 +39,14 @@ Each section has an **engineer** and a **manager** (duties `month_review` and `m
 
 The monthly report shows which sections are signed off; a report built from a month that is not signed off is marked **provisional**.
 
+**Built in 2.3.0 (Settings › Month closing).** Decided 2026-10-20: a signed-off month is locked until the manager reopens
+it with a reason (at least 10 characters); the month must then be reviewed and signed off again. For downtime the lock
+refuses: editing, voiding or keeping-as-entered a record dated (or stopping) in the month; upload and history rows of the
+month (refused row by row, the rest of the file goes in); posting shift stoppages into the month (they wait until it is
+reopened). Re-check leaves the month alone. A review needs a comment while records of the month still need checking. A
+month can be closed only after its last day. The report cover says **Final** (every month of the period signed off) or
+**Provisional** (with the months not signed off).
+
 ## The checks, section by section
 
 Thresholds confirmed by the owner on 2026-10-19; each can be changed later in the app. A blank threshold means the limit comes from the metric or parameter itself (its min / max or specification).

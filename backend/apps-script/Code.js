@@ -54,6 +54,7 @@ var HANDLERS = {
   saveKpiTargets: function (s, p) { return saveKpiTargets_(s, p); },
   listQualityParameters: function () { return listQualityParameters_(); },
   saveQualityLimits: function (s, p) { return saveQualityLimits_(s, p.rows); },
+  closeMonthStep: function (s, p) { return closeMonthStep_(s, p); },
   listShiftReports: function (s, p) { return listShiftReports_(p.from, p.to); },
   getShiftReportHistory: function (s, p) { return getShiftReportHistory_(p.reportId); },
   saveShiftReport: function (s, p) { return saveShiftReport_(s, p.report); },

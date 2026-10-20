@@ -23,6 +23,7 @@ const SUBS = {
   actions: lazyPage(() => import('../admin/settings/ActionsTargets')),
   'kpi-targets': lazyPage(() => import('../admin/settings/KpiTargets')),
   quality: lazyPage(() => import('../admin/settings/QualityLimits')),
+  closing: lazyPage(() => import('../admin/settings/MonthClosing')),
   areas: lazyPage(() => import('../admin/settings/AreasActive')),
   security: lazyPage(() => import('../admin/settings/Security')),
   users: lazyPage(() => import('../admin/settings/UsersAccess')),

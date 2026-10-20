@@ -82,6 +82,8 @@ var ACTION_RULES = {
   // 2.3.0: quality limits (Quality.js); saving needs the Admin role or the duty "quality_validation" for the area (checked inside)
   listQualityParameters: { auth: 'session' },
   saveQualityLimits: { auth: 'session' },
+  // 2.3.0: month-end closing (Closing.js); the duties month_review / month_signoff of the section are checked inside
+  closeMonthStep: { auth: 'session' },
   listShiftReports: { auth: 'tabs', tabs: ['shift', 'daily'], level: 'View' },
   getShiftReportHistory: { auth: 'tabs', tabs: ['shift', 'daily'], level: 'View' },
   saveShiftReport: { auth: 'tabs', tabs: ['shift'], level: 'Edit' },

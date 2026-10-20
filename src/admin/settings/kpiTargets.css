@@ -19,3 +19,10 @@
 .kt-num[aria-invalid='true'] { border-color: var(--tk-danger); outline: 1px solid var(--tk-danger); }
 .ql-problems { margin: 10px 0 0; padding-left: 28px; display: block; }
 .ql-row--bad th { color: var(--tk-danger); }
+/* Settings › Month closing (backend 2.3.0) */
+.mc-table th[scope='row'] { white-space: nowrap; }
+.mc-cell { background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 6px 8px; min-height: 40px; min-width: 44px; cursor: pointer; color: inherit; font: inherit; }
+.mc-cell:hover, .mc-cell:focus-visible, .mc-cell--on { border-color: var(--tk-accent, currentColor); }
+.mc-panel { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px; }
+.mc-panel .field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; margin-top: 8px; }
+.mc-trail { margin: 0; padding-left: 18px; }

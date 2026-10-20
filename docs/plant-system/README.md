@@ -21,6 +21,7 @@ The app becomes the one place where data is entered once, reviewed, and reported
 | 0 | Agree one definition per KPI ([01-kpi-definitions.md](01-kpi-definitions.md)) | 24 approved 2026-10-19; quality and other new KPIs in draft |
 | 1 | Shift reports with production → reliability review; only validated stoppages reach the downtime analysis ([02-shift-workflow-and-roles.md](02-shift-workflow-and-roles.md)) | Built (backend 2.1.0): Responsibilities, Shift reports, Review, Daily meeting |
 | 1b | Import NRS downtime history 2024–2025 (date only, `time_precision = day`) | Built (backend 2.2.0): Upload › History import, Admin only |
+| 1c | KPI targets, quality limits, month-end closing; EA on the Dashboard | Built (backend 2.3.0): Settings › KPI targets, Quality limits, Month closing |
 | 2 | Daily production data from the DCS automated report, laboratory results from QCX; daily meeting view | Daily meeting (downtime part) built; production and quality wait for the DCS report and the QCX answers |
 | 3 | Monthly reporting from the app, replacing the NRS workbook | After Stage 2 |
 

@@ -99,6 +99,7 @@ export function createSheetsApi(url: string): Api {
     saveKpiTargets: (token, save) => call('saveKpiTargets', token, { ...save }),
     listQualityParameters: (token) => call('listQualityParameters', token),
     saveQualityLimits: (token, rows) => call('saveQualityLimits', token, { rows }),
+    closeMonthStep: (token, step) => call('closeMonthStep', token, { ...step }),
     listShiftReports: (token, from, to) => call('listShiftReports', token, { from, to }),
     getShiftReportHistory: (token, reportId) => call('getShiftReportHistory', token, { reportId }),
     saveShiftReport: (token, report) => call('saveShiftReport', token, { report }),

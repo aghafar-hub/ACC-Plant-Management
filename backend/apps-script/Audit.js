@@ -49,7 +49,7 @@ var AUDIT_GROUPS_ = {
   users: ['create_user', 'update_user', 'reset_password', 'set_tab_access', 'create_first_admin', 'sign_out_user_everywhere', 'set_responsibilities'],
   settings: ['save_setting', 'save_contractors', 'save_area_targets', 'save_task_templates', 'save_kpi_targets', 'save_quality_limits'],
   master: ['add_equipment', 'update_equipment', 'add_area', 'update_area', 'add_reason', 'update_reason', 'add_alias', 'update_alias', 'delete_alias'],
-  events: ['edit_event', 'void_event', 'unvoid_event', 'accept_event_flags', 'revalidate_events'],
+  events: ['edit_event', 'void_event', 'unvoid_event', 'accept_event_flags', 'revalidate_events', 'month_review', 'month_signoff', 'month_reopen'],
   upload: ['upload_start', 'upload_chunk', 'upload_finish'],
   actions: ['create_action', 'merge_action', 'update_action', 'comment_action', 'action_check', 'create_task', 'update_task', 'apply_template'],
   areas: ['activate_area', 'deactivate_area'],

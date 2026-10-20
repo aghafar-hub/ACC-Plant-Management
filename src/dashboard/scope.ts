@@ -8,6 +8,7 @@ import {
   type DateRange, type Filter, type KpiComparison, type KpiResult, type MasterIndex,
 } from '../calc';
 import { periodMonth, resolveKpiTarget, type KpiTarget } from '../plant/kpiTargets';
+import type { MonthClosing } from '../plant/closing';
 import { areasInScope, compareKind, eventLevelFilter, hasEventLevelFilter, type CompareMode, type DashFilters } from './filters';
 
 export interface Master {
@@ -17,6 +18,8 @@ export interface Master {
   settings: CalcSettings;
   /** backend 2.3.0: every stored KPI target (Settings › KPI targets); empty on older servers */
   kpiTargets?: readonly KpiTarget[];
+  /** backend 2.3.0: the month-end closings (undefined on older servers: nothing is marked final or provisional) */
+  monthClosings?: readonly MonthClosing[];
   /** the period these settings were resolved for (set by withKpiTargets), so per-area targets use the same year and month */
   targetPeriod?: { year: number; month: number | null };
 }
@@ -72,7 +75,7 @@ export function clearScopeMemo() {
 function buildMasterNow(startup: Startup): Master {
   return {
     index: buildIndex(startup), lineNames: new Map(startup.lines.map((l) => [l.line_id, l.name])), settings: parseSettings(startup.settings),
-    kpiTargets: startup.kpi_targets ?? [],
+    kpiTargets: startup.kpi_targets ?? [], monthClosings: startup.month_closings,
   };
 }
 

@@ -28,6 +28,7 @@ import {
 import { targetNumber, type TargetStatus, type Targets } from '../dashboard/targets';
 import { t } from '../i18n/t';
 import { buildScorecard, type MonthQuality } from '../validate/scorecard';
+import { periodClosing } from '../plant/closing';
 import { buildValidation, type ValidationList } from '../validate/model';
 import { flagLabel, isBlocked, listedRepeats } from '../calc';
 import { repeatsTop } from '../dashboard/dashModels';
@@ -183,6 +184,8 @@ export interface ReportModel {
   targets: Targets;
   /** the chosen sections in report order */
   sections: SectionModel[];
+  /** backend 2.3.0: final when every month of the period is signed off (downtime), else provisional; null on older servers */
+  closing: { final: boolean; open: string[] } | null;
 }
 
 // ---------------------------------------------------------------- the context (also used by the builder's live line)
@@ -265,6 +268,7 @@ export function buildReport(input: ReportInput): ReportModel {
     },
     filters: lines, filterSummary: summary, scope, noData: none,
     basis: settings.availabilityBasis, targets: ov.targets, sections,
+    closing: ctx.master.monthClosings ? (({ final, open }) => ({ final, open }))(periodClosing(ctx.master.monthClosings, 'downtime', range.from, range.to)) : null,
   };
 }
 

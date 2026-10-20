@@ -450,8 +450,10 @@ function postReadyStoppages_(by) {
   var repById = {};
   reports.forEach(function (r) { repById[r.report_id] = r; });
   var stops = readTable_(T.SHIFT_STOPPAGES).filter(function (s) { return s.row_state === 'active'; });
+  var locked = lockedMonths_('downtime');
   var ready = stops.filter(function (s) {
     if (s.posted_event_id || s.stop_state !== 'closed') return false;
+    if (locked[String(s.stop_ts).slice(0, 7)]) return false; // waits until the month is reopened
     var own = repById[s.report_id];
     var closer = s.closed_report_id ? repById[s.closed_report_id] : own;
     return own && closer && SHIFT_DONE_[own.status] && SHIFT_DONE_[closer.status];
