@@ -1714,3 +1714,14 @@ button.hb-row:hover {
   font-weight: 500;
   color: var(--tk-text-secondary);
 }
+/* EA inside the Utilization tile (equipment availability, approved 2026-10-19) */
+.ktile-ea {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--tk-text-secondary);
+  overflow-wrap: anywhere;
+}
+.ktile-ea b {
+  color: var(--tk-text-primary);
+  font-variant-numeric: tabular-nums;
+}

@@ -58,7 +58,7 @@ export default function AreasBlock({ ctx, onOpen }: { ctx: DashCtx; onOpen?: (la
       {kpi && (
         <section className="card" data-testid="area-table-card">
           <div className="card-title-row"><h2>{t('By area')}</h2><ChartInfo help={tableHelp} title={t('By area')} /></div>
-          <p className="chart-sub" style={{ marginBottom: 8 }}>{t('MTBF is an area-level figure; the aggregate is shown in area-hours and never averaged.')} {t('Point at, tap or press Enter on Stopped h, Failure h or Failures for the split by classification.')}{anyTarget(targets) ? ` ${t('Availability, RF, MTBF and MTTR show their status against the targets set in Settings; an area without a figure has no status.')}` : ''} {t('RF = running ÷ (running + INC); UF = running ÷ calendar hours.')}</p>
+          <p className="chart-sub" style={{ marginBottom: 8 }}>{t('MTBF is an area-level figure; the aggregate is shown in area-hours and never averaged.')} {t('Point at, tap or press Enter on Stopped h, Failure h or Failures for the split by classification.')}{anyTarget(targets) ? ` ${t('Availability, RF, MTBF and MTTR show their status against the targets set in Settings; an area without a figure has no status.')}` : ''} {t('RF = running ÷ (running + INC); UF = running ÷ calendar hours; EA = (running + CIR) ÷ calendar hours.')}</p>
           <div className="table-wrap">
             <table className="data-table area-table" data-testid="area-table">
               <thead>
@@ -71,6 +71,7 @@ export default function AreasBlock({ ctx, onOpen }: { ctx: DashCtx; onOpen?: (la
                   <th scope="col" className="num">{t('Availability ({b})', { b: basis })}</th>
                   <th scope="col" className="num" title={t('Reliability factor: running ÷ (running + INC)')}>{t('RF')}</th>
                   <th scope="col" className="num col-uf" title={t('Utilization factor: running ÷ calendar hours')}>{t('UF')}</th>
+                  <th scope="col" className="num col-ea" title={t('Equipment availability: (running + CIR) ÷ calendar hours')}>{t('EA')}</th>
                   <th scope="col" className="num">{t('MTBF h')}</th>
                   <th scope="col" className="num">{t('MTTR h')}</th>
                 </tr>
@@ -91,6 +92,7 @@ export default function AreasBlock({ ctx, onOpen }: { ctx: DashCtx; onOpen?: (la
                       {ufOn
                         ? withStatus(metricText(a.utilizationFactor, fpct).text, true, st?.utilization, 'status-utilization', metricText(a.utilizationFactor, fpct).reason, 'col-uf', 'area-uf')
                         : <td className="num col-uf" data-testid="area-uf" title={metricText(a.utilizationFactor, fpct).reason}>{metricText(a.utilizationFactor, fpct).text}</td>}
+                      <td className="num col-ea" data-testid="area-ea" title={metricText(a.equipmentAvailability, fpct).reason}>{metricText(a.equipmentAvailability, fpct).text}</td>
                       {withStatus(metricText(a.mtbfHours, fh).text, targets.mtbfH !== null, st?.mtbf, 'status-mtbf', metricText(a.mtbfHours, fh).reason)}
                       {withStatus(metricText(a.mttrHours, fh2).text, targets.mttrH !== null, st?.mttr, 'status-mttr', metricText(a.mttrHours, fh2).reason)}
                     </tr>

@@ -799,7 +799,7 @@ test.describe('Phase 4: more charts (desktop)', () => {
     // the bars equal the By area table
     const mtbfRows = await tableValues('chart-area-mtbf');
     for (const [area, v] of mtbfRows) {
-      const cell = await page.locator(`[data-testid="area-row"][data-area="${area}"] td`).nth(7).textContent();
+      const cell = await page.locator(`[data-testid="area-row"][data-area="${area}"] td`).nth(8).textContent();
       expect(cell === 'None recorded' ? 'no failures' : cell).toBe(v);
     }
     for (const id of ['chart-area-mtbf', 'chart-area-mttr']) await expect(page.getByTestId(id).locator('rect.chart-hit').first()).toBeVisible();

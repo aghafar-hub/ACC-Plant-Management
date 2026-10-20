@@ -352,4 +352,10 @@ describe('reliability and utilization factors', () => {
     expect(composeKpis('X', 24, { pl: 24, inc: 0, cir: 0, events: 0, eventSeconds: 0 }, { availabilityBasis: 'B' }).reliabilityFactor.available).toBe(false);
     expect(composeKpis('X', 24, emptySums(), { availabilityBasis: 'B' }).reliabilityFactor).toEqual(avail(1));
   });
+  it('EA = (running + CIR) ÷ scheduled: planned and incidental stops lower it, CIR does not (as NRS)', () => {
+    const k = composeKpis('X', 744, { pl: 40, inc: 30, cir: 4, events: 6, eventSeconds: 30 * 3600 }, { availabilityBasis: 'B' });
+    expect(k.equipmentAvailability).toEqual(avail((744 - 40 - 30 - 4 + 4) / 744));
+    expect(composeKpis('X', 24, { pl: 0, inc: 0, cir: 24, events: 0, eventSeconds: 0 }, { availabilityBasis: 'B' }).equipmentAvailability).toEqual(avail(1));
+    expect(composeKpis('X', 0, emptySums(), { availabilityBasis: 'B' }).equipmentAvailability.available).toBe(false);
+  });
 });

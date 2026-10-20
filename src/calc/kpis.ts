@@ -44,6 +44,9 @@ export interface AreaKpis {
   reliabilityFactor: Metric;
   /** utilization factor UF = running ÷ scheduled (calendar) time, 0..1 (every stop counts; the same arithmetic as basis A) */
   utilizationFactor: Metric;
+  /** equipment availability EA = (running + CIR) ÷ scheduled time, 0..1 (approved 2026-10-19, as NRS: planned stops count
+   * as lost time, circumstantial stops do not) */
+  equipmentAvailability: Metric;
 }
 
 export type TopArea = Metric & { areaId?: string; sharePct?: number };
@@ -226,6 +229,7 @@ export function composeKpis(id: string, t: number, a: HourSums, settings: Pick<C
     mttrHours: a.events === 0 ? unavail('no_failures', NO_FAIL) : avail(a.eventSeconds / 3600 / a.events),
     reliabilityFactor: clamp01(ratio(Math.max(0, op), Math.max(0, op) + a.inc, 'no_exposure', 'No running time outside planned and CIR stops')),
     utilizationFactor: clamp01(ratio(Math.max(0, op), t, 'no_scheduled_time', NO_TIME)),
+    equipmentAvailability: clamp01(ratio(Math.max(0, op) + a.cir, t, 'no_scheduled_time', NO_TIME)),
   };
 }
 
@@ -344,7 +348,7 @@ export function compareValues(current: Metric, previous: Metric, better: 'higher
 export interface KpiChanges {
   failureHours: Change; plannedHours: Change; failureCount: Change; availability: Change;
   mtbfHours: Change; mttrHours: Change; failureRatePer1000h: Change; operatingHours: Change;
-  reliabilityFactor: Change; utilizationFactor: Change;
+  reliabilityFactor: Change; utilizationFactor: Change; equipmentAvailability: Change;
 }
 
 /** P7: below this share of covered days the comparison period's totals are not compared as totals. */
@@ -420,6 +424,7 @@ export function kpiChanges(cur: AreaKpis, prev: AreaKpis, scaling?: TotalsScalin
     operatingHours: compareTotal(cur.operatingHours, prev.operatingHours, 'higher', scaling),
     reliabilityFactor: compareValues(cur.reliabilityFactor, prev.reliabilityFactor, 'higher'),
     utilizationFactor: compareValues(cur.utilizationFactor, prev.utilizationFactor, 'higher'),
+    equipmentAvailability: compareValues(cur.equipmentAvailability, prev.equipmentAvailability, 'higher'),
   };
 }
 

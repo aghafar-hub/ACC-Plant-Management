@@ -110,6 +110,10 @@ test.describe('desktop', () => {
     await expect(page.getByTestId('kpi-reliability-target')).toHaveAttribute('data-state', /^(on|below)$/);
     await expect(page.getByTestId('kpi-utilization-value')).toHaveText(/^\d+\.\d%$/);
     await expect(page.getByTestId('kpi-utilization')).toContainText(/running of [\d,.]+ h/);
+    // EA (approved 2026-10-19) lives in the UF tile: (running + CIR) ÷ scheduled, never below UF
+    const ufPct = num(await page.getByTestId('kpi-utilization-value').textContent());
+    await expect(page.getByTestId('kpi-ea-value')).toHaveText(/^\d+\.\d%$/);
+    expect(num(await page.getByTestId('kpi-ea-value').textContent())).toBeGreaterThanOrEqual(ufPct);
     const value = num(await page.getByTestId('kpi-uf-running').textContent());
     expect(value).toBeGreaterThan(0);
     // MTBF shows its own sum: running hours ÷ failures
@@ -248,7 +252,7 @@ test.describe('desktop', () => {
     await signInAndWait(page, 'engineer');
     await open(page, '/reliability', 'page-reliability');
     const table = page.getByTestId('area-table');
-    await expect(table.locator('thead th')).toHaveText(['Area', 'Operating h', 'Stopped h', 'Failure h', 'Failures', 'Availability (B)', 'RF', 'UF', 'MTBF h', 'MTTR h']);
+    await expect(table.locator('thead th')).toHaveText(['Area', 'Operating h', 'Stopped h', 'Failure h', 'Failures', 'Availability (B)', 'RF', 'UF', 'EA', 'MTBF h', 'MTTR h']);
     const rows = page.getByTestId('area-row');
     // the row with most failures
     const counts = await rows.getByTestId('area-failures').allTextContents();

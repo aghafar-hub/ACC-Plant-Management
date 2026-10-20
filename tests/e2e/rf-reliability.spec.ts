@@ -18,7 +18,9 @@ test('By area has RF (with its status) and UF; the RF chart plots the same RF; T
   const rows = page.getByTestId('area-row');
   const n = await rows.count();
   expect(n).toBeGreaterThan(1);
-  await expect(page.getByTestId('area-table').locator('thead th')).toHaveText(['Area', 'Operating h', 'Stopped h', 'Failure h', 'Failures', 'Availability (B)', 'RF', 'UF', 'MTBF h', 'MTTR h']);
+  await expect(page.getByTestId('area-table').locator('thead th')).toHaveText(['Area', 'Operating h', 'Stopped h', 'Failure h', 'Failures', 'Availability (B)', 'RF', 'UF', 'EA', 'MTBF h', 'MTTR h']);
+  await expect(page.getByTestId('area-ea')).toHaveCount(n);
+  for (const c of await page.getByTestId('area-ea').all()) await expect(c).toHaveText(/^(\d+\.\d%|–)$/);
   await expect(page.getByTestId('status-reliability')).toHaveCount(n);
   await expect(page.getByTestId('area-uf')).toHaveCount(n);
   for (const c of await page.getByTestId('status-reliability').all()) await expect(c).toHaveText(/^(–|[✔▼] (On|Below) target)/);
@@ -50,6 +52,7 @@ test('By area has RF (with its status) and UF; the RF chart plots the same RF; T
   await expect(trend).toBeVisible();
   await expect(trend.getByTestId('chart-legend')).toContainText('Reliability factor RF');
   await expect(trend.getByTestId('chart-legend')).toContainText('Utilization factor UF');
+  await expect(trend.getByTestId('chart-legend')).toContainText('Equipment availability EA');
   await expect(trend.getByTestId('chart-legend')).toContainText('RF target 95%');
 });
 
@@ -58,6 +61,7 @@ test.describe('phone', () => {
   test('UF is left out of the By area table and the RF chart fits', async ({ page }) => {
     await open(page, '/reliability?r=last90');
     await expect(page.getByTestId('area-uf').first()).toBeHidden();
+    await expect(page.getByTestId('area-ea').first()).toBeHidden();
     await expect(page.getByTestId('status-reliability').first()).toBeVisible();
     await page.getByTestId('dup-rf-mtbf-toggle').click();
     await page.getByTestId('chart-rf-mtbf').scrollIntoViewIfNeeded();

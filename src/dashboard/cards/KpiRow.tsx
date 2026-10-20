@@ -134,6 +134,7 @@ export default function KpiRow({ model, sparks, basis, cmpLabel, prevLabel, dark
   const pctText = (m: typeof tot.reliabilityFactor) => metricText(m, (n) => (n * 100).toFixed(1), '');
   const rf = pctText(tot.reliabilityFactor);
   const uf = pctText(tot.utilizationFactor);
+  const ea = pctText(tot.equipmentAvailability);
   const rfPct = tot.reliabilityFactor.available ? tot.reliabilityFactor.value * 100 : null;
   const rfTarget = model.targets.reliabilityPct ?? null;
   const prevRf = prev && prev.reliabilityFactor.available ? fpct(prev.reliabilityFactor.value) : null;
@@ -149,7 +150,7 @@ export default function KpiRow({ model, sparks, basis, cmpLabel, prevLabel, dark
     T: fh(run.scheduledHours), pl: fh(tot.plannedHours), inc: fh(tot.failureHours), cir: fh(tot.otherHours), down: fh(tot.downtimeHours),
     run: fh(run.value.value), failures: fint(tot.failureCount),
     eventHours: fh(tot.mttrHours.available ? tot.mttrHours.value * tot.failureCount : 0),
-    mtbf: mtbf.text, mttr: mttr.text, rf: rf.text, uf: uf.text,
+    mtbf: mtbf.text, mttr: mttr.text, rf: rf.text, uf: uf.text, ea: ea.text,
     perDay: fh(run.days > 0 && run.areas > 0 ? run.scheduledHours / (run.days * run.areas) : 0), days: run.days, areas: run.areas,
   } : undefined;
   const mtbfSub = run && run.value.available && tot.failureCount > 0 ? t('{h} h running ÷ {n} failures', { h: fh(run.value.value), n: fint(tot.failureCount) }) : t('Run area-hours ÷ failures');
@@ -215,8 +216,13 @@ export default function KpiRow({ model, sparks, basis, cmpLabel, prevLabel, dark
         sub={run && run.value.available
           ? <><b data-testid="kpi-uf-running">{fh(run.value.value)} h</b> {t('running of {T} h', { T: fh(run.scheduledHours) })}</>
           : (uf.reason ?? t('Running ÷ calendar hours'))}
+
         spark={sparkFoot(sparks && <MonthSpark slots={slots} values={sparks.utilization.map((v) => (v === null ? null : v * 100))} label={t('Utilization (UF)')} format={(n) => `${n.toFixed(1)}%`} />)}
-      />
+      >
+        <p className="ktile-ea" data-testid="kpi-ea" title={t('Equipment availability: (running + CIR) ÷ scheduled hours')}>
+          {t('Equipment availability (EA)')} <b data-testid="kpi-ea-value">{ea.text}{ea.unavailable ? '' : '%'}</b>
+        </p>
+      </Tile>
     </div>
   );
 }

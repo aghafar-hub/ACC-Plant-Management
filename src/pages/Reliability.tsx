@@ -69,12 +69,13 @@ export default function Reliability() {
   const rate = line('rate', t('Failures per 1,000 operating hours'), (m) => m.failureRatePer1000h, fh2, 2);
   // reliability and utilization factor in percent, on one 0–100 % axis
   const NA: Metric = { available: false, code: 'no_data', reason: t('No data for this month') };
-  const pctLine = (key: string, label: string, pick: (m: (typeof months)[number]) => Metric, slot: number, marker: 'circle' | 'square'): CartSeries => {
+  const pctLine = (key: string, label: string, pick: (m: (typeof months)[number]) => Metric, slot: number, marker: 'circle' | 'square' | 'diamond'): CartSeries => {
     const s = line(key, label, pick, (n) => `${n.toFixed(1)}%`, slot);
     return { ...s, marker, values: s.values.map((v) => (v === null ? null : v * 100)) };
   };
   const rfLine = pctLine('rf', t('Reliability factor RF'), (m) => m.kpis?.reliabilityFactor ?? NA, 0, 'circle');
   const ufLine = pctLine('uf', t('Utilization factor UF'), (m) => m.kpis?.utilizationFactor ?? NA, 3, 'square');
+  const eaLine = pctLine('ea', t('Equipment availability EA'), (m) => m.kpis?.equipmentAvailability ?? NA, 1, 'diamond');
   const rfTarget = ctx ? ctx.master.settings.reliabilityTargetPct ?? null : null;
   const lastRf = [...months].reverse().find((m) => m.kpis?.reliabilityFactor.available) ?? null;
   const pctOf = (x: Metric | undefined) => (x && x.available ? `${(x.value * 100).toFixed(1)}%` : '–');
@@ -239,16 +240,16 @@ export default function Reliability() {
                 {(w) => <CartesianChart categories={cats} series={[rate]} width={w} ariaLabel={t('Line chart of failures per 1,000 operating hours')} yFormat={(n) => `${n}`} />}
               </ChartCard>
             </div>
-            <ChartCard title={t('Reliability and utilization factor')} subtitle={t('RF = running ÷ (running + INC); UF = running ÷ calendar hours, {a}', { a: areaLabel })} testid="chart-rf-uf"
-              help={{ id: 'rf-uf-month', vars: lastRf ? { m: monthLabel(lastRf.month), r: pctOf(lastRf.kpis?.reliabilityFactor), u: pctOf(lastRf.kpis?.utilizationFactor) } : {} }}
+            <ChartCard title={t('Reliability, utilization and equipment availability')} subtitle={t('RF = running ÷ (running + INC); UF = running ÷ calendar hours; EA = (running + CIR) ÷ calendar hours, {a}', { a: areaLabel })} testid="chart-rf-uf"
+              help={{ id: 'rf-uf-month', vars: lastRf ? { m: monthLabel(lastRf.month), r: pctOf(lastRf.kpis?.reliabilityFactor), u: pctOf(lastRf.kpis?.utilizationFactor), e: pctOf(lastRf.kpis?.equipmentAvailability) } : {} }}
               summary={`${t('{n} of {m} months have an RF.', { n: months.length - gapCount(rfLine), m: months.length })}${rfTarget !== null ? ` ${t('{n} months below the RF target of {x}%.', { n: rfBelow, x: rfTarget })}` : ''}`}
               footnote={gapNote(rfLine)}
-              legend={[{ label: rfLine.label, color: rfLine.color, symbol: 'circle' }, { label: ufLine.label, color: ufLine.color, symbol: 'square' }, ...(rfTarget !== null ? [{ label: t('RF target {x}%', { x: rfTarget }), color: 'var(--tk-text-primary)', symbol: 'dash' as const }] : [])]}
-              table={seriesTable(cats, [rfLine, ufLine], t('Month'), (_s, n) => `${n.toFixed(1)}%`)}>
+              legend={[{ label: rfLine.label, color: rfLine.color, symbol: 'circle' }, { label: ufLine.label, color: ufLine.color, symbol: 'square' }, { label: eaLine.label, color: eaLine.color, symbol: 'diamond' }, ...(rfTarget !== null ? [{ label: t('RF target {x}%', { x: rfTarget }), color: 'var(--tk-text-primary)', symbol: 'dash' as const }] : [])]}
+              table={seriesTable(cats, [rfLine, ufLine, eaLine], t('Month'), (_s, n) => `${n.toFixed(1)}%`)}>
               {(w) => (
-                <CartesianChart categories={cats} series={[rfLine, ufLine]} width={w} zeroBased={false} yMax={100} yFormat={(n) => `${n}%`}
+                <CartesianChart categories={cats} series={[rfLine, ufLine, eaLine]} width={w} zeroBased={false} yMax={100} yFormat={(n) => `${n}%`}
                   refLines={rfTarget !== null ? [{ value: rfTarget, label: t('RF target {x}%', { x: rfTarget }) }] : []}
-                  ariaLabel={t('Line chart of the monthly reliability factor and utilization factor')} />
+                  ariaLabel={t('Line chart of the monthly reliability factor, utilization factor and equipment availability')} />
               )}
             </ChartCard>
             {/* moved from the Dashboard (owner): the planned-stop budget month by month */}

@@ -379,11 +379,11 @@ export const CHART_HELP = {
     example: 'Here, {a}: RF {r}, MTBF {m} h, MTTR {n} h.',
   },
   'rf-uf-month': {
-    title: 'Reliability and utilization factor by month',
-    what: 'The reliability factor (RF) and the utilization factor (UF) of each month, for all areas (area-hours) or for one area. RF says how much of the time it was meant to run was lost to its own failures; UF says how much of the calendar it ran.',
-    formulas: [RF_F, UF_F, OPERATING, T_DEF],
-    how: [P1, 'Planned and CIR stops lower the UF but not the RF.', RATIO, P6],
-    example: 'Here: {m}: RF {r}, UF {u}.',
+    title: 'Reliability, utilization and equipment availability by month',
+    what: 'The reliability factor (RF), the utilization factor (UF) and the equipment availability (EA) of each month, for all areas (area-hours) or for one area. RF says how much of the time it was meant to run was lost to its own failures; UF says how much of the calendar it ran; EA says how much of the calendar it ran or was held only by outside reasons (CIR).',
+    formulas: [RF_F, UF_F, 'EA = (Running + CIR) ÷ T × 100', OPERATING, T_DEF],
+    how: [P1, 'Planned and CIR stops lower the UF but not the RF. CIR stops do not lower the EA; planned and incidental stops do (as the NRS report).', RATIO, P6],
+    example: 'Here: {m}: RF {r}, UF {u}, EA {e}.',
   },
   'area-month-heat': {
     title: 'Availability by area and month',

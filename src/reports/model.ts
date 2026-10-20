@@ -91,7 +91,7 @@ interface Base<I extends ReportSectionId> {
   notes: string[];
 }
 
-export type KpiId = 'stoppage' | 'failures' | 'availability' | 'reliability' | 'utilization' | 'mttr' | 'mtbf' | 'repeats';
+export type KpiId = 'stoppage' | 'failures' | 'availability' | 'reliability' | 'utilization' | 'ea' | 'mttr' | 'mtbf' | 'repeats';
 export interface KpiCard {
   id: KpiId;
   label: string;
@@ -338,6 +338,11 @@ function summarySection(env: Env): SummarySection {
       change: ch?.utilizationFactor ?? null, changeUnit: 'pts', status: null,
     },
     {
+      id: 'ea', label: t('Equipment availability (EA)'), text: tot.equipmentAvailability.available ? fpct(tot.equipmentAvailability.value) : t('Unavailable'),
+      value: metricNum(tot.equipmentAvailability), unavailable: !tot.equipmentAvailability.available, sub: tot.equipmentAvailability.available ? t('(running + CIR) ÷ calendar hours') : tot.equipmentAvailability.reason,
+      change: ch?.equipmentAvailability ?? null, changeUnit: 'pts', status: null,
+    },
+    {
       id: 'mttr', label: t('Mean restoration time'), text: tot.mttrHours.available ? `${fh2(tot.mttrHours.value)} h` : tot.mttrHours.code === 'no_failures' ? t('None recorded') : t('Unavailable'),
       value: metricNum(tot.mttrHours), unavailable: !tot.mttrHours.available && tot.mttrHours.code !== 'no_failures', sub: t('mean length of a failure event'),
       change: ch?.mttrHours ?? null, changeUnit: 'h2', status: ov.status.mttr,
@@ -477,18 +482,18 @@ function availabilitySection(env: Env): AvailabilitySection {
   const pctOf = (m: Metric | undefined): number | null => (m && m.available ? m.value * 100 : null);
   const tot = ov.kpi?.total;
   const table: ReportTable = {
-    columns: [col(t('Area')), col(t('Availability'), 'pct'), ...(withTarget ? [col(t('Status'))] : []), col(t('RF'), 'pct'), col(t('UF'), 'pct')],
+    columns: [col(t('Area')), col(t('Availability'), 'pct'), ...(withTarget ? [col(t('Status'))] : []), col(t('RF'), 'pct'), col(t('UF'), 'pct'), col(t('EA'), 'pct')],
     rows: areas.map((a) => [a.area_id, a.availability.available ? a.availability.value * 100 : null, ...(withTarget ? [!a.availability.available ? '–' : belowIds.has(a.area_id) ? t('Below target') : t('On target')] : []),
-      pctOf(kpiOf.get(a.area_id)?.reliabilityFactor), pctOf(kpiOf.get(a.area_id)?.utilizationFactor)]),
+      pctOf(kpiOf.get(a.area_id)?.reliabilityFactor), pctOf(kpiOf.get(a.area_id)?.utilizationFactor), pctOf(kpiOf.get(a.area_id)?.equipmentAvailability)]),
     total: av ? [t('All areas together'), overall.available ? overall.value * 100 : null, ...(withTarget ? [ov.status.availability ? (ov.status.availability.ok ? t('On target') : t('Below target')) : '–'] : []),
-      pctOf(tot?.reliabilityFactor), pctOf(tot?.utilizationFactor)] : undefined,
+      pctOf(tot?.reliabilityFactor), pctOf(tot?.utilizationFactor), pctOf(tot?.equipmentAvailability)] : undefined,
   };
   return {
     ...section('availability', availabilityTakeaway({ basis, lowest, highest, overall, belowTarget: ov.belowTarget, target: targets.availabilityPct }),
       env.noData ?? (areas.length === 0 || values.length === 0 ? t('No availability can be calculated for these areas.') : null), [
         t('Availability on basis {b}, worked out from summed area-hours for each area and for all areas together; never an average of percentages.', { b: basis }),
         ...(withTarget ? [t('Target {x}% from Settings: striped bars are below the target.', { x: targetNumber(targets.availabilityPct!) })] : []),
-        t('RF (reliability factor) = running h ÷ (running h + incidental h); UF (utilization factor) = running h ÷ calendar h. Running h = scheduled time minus every stop.'),
+        t('RF (reliability factor) = running h ÷ (running h + incidental h); UF (utilization factor) = running h ÷ calendar h; EA (equipment availability) = (running h + CIR h) ÷ calendar h. Running h = scheduled time minus every stop.'),
       ]),
     data: { basis, areas, overall, floor, targets, below: [...belowIds], belowTarget: ov.belowTarget, status: ov.status.availability, table },
   };

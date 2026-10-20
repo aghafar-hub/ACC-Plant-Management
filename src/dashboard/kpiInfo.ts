@@ -16,6 +16,8 @@ export interface KpiLive {
   /** summed length of the failure events (the MTTR numerator) */
   eventHours: string;
   mtbf: string; mttr: string; rf: string; uf: string;
+  /** equipment availability EA, as the UF card shows it */
+  ea: string;
   perDay: string; days: number; areas: number;
 }
 
@@ -46,7 +48,7 @@ function formulas(id: HeroId): string[] {
     ];
     case 'mtbf': return [t('MTBF = Running hours ÷ Failures'), t('Running = T − PL − INC − CIR')];
     case 'mttr': return [t('MTTR = total length of the failure events ÷ Failures')];
-    case 'utilization': return [t('UF = Running ÷ T × 100'), t('Running = T − PL − INC − CIR'), t('T = scheduled hours per day × days × areas')];
+    case 'utilization': return [t('UF = Running ÷ T × 100'), t('EA = (Running + CIR) ÷ T × 100'), t('Running = T − PL − INC − CIR'), t('T = scheduled hours per day × days × areas')];
     case 'availability': return [t('Availability = (T − PL − INC − CIR) ÷ (T − PL) × 100 (basis B)')];
     case 'running-hours': return [t('Running = T − (PL + INC + CIR)'), t('T = scheduled hours per day × days × areas')];
   }
@@ -63,7 +65,7 @@ function worked(id: HeroId, n: KpiLive): string[] {
     case 'mtbf': return n.failures === '0' ? [] : [run, t('MTBF = {r} ÷ {n} = {m} h', { r: n.run, n: n.failures, m: n.mtbf })];
     case 'mttr': return n.failures === '0' ? [] : [t('MTTR = {h} h ÷ {n} = {m} h', { h: n.eventHours, n: n.failures, m: n.mttr })];
     // T and the running hours are in the 'Here:' line of the running-hours text above
-    case 'utilization': return [run, t('UF = {r} ÷ {T} = {uf}%', { r: n.run, T: n.T, uf: n.uf })];
+    case 'utilization': return [run, t('UF = {r} ÷ {T} = {uf}%', { r: n.run, T: n.T, uf: n.uf }), t('EA = ({r} + {cir}) ÷ {T} = {ea}%', { r: n.run, cir: n.cir, T: n.T, ea: n.ea })];
     case 'running-hours': return [T, run];
     case 'availability': return [];
   }
@@ -146,6 +148,7 @@ function baseInfo(id: HeroId, basis: 'A' | 'B' | 'C'): KpiInfo {
           t('The share of the calendar the areas actually ran.'),
           t('UF = running hours ÷ scheduled (calendar) hours. Every stop lowers it: planned, incidental and CIR. It is the same arithmetic as availability basis A.'),
           t('A low UF with a high RF means the areas were stopped for planned work or outside reasons, not because they failed.'),
+          t('EA (equipment availability) is shown on the same card: (running hours + CIR hours) ÷ scheduled hours. Circumstantial stops (power, gas, water, full silos) do not lower it; planned and incidental stops do. Approved as in the NRS report.'),
         ],
       };
     case 'mtbf':
