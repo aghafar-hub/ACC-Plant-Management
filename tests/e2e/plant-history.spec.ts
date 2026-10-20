@@ -55,6 +55,10 @@ test.describe('history import', () => {
     await page.getByTestId('d-year').selectOption('2023');
     await expect(page.getByTestId('v-row').first()).toBeVisible();
     for (const m of await page.getByTestId('d-month').locator('option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value).filter(Boolean))) expect(m.startsWith('2023-')).toBe(true);
+    // the switch is remembered on this device
+    await page.goto('/#/dashboard');
+    await page.goto('/#/validate');
+    await expect(page.getByTestId('v-history-toggle')).toBeChecked();
   });
 
   test('the engineer (not an Admin) has no history import', async ({ page }) => {

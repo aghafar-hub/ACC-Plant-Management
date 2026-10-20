@@ -130,4 +130,6 @@ up. A day over 24 hours (an entry error) runs into the next day, keeping its tot
 
 **Validate:** history records are left out of the list, the counts and the badges by default. The switch "Also check the
 imported history" on the Validate page lists them with the same checks as any upload; the Year and Month filters then
-narrow the list (the month list keeps to the chosen year). Fixing a history record changes the stored record.
+narrow the list (the month list keeps to the chosen year). The switch is remembered on the device. History records are
+fixed by hand (owner decision 2026-10-20: no automatic line correction); fixing one changes the stored record and it
+stays a history record.

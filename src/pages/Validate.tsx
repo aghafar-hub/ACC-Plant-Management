@@ -17,6 +17,7 @@ import { inactiveAreas } from '../data/activeAreas';
 import { Icon } from '../icons';
 import { pageById, pageLabel } from '../navigation';
 import { useTheme } from '../theme/ThemeContext';
+import { store } from '../storagePrefix';
 import { useOnlineStatus } from '../useOnlineStatus';
 import { duration, hours, num, shortTs } from '../util/format';
 import BulkModal, { BULK_NOTE } from '../validate/BulkModal';
@@ -118,7 +119,9 @@ export default function Validate() {
   const editor = canEdit('events');
   const { rows, ready, st, loadAll } = v;
   // imported NRS history (2024-2025, date only) is checked here only when switched on; the badges elsewhere never count it
-  const [withHistory, setWithHistory] = useState(false);
+  // remembered on this device: history is fixed by hand over many visits
+  const [withHistory, setHistoryState] = useState(() => store.get('validate_history') === '1');
+  const setWithHistory = (on: boolean) => { setHistoryState(on); store.set('validate_history', on ? '1' : '0'); };
   const historyCount = useMemo(() => rows.filter(isHistory).length, [rows]);
   const list = useMemo(() => (withHistory && historyCount ? buildValidation(rows, { history: true }) : v.list), [withHistory, historyCount, rows, v.list]);
   // this page needs every year's records: no waiting for idle time
