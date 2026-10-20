@@ -93,7 +93,7 @@ test.describe('desktop', () => {
     await expect(title).toBeVisible();
     await page.mouse.move(800, 500);
     await expect(title).toBeHidden();
-    const border = await page.locator('[data-section="downtime"]').evaluate((el) => getComputedStyle(el).borderTopWidth);
+    const border = await page.getByTestId('rail').locator('section[data-section="downtime"]').evaluate((el) => getComputedStyle(el).borderTopWidth);
     expect(border).toBe('1px');
     await page.getByTestId('rail-panel').hover();
     await expect(title).toBeVisible();
@@ -344,8 +344,8 @@ test.describe('desktop', () => {
     await expect(page.getByTestId('rail-link-downtime')).toContainText('Downtime analysis');
     expect(await mainLeft()).toBe(68);
     // choosing a page with the mouse closes it at once, even with the pointer still on the rail
-    await page.getByTestId('rail-link-daily').click();
-    await expect(page.getByTestId('page-daily')).toBeVisible();
+    await page.getByTestId('rail-link-downtime').click();
+    await expect(page.getByTestId('page-overview')).toBeVisible();
     await expect.poll(async () => (await panel.boundingBox())!.width).toBe(68);
     // it opens again once the pointer has left and comes back
     await page.mouse.move(900, 500);

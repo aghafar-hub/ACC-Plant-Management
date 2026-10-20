@@ -253,3 +253,7 @@
   min-height: 32px;
   padding: 4px 0;
 }
+
+/* History import (backend 2.2.0): the three figures share the width and stack on a phone */
+.hi-figures { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
+.hi-figures > .card { min-width: 0; margin: 0; }

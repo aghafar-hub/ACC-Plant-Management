@@ -58,13 +58,13 @@ export default function HistoryImport({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <section className="card" data-testid="history-import" style={{ marginTop: 16 }}>
+    <section className="card" data-testid="history-import" style={{ marginTop: 16, minWidth: 0, overflowWrap: 'anywhere' }}>
       <h3 style={{ margin: '0 0 4px', fontSize: 15 }}><Icon name="history" size={16} /> {t('History import (date only)')}</h3>
       <p className="adm-note">
         {t('Adds the stoppages of earlier years from the NRS reporting workbook (sheet MS.Downtime: date, area, code, hours, classification, reason, failure). They have no stop or restart times: the stops of each day are laid end to end from 00:00, so daily, monthly and yearly hours, failures, RF, UF, MTBF and MTTR are right, while the hour-of-day charts and the timeline leave them out. Admin only.')}
       </p>
       {(stage.kind === 'idle' || stage.kind === 'error' || stage.kind === 'done') && (
-        <label className="btn" style={{ display: 'inline-flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
+        <label className="btn" style={{ display: 'inline-flex', gap: 6, alignItems: 'center', cursor: 'pointer', whiteSpace: 'normal', maxWidth: '100%', textAlign: 'left' }}>
           <Icon name="upload" size={15} /> {t('Choose the NRS workbook or its MS.Downtime sheet')}
           <input type="file" accept=".xlsx,.xlsm" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void choose(f); }} data-testid="history-file" />
         </label>
@@ -76,7 +76,7 @@ export default function HistoryImport({ onDone }: { onDone: () => void }) {
         const sendable = plan.rows.filter((r) => !taken.includes(r.event_date.slice(0, 7))).length;
         return (
           <div data-testid="history-summary">
-            <div className="tiles" style={{ marginTop: 10 }}>
+            <div className="hi-figures" style={{ marginTop: 10 }}>
               <div className="card"><b data-testid="history-rows">{num(plan.rows.length)}</b> {t('stoppages')}<div className="adm-muted-sm">{t('{from} to {to}', { from: plan.dateFrom, to: plan.dateTo })}</div></div>
               <div className="card"><b>{num(Math.round(plan.hours))}</b> {t('stop hours')}<div className="adm-muted-sm">{t('{n} areas: {list}', { n: plan.areas.length, list: plan.areas.join(', ') })}</div></div>
               <div className="card"><b>{plan.months.length}</b> {t('months')}<div className="adm-muted-sm">{monthText(plan.months[0] ?? '')} – {monthText(plan.months[plan.months.length - 1] ?? '')}</div></div>

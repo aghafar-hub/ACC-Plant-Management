@@ -52,7 +52,7 @@ test.describe('validate (desktop)', () => {
       await expect(page.getByTestId('page-events')).toBeVisible();
       await expect(railLink).toHaveClass(/sidebar-link--active/);
       const tabs = page.getByRole('navigation', { name: 'Pages' });
-      expect((await tabs.getByRole('link').allTextContents()).map((x) => x.replace(/[◆\d,\s]+$/, '').trim()).slice(0, 2)).toEqual(['Events', 'Validate']);
+      expect((await tabs.getByRole('link').allTextContents()).map((x) => x.replace(/[◆\d,\s]+$/, '').trim()).slice(6, 8)).toEqual(['Events', 'Validate']);
       await tabs.getByRole('link', { name: /^Validate/ }).click();
       await expect(page.getByTestId('page-validate')).toBeVisible();
       await expect(railLink).toHaveClass(/sidebar-link--active/);
