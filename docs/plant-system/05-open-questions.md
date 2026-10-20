@@ -25,3 +25,4 @@ Ask the laboratory or whoever runs QCX.
 | O2 | OEE: is it wanted, and what counts as good quality (e.g. 1 − isolated clinker ÷ clinker)? | |
 | O3 | Names of the engineer and manager of each section (downtime, production, quality) and the plant manager, for the month-end closing. | Entered on the Users page later |
 | O4 | Quality specification limits and aims. | Entered later in Settings › Quality limits |
+| O5 | December 2025 downtime: missing (the NRS file ends on 30 Nov 2025, the database starts on 1 Jan 2026). Shown as "not uploaded", so it does not distort the figures. Owner will add the file later: a monthly workbook goes through the normal Upload; a newer NRS file needs a "choose which months" option in the history import first. | Later |
