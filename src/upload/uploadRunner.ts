@@ -27,6 +27,8 @@ export interface UploadJob {
   rows: UploadRow[];
   summary: { rows_read: number; rows_skipped: number };
   warnings: FinishWarning[];
+  /** backend 2.2.0: 'history' for a date-only history import */
+  kind?: 'monthly' | 'history';
 }
 
 export interface UploadOutcome { batch: UploadBatch; progress: Progress }
@@ -81,7 +83,7 @@ export async function runUpload(api: Pick<Api, 'uploadStart' | 'uploadChunk' | '
   };
   try {
     if (!p.batchId) {
-      p.batchId = (await withRetry(() => api.uploadStart(token, job.fileName, job.fileHash), delays, sleep)).batch_id;
+      p.batchId = (await withRetry(() => (job.kind ? api.uploadStart(token, job.fileName, job.fileHash, job.kind) : api.uploadStart(token, job.fileName, job.fileHash)), delays, sleep)).batch_id;
     }
     report();
     for (let c = p.chunksDone; c < p.totalChunks; c++) {

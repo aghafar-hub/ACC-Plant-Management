@@ -567,6 +567,7 @@ export function failureStartHeatmap(failureEvents: ChainedEvent[], window: DateR
   const cells: HeatCell[] = [];
   for (const c of analysableChains(failureEvents)) {
     if (!c.isFailure || c.startMs < w.fromMs || c.startMs >= w.toMs) continue;
+    if (c.head.time_precision === 'day') continue; // date-only history: its clock times are made up (laid end to end from 00:00)
     const d = new Date(c.startMs);
     const hour = d.getUTCHours();
     const wd = (d.getUTCDay() + 6) % 7;

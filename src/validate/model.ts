@@ -138,6 +138,7 @@ export function buildValidation(events: readonly EventRow[]): ValidationList {
   const overlapRecords: ValidationRecord[] = [];
   for (const e of events) {
     if (e.is_void) continue;
+    if (e.origin === 'history') continue; // 2.2.0: imported date-only history is reference data, not a record to validate
     const partners = overlaps.partners.get(e.event_id) ?? [];
     const full = fullRecordOf(e, partners);
     if (full.problems.length) records.push(full);

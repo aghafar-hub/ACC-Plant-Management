@@ -112,7 +112,7 @@ const isBlank = (v: unknown): boolean => v === null || v === undefined || (typeo
 const p2 = (n: number, w = 2): string => String(n).padStart(w, '0');
 
 /** Text of a cell, trimmed ('' for empty). Dates read as ISO text. */
-function textOf(v: unknown): string {
+export function textOf(v: unknown): string {
   if (isBlank(v)) return '';
   if (v instanceof Date) return Number.isNaN(v.getTime()) ? '' : dateText(v.getTime());
   if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
@@ -174,7 +174,7 @@ export function readDate(v: unknown, date1904 = false): string | null {
   return null;
 }
 
-function readNumber(v: unknown): number | null {
+export function readNumber(v: unknown): number | null {
   if (typeof v === 'number') return Number.isFinite(v) ? v : null;
   if (typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v))) return Number(v);
   return null;

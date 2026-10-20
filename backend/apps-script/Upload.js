@@ -21,14 +21,18 @@ function batchOrThrow_(batchId) {
   return b;
 }
 
-function uploadStart_(session, fileName, fileHash) {
+function uploadStart_(session, fileName, fileHash, kind) {
   var name = cleanText_(fileName, 'File name', false, 200);
   var hash = cleanText_(fileHash, 'File hash', false, 128);
+  // 2.2.0: a history import (date-only stops from the NRS workbook) is for the Admin role only
+  var k = kind === undefined || kind === null || kind === '' ? 'monthly' : String(kind);
+  if (k !== 'monthly' && k !== 'history') throw apiError_(ERR.BAD_REQUEST, 'Kind must be monthly or history.');
+  if (k === 'history' && !isAdmin_(session)) throw apiError_(ERR.FORBIDDEN, 'Only an Admin can import history.');
   return withLock_(function () {
     var id = 'B-' + compactTs_('yyyyMMdd-HHmmss') + '-' + randomHex_(4);
     appendRow_(T.BATCHES, {
       batch_id: id, uploaded_by: session.user.user_id, uploaded_at: nowTs_(), file_name: name, file_hash: hash,
-      rows_read: 0, rows_added: 0, rows_identical: 0, rows_skipped: 0, warning_count: 0, status: 'Started'
+      rows_read: 0, rows_added: 0, rows_identical: 0, rows_skipped: 0, warning_count: 0, status: 'Started', kind: k
     });
     auditLog_(session.user.user_id, 'upload_start', T.BATCHES, id, name);
     return { batch_id: id };
@@ -93,6 +97,7 @@ function uploadChunk_(session, batchId, rows) {
       rec.edited = false;
       rec.is_void = false;
       rec.created_at = nowTs_();
+      if (batch.kind === 'history') { rec.origin = 'history'; rec.time_precision = 'day'; }
       fresh.push(rec);
     });
     appendRows_(T.EVENTS, fresh);

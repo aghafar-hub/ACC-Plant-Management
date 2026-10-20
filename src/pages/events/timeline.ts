@@ -153,6 +153,7 @@ export function chainBars(chains: readonly ChainedEvent[], w: Interval): TlBar[]
   const out: TlBar[] = [];
   for (const c of chains) {
     if (!touches(c.startMs, c.endMs, w)) continue;
+    if (c.head.time_precision === 'day') continue; // date-only history has no real clock times to draw
     out.push(makeBar(c.head, c.startMs, c.endMs, c.rows.reduce((s, r) => s + rowHours(r, w), 0), c.durationS / 3600, c.rows.length, false, w));
   }
   return out;

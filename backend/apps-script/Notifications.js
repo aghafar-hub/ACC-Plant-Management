@@ -975,6 +975,7 @@ function digestContext_() {
   var validate = 0, blocked = 0, codes = 0;
   events.forEach(function (e) {
     if (!hasOpenProblem_(e)) return; // a record whose only problems are kept as entered is not counted
+    if (e.origin === 'history') return; // 2.2.0: imported history is reference data, not a record to validate
     validate++;
     var f = openFlags_(e);
     if (f.some(function (x) { return NOTIF_BLOCKING_FLAGS_.indexOf(x) >= 0; })) blocked++;

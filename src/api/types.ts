@@ -98,6 +98,8 @@ export interface UploadBatch {
   batch_id: string; uploaded_by: string; uploaded_at: string; file_name?: string; file_hash?: string;
   rows_read: number; rows_added: number; rows_identical: number; rows_skipped: number;
   warning_count: number; status: 'Started' | 'Completed' | 'Failed';
+  /** 2.2.0: 'history' for a date-only history import; blank or 'monthly' for the monthly workbook */
+  kind?: string;
 }
 
 /** A row read from the workbook, normalised by the browser, ready to send. */
@@ -636,7 +638,8 @@ export interface Api {
   getUploadWarnings(token: string, batchId: string): Promise<UploadWarning[]>;
 
   // --- upload ---
-  uploadStart(token: string, fileName: string, fileHash: string): Promise<{ batch_id: string }>;
+  /** kind 'history' (backend 2.2.0, Admin role only): the events are stored as date-only history. */
+  uploadStart(token: string, fileName: string, fileHash: string, kind?: 'monthly' | 'history'): Promise<{ batch_id: string }>;
   uploadChunk(token: string, batchId: string, rows: UploadRow[]): Promise<{ added: number; identical: number; rejected: { source_row: number; reason: string }[] }>;
   uploadFinish(token: string, batchId: string, summary: { rows_read: number; rows_skipped: number }, warnings: Omit<UploadWarning, 'warning_id' | 'batch_id'>[]): Promise<UploadBatch>;
 

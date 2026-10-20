@@ -114,7 +114,7 @@ export interface SentMockMail { from: string; to: string[]; cc: string[]; subjec
  * outlives a reload and a fresh sign-in like on a real server (everything else in the mock starts again on a reload).
  */
 /** The backend version the demo behaves like. */
-export const MOCK_SERVER_VERSION = '2.1.0';
+export const MOCK_SERVER_VERSION = '2.2.0';
 
 export function createMockApi(opts: { seed?: number; demoActions?: boolean; keepAccountThemes?: boolean } = {}): MockApi {
   let db: SyntheticDb | null = null;
@@ -1008,13 +1008,15 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
     },
 
     // --- upload
-    async uploadStart(token, fileName, fileHash) {
+    async uploadStart(token, fileName, fileHash, kind) {
       const a = need(token, ['upload'], 'Edit');
+      if (kind && kind !== 'monthly' && kind !== 'history') throw new ApiError('Kind must be monthly or history.', 'bad_request');
+      if (kind === 'history' && a.user.role_id !== 'ROLE-ADMIN') throw new ApiError('Only an Admin can import history.', 'forbidden');
       const t = nowTs();
       const id = `B-${t.slice(0, 10).replace(/-/g, '')}-${t.slice(11, 19).replace(/:/g, '')}-${(0x1000 + (++counter % 0xefff)).toString(16)}`;
       get().upload_batches.push({
         batch_id: id, uploaded_by: a.user.user_id, uploaded_at: t, file_name: String(fileName ?? ''), file_hash: String(fileHash ?? ''),
-        rows_read: 0, rows_added: 0, rows_identical: 0, rows_skipped: 0, warning_count: 0, status: 'Started',
+        rows_read: 0, rows_added: 0, rows_identical: 0, rows_skipped: 0, warning_count: 0, status: 'Started', kind: kind ?? 'monthly',
       });
       audit(a.user.user_id, 'upload_start', 'upload_batches', id, String(fileName ?? ''));
       return { batch_id: id };
@@ -1066,6 +1068,7 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
           duration_s: rec.duration_s, freq: rec.freq, classification: rec.classification as ClassificationCode, criticality: rec.criticality,
           is_failure: rec.is_failure, reason_raw: stored(rec.reason_raw), reason_id: rec.reason_id, description: stored(rec.description),
           source_file: batch.file_name, source_row: srcRow, fingerprint: fp, flags: stored(rec.flags), edited: false, is_void: false, created_at: nowTs(),
+          ...(batch.kind === 'history' ? { origin: 'history', time_precision: 'day' } : {}),
         });
         added++;
       }

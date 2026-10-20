@@ -29,7 +29,7 @@ var HANDLERS = {
   getEventEdits: function (s, p) { return getEventEdits_(p.eventId); },
   getUploadHistory: function () { return getUploadHistory_(); },
   getUploadWarnings: function (s, p) { return getUploadWarnings_(p.batchId); },
-  uploadStart: function (s, p) { return uploadStart_(s, p.fileName, p.fileHash); },
+  uploadStart: function (s, p) { return uploadStart_(s, p.fileName, p.fileHash, p.kind); },
   uploadChunk: function (s, p) { return uploadChunk_(s, p.batchId, p.rows); },
   uploadFinish: function (s, p) { return uploadFinish_(s, p.batchId, p.summary, p.warnings); },
   revalidateEvents: function (s, p) { return revalidateEvents_(s, p.year); },

@@ -380,6 +380,15 @@ var SCHEMA = {
       "Completed",
       "Failed"
      ]
+    },
+    {
+     "name": "kind",
+     "type": "enum",
+     "required": false,
+     "enum": [
+      "monthly",
+      "history"
+     ]
     }
    ]
   },

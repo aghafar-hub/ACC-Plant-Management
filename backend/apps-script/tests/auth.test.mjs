@@ -120,8 +120,8 @@ test('1.10.0: sign out of all devices ends every earlier session of that person;
   const audit = env.rows('audit_log').map((r) => r.action);
   assert.ok(audit.includes('sign_out_everywhere') && audit.includes('sign_out_user_everywhere'));
   // the session says which server answers (the app shows the 1.10.0 features only then)
-  assert.equal(again.server_version, '2.1.0');
-  assert.equal(env.ok('getMyAccess', admin.token).server_version, '2.1.0');
+  assert.equal(again.server_version, '2.2.0');
+  assert.equal(env.ok('getMyAccess', admin.token).server_version, '2.2.0');
 });
 
 test('temporary password: must_change limits actions to changePassword, getMyAccess and login', () => {

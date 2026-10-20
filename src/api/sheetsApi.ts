@@ -71,7 +71,7 @@ export function createSheetsApi(url: string): Api {
     getUploadHistory: (token) => call('getUploadHistory', token),
     getUploadWarnings: (token, batchId) => call('getUploadWarnings', token, { batchId }),
 
-    uploadStart: (token, fileName, fileHash) => call('uploadStart', token, { fileName, fileHash }),
+    uploadStart: (token, fileName, fileHash, kind) => call('uploadStart', token, kind ? { fileName, fileHash, kind } : { fileName, fileHash }),
     uploadChunk: (token, batchId, rows) => call('uploadChunk', token, { batchId, rows }),
     uploadFinish: (token, batchId, summary, warnings) => call('uploadFinish', token, { batchId, summary, warnings }),
 

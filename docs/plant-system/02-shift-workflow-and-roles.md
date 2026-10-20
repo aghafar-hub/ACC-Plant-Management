@@ -115,3 +115,16 @@ Scope is **plant**, a **line** (L.1, L.2) or one **area**. A responsibility can 
 * **Times:** a stop must start inside the shift; a restart typed in a shift may not be after its end (leave it blank, the later shift enters it); nothing in the future.
 * **Posting:** a stoppage goes into the downtime analysis when it is closed and both its own report and the report that entered its restart are validated. It becomes an event with origin `shift`, its batch is the report id. When the same stop is already stored (for example the month's workbook was also uploaded) the two are linked and nothing is added twice. A report whose stoppages are all posted becomes *In the downtime analysis*.
 * **Daily meeting:** one production day runs from 08:00 to 08:00. Figures come from the shift reports at whatever step they are, marked provisional until validated. An area counts as "in use" once it has a shift report in the last 7 days; areas not in use are listed but not counted as late.
+
+## History import (2.2.0)
+
+Upload › **History import (date only)**, Admin role only. It reads the sheet MS.Downtime of the NRS reporting workbook (the
+.xlsm itself can be chosen) and shows a summary before anything is sent: stoppages, hours, months, areas, rows left out
+(no hours), area-days over 24 hours, exact copies, spelling put right. Months that already hold stoppages are left out,
+so nothing is counted twice; importing the same file again adds nothing.
+
+The sheet has dates and hours but no stop or restart times. The stops of each area and date are laid end to end from
+00:00 in sheet order, so daily, monthly and yearly hours, failures, RF, UF, MTBF and MTTR are the same as the sheet adds
+up. A day over 24 hours (an entry error) runs into the next day, keeping its total. The events are stored with origin
+`history` and time precision `day`: the hour-of-day chart (when failures start) and the timeline leave them out, and
+they are not listed as records to validate.

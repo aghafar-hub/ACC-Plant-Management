@@ -8,12 +8,14 @@ import { useTheme } from '../theme/ThemeContext';
 import { num, whenText } from '../util/format';
 import UploadFlow from '../upload/UploadFlow';
 import UploadHistory from '../upload/UploadHistory';
+import HistoryImport from '../upload/HistoryImport';
+import { SERVER_2_2, versionAtLeast } from '../auth/serverVersion';
 import { useUploadHistory } from '../upload/useUploadHistory';
 import '../components/ui.css';
 import '../admin/admin.css';
 
 export default function Upload() {
-  const { canEdit } = useAuth();
+  const { canEdit, user, serverVersion } = useAuth();
   const { T } = useTheme();
   const { batches, error, reload } = useUploadHistory();
   const last = batches?.[0];
@@ -38,6 +40,7 @@ export default function Upload() {
           <span>{t('You can see the upload history. Adding a workbook needs Edit access to this page.')}</span>
         </div>
       )}
+      {edit && user?.role_id === 'ROLE-ADMIN' && versionAtLeast(serverVersion, SERVER_2_2) && <HistoryImport onDone={reload} />}
       <UploadHistory batches={batches} error={error} onRetry={reload} />
     </div>
   );

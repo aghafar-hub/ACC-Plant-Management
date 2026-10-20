@@ -113,7 +113,8 @@
         {"name": "rows_identical", "type": "int", "required": true, "description": ""},
         {"name": "rows_skipped", "type": "int", "required": true, "description": "Late rows the user chose to skip"},
         {"name": "warning_count", "type": "int", "required": true, "description": ""},
-        {"name": "status", "type": "enum", "required": true, "enum": ["Started", "Completed", "Failed"], "description": ""}
+        {"name": "status", "type": "enum", "required": true, "enum": ["Started", "Completed", "Failed"], "description": ""},
+        {"name": "kind", "type": "enum", "required": false, "enum": ["monthly", "history"], "description": "v7 (2.2.0): blank or monthly = the monthly downtime workbook; history = date-only history import (events get origin history, time_precision day)"}
       ]
     },
     {

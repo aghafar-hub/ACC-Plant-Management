@@ -21,3 +21,6 @@ export const SERVER_2_0 = '2.0.0';
 
 /** Backend 2.1.0 (plant system): shift reports, the two reviews, posting to events, the daily meeting. */
 export const SERVER_2_1 = '2.1.0';
+
+/** Backend 2.2.0 (plant system): date-only history import (upload kind 'history'). */
+export const SERVER_2_2 = '2.2.0';
