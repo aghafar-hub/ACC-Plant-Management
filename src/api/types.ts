@@ -15,14 +15,15 @@ import type { Responsibility, ResponsibilityInput } from '../plant/responsibilit
 import type { ShiftBundle, ShiftHistory, ShiftList, ShiftReportInput, ShiftRestartInput, ShiftReviewInput } from '../plant/shift';
 
 import type { KpiDefinition, KpiTarget, KpiTargetSave } from '../plant/kpiTargets';
+import type { DispatchDay, DispatchSettings, DispatchUploadResult } from '../dispatch/model';
 import type { QualityLimitInput, QualityParameter } from '../plant/quality';
 import type { MonthClosing, MonthClosingStep } from '../plant/closing';
 export type TabId =
   | 'overview' | 'pareto' | 'repeats' | 'reliability' | 'reports' | 'actions' | 'events'
-  | 'upload' | 'master' | 'settings' | 'users' | 'shift' | 'daily';
-/** shift and daily: backend 2.1.0 (plant system), Shift reports and Daily meeting. */
+  | 'upload' | 'master' | 'settings' | 'users' | 'shift' | 'daily' | 'dispatch';
+/** shift and daily: backend 2.1.0 (plant system), Shift reports and Daily meeting. dispatch: the Dispatch & Packing section (one access tab for all its pages). */
 export const TAB_IDS: TabId[] = [
-  'overview', 'pareto', 'repeats', 'reliability', 'reports', 'actions', 'events', 'upload', 'master', 'settings', 'users', 'shift', 'daily',
+  'overview', 'pareto', 'repeats', 'reliability', 'reports', 'actions', 'events', 'upload', 'master', 'settings', 'users', 'shift', 'daily', 'dispatch',
 ];
 export type AccessLevel = 'Hidden' | 'View' | 'Edit';
 export type Access = Record<TabId, AccessLevel>;
@@ -624,6 +625,20 @@ export interface OutgoingEmail {
 
 /** Which sender the server used: the system email through Gmail, or the deploying account through MailApp. */
 export interface SendResult { from: string; via: 'gmail' | 'mailapp'; recipients?: number }
+
+/**
+ * Dispatch & Packing (planned backend 2.4.0). Kept apart from `Api` on purpose: the backend suite requires every `Api` call to
+ * have an access rule and a handler, and these four have neither yet. Demo mode implements them; the server client answers
+ * "not available" until the backend exists. All four need the access tab `dispatch` (View to read, Edit to change).
+ * Packer stoppage hours live here and are never posted to downtime events.
+ */
+export interface DispatchApi {
+  getDispatchDays(token: string): Promise<DispatchDay[]>;
+  /** Adds the days of a workbook. A date that is already stored refuses the whole upload (code 'duplicate_dates'); nothing is replaced. */
+  uploadDispatchDays(token: string, days: DispatchDay[], fileName: string): Promise<DispatchUploadResult>;
+  getDispatchSettings(token: string): Promise<DispatchSettings>;
+  saveDispatchSettings(token: string, settings: DispatchSettings): Promise<DispatchSettings>;
+}
 
 export interface Api {
   // --- auth ---

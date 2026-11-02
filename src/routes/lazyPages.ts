@@ -36,12 +36,24 @@ export const SettingsPage = lazyPage(() => import('../pages/Settings'));
 export const ActionsPage = lazyPage(() => import('../pages/Actions'));
 export const NotificationsPage = lazyPage(() => import('../pages/Notifications'));
 export const ShiftReportsPage = lazyPage(() => import('../pages/ShiftReports'));
+export const DispatchDashboardPage = lazyPage(() => import('../pages/dispatch/DispatchDashboard'));
+export const DispatchAnalysisPage = lazyPage(() => import('../pages/dispatch/DispatchAnalysis'));
+export const DispatchPackersPage = lazyPage(() => import('../pages/dispatch/DispatchPackers'));
+export const DispatchBagsPage = lazyPage(() => import('../pages/dispatch/DispatchBags'));
+export const DispatchValidatePage = lazyPage(() => import('../pages/dispatch/DispatchValidate'));
+export const DispatchDataPage = lazyPage(() => import('../pages/dispatch/DispatchData'));
 export const DailyMeetingPage = lazyPage(() => import('../pages/DailyMeeting'));
 
 // Address prefix -> chunk. '/overview' is the old Dashboard address.
 const BY_PATH: [string, LazyPage][] = [
   ['/shift', ShiftReportsPage],
   ['/daily', DailyMeetingPage],
+  ['/dispatch/dashboard', DispatchDashboardPage],
+  ['/dispatch/analysis', DispatchAnalysisPage],
+  ['/dispatch/packers', DispatchPackersPage],
+  ['/dispatch/bags', DispatchBagsPage],
+  ['/dispatch/validate', DispatchValidatePage],
+  ['/dispatch/data', DispatchDataPage],
   ['/dashboard', DashboardPage],
   ['/overview', DashboardPage],
   ['/pareto', ParetoPage],

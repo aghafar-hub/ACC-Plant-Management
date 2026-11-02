@@ -119,7 +119,7 @@ test('user overrides win over the role, including Hidden', () => {
 test('a user with every tab Hidden can only use session actions', () => {
   const { env, admin, users } = setup();
   const v = users['ROLE-VIEW'];
-  const all = Object.fromEntries(DASH.concat(['upload', 'master', 'settings', 'users', 'shift', 'daily']).map((t) => [t, 'Hidden']));
+  const all = Object.fromEntries(DASH.concat(['upload', 'master', 'settings', 'users', 'shift', 'daily', 'dispatch']).map((t) => [t, 'Hidden']));
   env.ok('setUserTabAccess', admin.token, { userId: v.user_id, overrides: all });
   checkMatrix(env, v.token, all, 'all hidden', 'ROLE-VIEW');
   assert.equal(env.call('getStartup', v.token).error.code, 'forbidden');
@@ -130,7 +130,7 @@ test('a missing row means Hidden', () => {
   const user = { user_id: 'U-x', role_id: 'ROLE-NONE' };
   const access = env.json(env.ctx.computeAccess_(user, []));
   assert.ok(Object.values(access).every((l) => l === 'Hidden'));
-  assert.equal(Object.keys(access).length, 13);
+  assert.equal(Object.keys(access).length, 14);
   assert.equal(access.reports, 'Hidden');
 });
 
@@ -171,7 +171,7 @@ test('reports tab: seeded Admin Edit, Manager Edit, Engineer View, Viewer View; 
   assert.ok(env.json(env.run('TAB_IDS')).includes('reports'));
   // the events a report is built from are readable with the Reports tab alone
   const v = users['ROLE-VIEW'];
-  const onlyReports = Object.fromEntries(['overview', 'pareto', 'repeats', 'reliability', 'actions', 'events', 'upload', 'master', 'settings', 'users', 'shift', 'daily'].map((t) => [t, 'Hidden']));
+  const onlyReports = Object.fromEntries(['overview', 'pareto', 'repeats', 'reliability', 'actions', 'events', 'upload', 'master', 'settings', 'users', 'shift', 'daily', 'dispatch'].map((t) => [t, 'Hidden']));
   env.ok('setUserTabAccess', admin.token, { userId: v.user_id, overrides: { ...onlyReports, reports: 'View' } });
   assert.equal(env.call('getStartup', v.token).status, 'ok');
   assert.equal(env.call('getEvents', v.token, { year: 2026 }).error?.code === 'forbidden', false);

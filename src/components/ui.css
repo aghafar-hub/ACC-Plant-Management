@@ -614,3 +614,13 @@
 .table-wrap--sticky.is-stuck .data-table th {
   box-shadow: 0 2px 0 var(--tk-border);
 }
+
+/* Dispatch & Packing: two chart cards per row on a wide screen, one on a phone */
+.dp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.dp-grid > .card { margin-bottom: 0; }
+.tbl-total td { border-top: 2px solid var(--tk-border); }

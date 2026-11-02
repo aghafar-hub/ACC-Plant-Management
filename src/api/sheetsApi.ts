@@ -1,7 +1,7 @@
 // Api implementation that talks to the Apps Script web app described in
 // docs/wire-protocol.md. Every call is a POST with a text/plain body (no CORS
 // preflight) carrying { action, token, params }.
-import type { Api } from './types';
+import type { Api, DispatchApi } from './types';
 import { ApiError } from './types';
 
 interface Envelope {
@@ -17,7 +17,7 @@ const LONG_ACTIONS: ReadonlySet<string> = new Set(['uploadStart', 'uploadChunk',
 export const timeoutFor = (action: string): number => (LONG_ACTIONS.has(action) ? API_LONG_TIMEOUT_MS : API_TIMEOUT_MS);
 const TIMEOUT_TEXT = 'The server took too long to answer. Check your connection and try again.';
 
-export function createSheetsApi(url: string): Api {
+export function createSheetsApi(url: string): Api & DispatchApi {
   async function call<T>(action: string, token: string, params: Record<string, unknown> = {}): Promise<T> {
     // a call that never answers (a stalled network, a sleeping server) ends with a clear message instead of a spinner
     const ctrl = typeof AbortController === 'undefined' ? null : new AbortController();
@@ -135,5 +135,14 @@ export function createSheetsApi(url: string): Api {
 
     listActiveUsers: (token) => call('listActiveUsers', token),
     listAuditLog: (token, filter, cursor) => call('listAuditLog', token, { filter: filter ?? {}, ...(cursor ? { cursor } : {}) }),
+
+    // Dispatch & Packing: the server side does not exist yet (planned backend 2.4.0); the section stays hidden on a real server
+    // (see useVisiblePages) and these answer plainly if anything reaches them
+    getDispatchDays: () => notYet(),
+    uploadDispatchDays: () => notYet(),
+    getDispatchSettings: () => notYet(),
+    saveDispatchSettings: () => notYet(),
   };
 }
+
+const notYet = (): Promise<never> => Promise.reject(new ApiError('Dispatch & Packing is not available on this server yet.', 'not_available'));

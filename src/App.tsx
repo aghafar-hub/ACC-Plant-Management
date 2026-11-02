@@ -25,7 +25,7 @@ import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import { documentTitle } from './util/docTitle';
 import {
-  ActionsPage, DailyMeetingPage, DashboardPage, EventExplorerPage, ShiftReportsPage, MasterPage, NotificationsPage, ParetoPage, preloadPath, ReliabilityPage, ReportsPage, RepeatsPage,
+  ActionsPage, DailyMeetingPage, DispatchAnalysisPage, DispatchBagsPage, DispatchDashboardPage, DispatchDataPage, DispatchPackersPage, DispatchValidatePage, DashboardPage, EventExplorerPage, ShiftReportsPage, MasterPage, NotificationsPage, ParetoPage, preloadPath, ReliabilityPage, ReportsPage, RepeatsPage,
   SettingsPage, UploadPage, ValidatePage, whenIdle,
 } from './routes/lazyPages';
 import { ActionsProvider } from './actions/ActionsContext';
@@ -52,6 +52,12 @@ const ActionsBoard = ActionsPage.Component;
 const NotificationsInbox = NotificationsPage.Component;
 const ShiftReports = ShiftReportsPage.Component;
 const DailyMeeting = DailyMeetingPage.Component;
+const DispatchDashboard = DispatchDashboardPage.Component;
+const DispatchAnalysis = DispatchAnalysisPage.Component;
+const DispatchPackers = DispatchPackersPage.Component;
+const DispatchBags = DispatchBagsPage.Component;
+const DispatchValidate = DispatchValidatePage.Component;
+const DispatchData = DispatchDataPage.Component;
 
 // Hover, keyboard focus or a touch on any link or menu tile in the shell starts loading that page's code,
 // so the page is usually ready by the time the click lands. Links carry their address in href ('#/pareto');
@@ -226,6 +232,13 @@ export default function App() {
               <Route element={<ShellLayout />}>
                 <Route path="/" element={<Home />} />
                 <Route path="/shift/:sub?" element={<RequireTab tab="shift"><ShiftReports /></RequireTab>} />
+                <Route path="/dispatch" element={<Navigate to="/dispatch/dashboard" replace />} />
+                <Route path="/dispatch/dashboard" element={<RequireTab tab="dispatch"><DispatchDashboard /></RequireTab>} />
+                <Route path="/dispatch/analysis" element={<RequireTab tab="dispatch"><DispatchAnalysis /></RequireTab>} />
+                <Route path="/dispatch/packers" element={<RequireTab tab="dispatch"><DispatchPackers /></RequireTab>} />
+                <Route path="/dispatch/bags" element={<RequireTab tab="dispatch"><DispatchBags /></RequireTab>} />
+                <Route path="/dispatch/validate" element={<RequireTab tab="dispatch"><DispatchValidate /></RequireTab>} />
+                <Route path="/dispatch/data" element={<RequireTab tab="dispatch"><DispatchData /></RequireTab>} />
                 <Route path="/daily" element={<RequireTab tab="daily"><DailyMeeting /></RequireTab>} />
                 <Route path="/dashboard" element={<RequireTab tab="overview"><Dashboard /></RequireTab>} />
                 <Route path="/overview" element={<OldOverview />} />

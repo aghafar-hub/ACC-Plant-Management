@@ -21,7 +21,7 @@ var UPLOAD_WARNING_MAX = 20000;
 var FINGERPRINT_HINT_MAX = 20;
 var TEXT_MAX = 1000;
 
-var TAB_IDS = ['overview', 'pareto', 'repeats', 'reliability', 'reports', 'actions', 'events', 'upload', 'master', 'settings', 'users', 'shift', 'daily'];
+var TAB_IDS = ['overview', 'pareto', 'repeats', 'reliability', 'reports', 'actions', 'events', 'upload', 'master', 'settings', 'users', 'shift', 'daily', 'dispatch'];
 var DASHBOARD_TABS = ['overview', 'pareto', 'repeats', 'reliability', 'reports', 'actions', 'events'];
 var LEVELS = ['Hidden', 'View', 'Edit'];
 

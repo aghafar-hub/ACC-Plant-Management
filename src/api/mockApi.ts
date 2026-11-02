@@ -5,7 +5,7 @@
 import type {
   Access, AccessLevel, ActiveUser, AdminUser, Api, Area, AuditEntry, AuditGroup, DeviceKind, ClassificationCode, Equipment, EquipmentAlias, EventChanges,
   EventRow, NewTask, Notification, NotificationCheckResult, NotificationPrefs, NotificationState, Reason, Session, SessionUser, TaskStatus,
-  TabId, UploadBatch, UploadRow,
+  TabId, UploadBatch, UploadRow, DispatchApi,
 } from './types';
 import {
   cleanSavedReports, notificationCandidates, oneLine, parseNotifSettings, uploadDoneCandidate, userEventCandidate, type Candidate,
@@ -23,6 +23,8 @@ import { cleanTargetSave, type KpiDefinition, type KpiTarget } from '../plant/kp
 import { changedLimitFields, limitProblem, type QualityParameter } from '../plant/quality';
 import { CLOSING_REASON_MIN, CLOSING_SECTION_TEXT, CLOSING_SECTIONS, closingOf, lockedMonthOf, lockedMonths, lockedText, monthKey, type MonthClosing } from '../plant/closing';
 import schemaTables from '../../schema/tables.json';
+import { emptySettings, N_PACKERS, type DispatchDay, type DispatchSettings } from '../dispatch/model';
+import { syntheticDispatchDays } from '../dispatch/synthetic';
 import {
   DEFAULT_SHIFTS, SHIFT_STOP_FIELDS, blockingFlags, reportIdOf, shiftWindow,
   type ShiftHistory, type ShiftReport, type ShiftStage, type ShiftStoppage, type ShiftStopField,
@@ -99,7 +101,7 @@ function writeKeptTheme(userId: string, theme: string): void {
   store.set(KEPT_THEMES_KEY, JSON.stringify(all));
 }
 
-export interface MockApi extends Api {
+export interface MockApi extends Api, DispatchApi {
   /** Test helpers: the live data and a clock override. Not part of Api. */
   __db(): SyntheticDb;
   /** The emails 'sent' by sendReport / sendTestEmail (backend 1.9.0), newest last. */
@@ -118,7 +120,7 @@ export interface SentMockMail { from: string; to: string[]; cc: string[]; subjec
  * outlives a reload and a fresh sign-in like on a real server (everything else in the mock starts again on a reload).
  */
 /** The backend version the demo behaves like. */
-export const MOCK_SERVER_VERSION = '2.3.0';
+export const MOCK_SERVER_VERSION = '2.4.0';
 
 export function createMockApi(opts: { seed?: number; demoActions?: boolean; keepAccountThemes?: boolean } = {}): MockApi {
   let db: SyntheticDb | null = null;
@@ -403,6 +405,9 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
     kpi_id: d.kpi_id, name: d.name, category: d.category, unit: d.unit ?? '', better: d.better, decimals: Number(d.decimals ?? 1), aggregation: d.aggregation, status: d.status,
   }));
   let kpiTargets: KpiTarget[] = [];
+  // Dispatch & Packing (demo mode only; the backend comes later): daily rows and the section's targets
+  let dispatchDays: DispatchDay[] = syntheticDispatchDays();
+  let dispatchSettings: DispatchSettings = emptySettings();
   // month-end closing (backend 2.3.0; mirrors Closing.js): a signed-off downtime month is locked
   const closings: MonthClosing[] = [];
   function requireMonthOpen(rec: { event_date?: string; stop_ts?: string }, locked = lockedMonths(closings)) {
@@ -1445,6 +1450,45 @@ export function createMockApi(opts: { seed?: number; demoActions?: boolean; keep
     async listResponsibilities(token) {
       need(token, ['users'], 'View');
       return clone(responsibilities.filter((r) => r.active).map(({ active: _a, ...r }) => r));
+    },
+    async getDispatchDays(token) {
+      need(token, ['dispatch'], 'View');
+      return clone(dispatchDays);
+    },
+    async uploadDispatchDays(token, days, fileName) {
+      const a = need(token, ['dispatch'], 'Edit');
+      if (!Array.isArray(days) || days.length === 0) throw new ApiError('The upload has no days.', 'bad_request');
+      const have = new Set(dispatchDays.map((d) => d.date));
+      const seen = new Set<string>();
+      const dup: string[] = [];
+      for (const d of days) {
+        if (!isValidDate(d.date) || !Array.isArray(d.packers) || d.packers.length !== N_PACKERS) throw new ApiError(`Row ${String(d.date)} is not a valid day.`, 'bad_request');
+        if (have.has(d.date) || seen.has(d.date)) dup.push(d.date);
+        seen.add(d.date);
+      }
+      if (dup.length) {
+        const shown = dup.slice(0, 5).join(', ');
+        throw new ApiError(`Nothing was added: ${dup.length} date(s) are already in the app (${shown}${dup.length > 5 ? ', ...' : ''}). Dates are never replaced by an upload.`, 'duplicate_dates');
+      }
+      dispatchDays = [...dispatchDays, ...clone(days)].sort((x, y) => x.date.localeCompare(y.date));
+      const sorted = [...seen].sort();
+      audit(a.user.user_id, 'dispatch_upload', 'dispatch', fileName || 'workbook', `${days.length} days ${sorted[0]} to ${sorted[sorted.length - 1]}`);
+      return { file_name: fileName, days_added: days.length, from: sorted[0]!, to: sorted[sorted.length - 1]! };
+    },
+    async getDispatchSettings(token) {
+      need(token, ['dispatch'], 'View');
+      return clone(dispatchSettings);
+    },
+    async saveDispatchSettings(token, settings) {
+      const a = need(token, ['dispatch'], 'Edit');
+      const ok = (x: unknown) => typeof x === 'number' && Number.isFinite(x) && x >= 0;
+      const pct = (x: unknown) => x === null || (ok(x) && (x as number) <= 100);
+      if (!Array.isArray(settings?.ratedTph) || settings.ratedTph.length !== N_PACKERS || !settings.ratedTph.every(ok)) throw new ApiError('Rated capacity must be six numbers, 0 or more.', 'bad_request');
+      if (!Array.isArray(settings.monthlyTargetT) || settings.monthlyTargetT.length !== 12 || !settings.monthlyTargetT.every(ok)) throw new ApiError('Monthly targets must be twelve numbers, 0 or more.', 'bad_request');
+      if (!pct(settings.availabilityTargetPct) || !pct(settings.noTrucksMaxPct)) throw new ApiError('Percentages must be between 0 and 100.', 'bad_request');
+      dispatchSettings = clone(settings);
+      audit(a.user.user_id, 'dispatch_settings', 'dispatch', 'targets', 'Dispatch & Packing targets saved');
+      return clone(dispatchSettings);
     },
     async saveKpiTargets(token, save) {
       const a = auth(token);

@@ -27,3 +27,6 @@ export const SERVER_2_2 = '2.2.0';
 
 /** Backend 2.3.0 (plant system): KPI targets (Settings › KPI targets), quality limits, month-end closing. */
 export const SERVER_2_3 = '2.3.0';
+
+/** Backend 2.4.0 (planned): Dispatch & Packing (daily rows, targets, upload). Until a server reports this, the section is not shown. */
+export const SERVER_2_4 = '2.4.0';

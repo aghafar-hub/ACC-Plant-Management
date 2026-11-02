@@ -8,9 +8,10 @@ const ids = (ps: { id: string }[]) => ps.map((p) => p.id);
 
 describe('navigation sections', () => {
   it('groups every page into Analyze, Reports, Act, Data or Setup in the agreed order', () => {
-    expect(SECTIONS.map((s) => s.label)).toEqual(['Operate', 'Downtime analysis', 'Setup']);
+    expect(SECTIONS.map((s) => s.label)).toEqual(['Operate', 'Downtime analysis', 'Dispatch & Packing', 'Setup']);
     expect(ids(pagesInSection(PAGES, 'operate'))).toEqual(['shift', 'daily']);
     expect(ids(pagesInSection(PAGES, 'downtime'))).toEqual(['overview', 'pareto', 'repeats', 'reliability', 'reports', 'actions', 'events', 'validate', 'upload']);
+    expect(ids(pagesInSection(PAGES, 'dispatch'))).toEqual(['dispatch', 'dispatch-analysis', 'dispatch-packers', 'dispatch-bags', 'dispatch-validate', 'dispatch-data']);
     expect(ids(pagesInSection(PAGES, 'setup'))).toEqual(['master']);
     expect(pageById('pareto')).toMatchObject({ label: 'Pareto', tab: 'Pareto', short: 'Pareto' });
   });
@@ -45,5 +46,19 @@ describe('navigation sections', () => {
     expect(pageForPath('/actions')?.id).toBe('actions');
     expect(pageForPath('/notifications')).toBeUndefined();
     expect(ICON_NAMES).toContain(pageById('actions').icon);
+  });
+  it('Dispatch & Packing is its own section behind ONE access tab; it does not change the start page or the phone bar', () => {
+    for (const p of pagesInSection(PAGES, 'dispatch')) {
+      expect(p.access).toBe('dispatch');
+      expect(p.path.startsWith('/dispatch/')).toBe(true);
+      expect(ICON_NAMES).toContain(p.icon);
+      expect(pageForPath(p.path)?.id).toBe(p.id);
+    }
+    expect(pageById('dispatch')).toMatchObject({ path: '/dispatch/dashboard', label: 'Dispatch & Packing', tab: 'Dashboard' });
+    expect(pageForPath('/dispatch')).toBeUndefined();
+    expect(landingPath(PAGES, 'ROLE-ADMIN')).toBe('/dashboard');
+    expect(ids(bottomBarPages(PAGES))).toEqual(['overview', 'pareto', 'actions', 'events']);
+    // no downtime page is in the section, and no dispatch page is a downtime tab
+    expect(pagesInSection(PAGES, 'downtime').some((p) => p.access === 'dispatch')).toBe(false);
   });
 });

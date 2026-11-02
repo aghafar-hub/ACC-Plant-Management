@@ -1,7 +1,8 @@
 // The one `api` the app uses: the Apps Script backend when VITE_API_URL is set
 // at build time, otherwise the in-memory synthetic API (mock mode).
 import { createSheetsApi } from './sheetsApi';
-import type { Api } from './types';
+import type { Api, DispatchApi } from './types';
+type FullApi = Api & DispatchApi;
 import { ApiError } from './types';
 
 export { ApiError } from './types';
@@ -12,10 +13,10 @@ export const ACCESS_DENIED_EVENT = 'acc-dt-access-denied';
 
 // The mock (and its synthetic data) is loaded on first use only, so a build
 // that talks to a real backend never downloads it.
-function lazyMock(): Api {
-  let loaded: Promise<Api> | null = null;
+function lazyMock(): FullApi {
+  let loaded: Promise<FullApi> | null = null;
   const load = () => (loaded ??= import('./mockApi').then((m) => m.mockApi));
-  return new Proxy({} as Api, {
+  return new Proxy({} as FullApi, {
     get: (_t, method: string) => async (...args: unknown[]) => {
       const impl = (await load()) as unknown as Record<string, (...a: unknown[]) => Promise<unknown>>;
       return impl[method](...args);
@@ -24,7 +25,7 @@ function lazyMock(): Api {
 }
 
 // Reports a refused session or refused access to the app, then rethrows.
-function watched(base: Api): Api {
+function watched(base: FullApi): FullApi {
   return new Proxy(base, {
     get: (target, method: string) => {
       const fn = (target as unknown as Record<string, (...a: unknown[]) => Promise<unknown>>)[method];
@@ -44,7 +45,7 @@ function watched(base: Api): Api {
 }
 
 // Written against import.meta.env directly so a build with a backend address drops the mock entirely.
-export const api: Api = watched(import.meta.env.VITE_API_URL ? createSheetsApi(import.meta.env.VITE_API_URL.trim()) : lazyMock());
+export const api: FullApi = watched(import.meta.env.VITE_API_URL ? createSheetsApi(import.meta.env.VITE_API_URL.trim()) : lazyMock());
 
 /** Plain-English text for any error. */
 export function describeError(err: unknown, fallback = 'Something went wrong. Please try again.'): string {

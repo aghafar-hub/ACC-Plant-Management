@@ -3533,7 +3533,8 @@ var SCHEMA = {
     "settings": "Edit",
     "users": "Edit",
     "shift": "Edit",
-    "daily": "Edit"
+    "daily": "Edit",
+    "dispatch": "Edit"
    },
    "ROLE-MGR": {
     "overview": "View",
@@ -3548,7 +3549,8 @@ var SCHEMA = {
     "settings": "Hidden",
     "users": "Hidden",
     "shift": "View",
-    "daily": "View"
+    "daily": "View",
+    "dispatch": "Edit"
    },
    "ROLE-ENG": {
     "overview": "View",
@@ -3563,7 +3565,8 @@ var SCHEMA = {
     "settings": "Hidden",
     "users": "Hidden",
     "shift": "View",
-    "daily": "View"
+    "daily": "View",
+    "dispatch": "View"
    },
    "ROLE-VIEW": {
     "overview": "View",
@@ -3578,7 +3581,8 @@ var SCHEMA = {
     "settings": "Hidden",
     "users": "Hidden",
     "shift": "Hidden",
-    "daily": "View"
+    "daily": "View",
+    "dispatch": "View"
    },
    "ROLE-SHIFT": {
     "overview": "View",
@@ -3593,7 +3597,8 @@ var SCHEMA = {
     "settings": "Hidden",
     "users": "Hidden",
     "shift": "Edit",
-    "daily": "View"
+    "daily": "View",
+    "dispatch": "View"
    },
    "ROLE-PROD": {
     "overview": "View",
@@ -3608,7 +3613,8 @@ var SCHEMA = {
     "settings": "Hidden",
     "users": "Hidden",
     "shift": "Edit",
-    "daily": "View"
+    "daily": "View",
+    "dispatch": "Edit"
    },
    "ROLE-REL": {
     "overview": "View",
@@ -3623,7 +3629,8 @@ var SCHEMA = {
     "settings": "Hidden",
     "users": "Hidden",
     "shift": "Edit",
-    "daily": "View"
+    "daily": "View",
+    "dispatch": "View"
    },
    "ROLE-QC": {
     "overview": "View",
@@ -3638,7 +3645,8 @@ var SCHEMA = {
     "settings": "Hidden",
     "users": "Hidden",
     "shift": "Hidden",
-    "daily": "View"
+    "daily": "View",
+    "dispatch": "View"
    }
   },
   "classifications": [
@@ -8081,7 +8089,7 @@ var UPLOAD_WARNING_MAX = 20000;
 var FINGERPRINT_HINT_MAX = 20;
 var TEXT_MAX = 1000;
 
-var TAB_IDS = ['overview', 'pareto', 'repeats', 'reliability', 'reports', 'actions', 'events', 'upload', 'master', 'settings', 'users', 'shift', 'daily'];
+var TAB_IDS = ['overview', 'pareto', 'repeats', 'reliability', 'reports', 'actions', 'events', 'upload', 'master', 'settings', 'users', 'shift', 'daily', 'dispatch'];
 var DASHBOARD_TABS = ['overview', 'pareto', 'repeats', 'reliability', 'reports', 'actions', 'events'];
 var LEVELS = ['Hidden', 'View', 'Edit'];
 

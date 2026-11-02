@@ -5,19 +5,21 @@ import { t } from './i18n/t';
 // "which pages does this person see" is decided by the levels the server
 // returns (Hidden pages never appear).
 /** A page of the app. Every id is a tab id, except Validate: it is part of the events tab (View to see, Edit to fix). */
-export type PageId = TabId | 'validate';
+export type PageId = TabId | 'validate' | 'dispatch-analysis' | 'dispatch-packers' | 'dispatch-bags' | 'dispatch-validate' | 'dispatch-data';
 
 /** The navigation sections: the left rail headings, the page tabs' scope, the More sheet groups. */
 // Plant system: Operate (Shift reports, Daily meeting), Downtime analysis (every downtime page, one rail item whose
 // pages are the tabs under the top bar), Setup. Production and Quality become sections of their own later.
-export type SectionId = 'operate' | 'downtime' | 'setup';
+export type SectionId = 'operate' | 'downtime' | 'dispatch' | 'setup';
 export const SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'operate', label: 'Operate' },
   { id: 'downtime', label: 'Downtime analysis' },
+  // Dispatch & Packing: its own section; packer stoppage and no-trucks hours stay here and never reach the downtime analysis
+  { id: 'dispatch', label: 'Dispatch & Packing' },
   { id: 'setup', label: 'Setup' },
 ];
 /** Sections drawn as ONE rail item (their pages are the tabs under the top bar), with its icon. */
-export const ONE_ITEM_SECTIONS: Partial<Record<SectionId, string>> = { downtime: 'dashboard' };
+export const ONE_ITEM_SECTIONS: Partial<Record<SectionId, string>> = { downtime: 'dashboard', dispatch: 'route' };
 export const sectionLabel = (id: SectionId): string => t(SECTIONS.find((s) => s.id === id)!.label);
 
 export interface PageDef {
@@ -51,6 +53,13 @@ export const PAGES: PageDef[] = [
   // but the shift roles (see landingPath and bottomBarPages); the rail shows them first, in their Operate section.
   { id: 'shift', access: 'shift', path: '/shift', label: 'Shift reports', tab: 'Shift reports', short: 'Shift', icon: 'clock', group: 'operate' },
   { id: 'daily', access: 'daily', path: '/daily', label: 'Daily meeting', tab: 'Daily meeting', short: 'Daily', icon: 'calendar', group: 'operate' },
+  // Dispatch & Packing: one access tab (`dispatch`) for every page of the section; the Dashboard carries the tab id
+  { id: 'dispatch', access: 'dispatch', path: '/dispatch/dashboard', label: 'Dispatch & Packing', tab: 'Dashboard', short: 'Dispatch', icon: 'route', group: 'dispatch' },
+  { id: 'dispatch-analysis', access: 'dispatch', path: '/dispatch/analysis', label: 'Dispatch analysis', tab: 'Dispatch analysis', short: 'Analysis', icon: 'graphs', group: 'dispatch' },
+  { id: 'dispatch-packers', access: 'dispatch', path: '/dispatch/packers', label: 'Packers', tab: 'Packers', short: 'Packers', icon: 'tool', group: 'dispatch' },
+  { id: 'dispatch-bags', access: 'dispatch', path: '/dispatch/bags', label: 'Bags, clinker and power', tab: 'Bags, clinker, power', short: 'Bags', icon: 'thermometer', group: 'dispatch' },
+  { id: 'dispatch-validate', access: 'dispatch', path: '/dispatch/validate', label: 'Data validation', tab: 'Data validation', short: 'Checks', icon: 'compliance', group: 'dispatch' },
+  { id: 'dispatch-data', access: 'dispatch', path: '/dispatch/data', label: 'Data and upload', tab: 'Data', short: 'Data', icon: 'database', group: 'dispatch' },
 ];
 
 // Settings and Users are not in the main navigation: they are reached from the
@@ -77,7 +86,7 @@ export const pageTab = (p: PageDef): string => t(p.tab);
 export const pageShort = (p: PageDef): string => t(p.short);
 
 /** The first four of these that the person may see go on the phone bottom bar, left to right; More is the fifth slot (mobile-actions.png). */
-export const BOTTOM_BAR_ORDER: PageId[] = ['overview', 'pareto', 'actions', 'events', 'reliability', 'repeats', 'validate', 'upload', 'shift', 'daily'];
+export const BOTTOM_BAR_ORDER: PageId[] = ['overview', 'pareto', 'actions', 'events', 'reliability', 'repeats', 'validate', 'upload', 'shift', 'daily', 'dispatch'];
 /** The roles whose work starts on Shift reports: their start page and the first slot of their phone bar. */
 export const SHIFT_FIRST_ROLES = ['ROLE-SHIFT', 'ROLE-PROD', 'ROLE-REL'];
 export const BOTTOM_BAR_SLOTS = 4;

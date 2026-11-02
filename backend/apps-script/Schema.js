@@ -3526,7 +3526,8 @@ var SCHEMA = {
     "settings": "Edit",
     "users": "Edit",
     "shift": "Edit",
-    "daily": "Edit"
+    "daily": "Edit",
+    "dispatch": "Edit"
    },
    "ROLE-MGR": {
     "overview": "View",
@@ -3541,7 +3542,8 @@ var SCHEMA = {
     "settings": "Hidden",
     "users": "Hidden",
     "shift": "View",
-    "daily": "View"
+    "daily": "View",
+    "dispatch": "Edit"
    },
    "ROLE-ENG": {
     "overview": "View",
@@ -3556,7 +3558,8 @@ var SCHEMA = {
     "settings": "Hidden",
     "users": "Hidden",
     "shift": "View",
-    "daily": "View"
+    "daily": "View",
+    "dispatch": "View"
    },
    "ROLE-VIEW": {
     "overview": "View",
@@ -3571,7 +3574,8 @@ var SCHEMA = {
     "settings": "Hidden",
     "users": "Hidden",
     "shift": "Hidden",
-    "daily": "View"
+    "daily": "View",
+    "dispatch": "View"
    },
    "ROLE-SHIFT": {
     "overview": "View",
@@ -3586,7 +3590,8 @@ var SCHEMA = {
     "settings": "Hidden",
     "users": "Hidden",
     "shift": "Edit",
-    "daily": "View"
+    "daily": "View",
+    "dispatch": "View"
    },
    "ROLE-PROD": {
     "overview": "View",
@@ -3601,7 +3606,8 @@ var SCHEMA = {
     "settings": "Hidden",
     "users": "Hidden",
     "shift": "Edit",
-    "daily": "View"
+    "daily": "View",
+    "dispatch": "Edit"
    },
    "ROLE-REL": {
     "overview": "View",
@@ -3616,7 +3622,8 @@ var SCHEMA = {
     "settings": "Hidden",
     "users": "Hidden",
     "shift": "Edit",
-    "daily": "View"
+    "daily": "View",
+    "dispatch": "View"
    },
    "ROLE-QC": {
     "overview": "View",
@@ -3631,7 +3638,8 @@ var SCHEMA = {
     "settings": "Hidden",
     "users": "Hidden",
     "shift": "Hidden",
-    "daily": "View"
+    "daily": "View",
+    "dispatch": "View"
    }
   },
   "classifications": [

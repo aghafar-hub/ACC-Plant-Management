@@ -9,10 +9,10 @@ const ANALYZE = ['Dashboard', 'Pareto', 'Repeated failures', 'Reliability', 'Rep
 // plant system: Operate (Shift reports for Admin / Manager / Engineer, Daily meeting for everyone), Downtime analysis
 // (ONE rail item; its pages are the tabs under the top bar), Setup
 const RAIL: Record<Role, Record<string, string[]>> = {
-  admin: { Operate: ['Shift reports', 'Daily meeting'], 'Downtime analysis': ['Downtime analysis'], Setup: ['Master Data'] },
-  manager: { Operate: ['Shift reports', 'Daily meeting'], 'Downtime analysis': ['Downtime analysis'], Setup: ['Master Data'] },
-  engineer: { Operate: ['Shift reports', 'Daily meeting'], 'Downtime analysis': ['Downtime analysis'], Setup: ['Master Data'] },
-  viewer: { Operate: ['Daily meeting'], 'Downtime analysis': ['Downtime analysis'] },
+  admin: { Operate: ['Shift reports', 'Daily meeting'], 'Downtime analysis': ['Downtime analysis'], 'Dispatch & Packing': ['Dispatch & Packing'], Setup: ['Master Data'] },
+  manager: { Operate: ['Shift reports', 'Daily meeting'], 'Downtime analysis': ['Downtime analysis'], 'Dispatch & Packing': ['Dispatch & Packing'], Setup: ['Master Data'] },
+  engineer: { Operate: ['Shift reports', 'Daily meeting'], 'Downtime analysis': ['Downtime analysis'], 'Dispatch & Packing': ['Dispatch & Packing'], Setup: ['Master Data'] },
+  viewer: { Operate: ['Daily meeting'], 'Downtime analysis': ['Downtime analysis'], 'Dispatch & Packing': ['Dispatch & Packing'] },
 };
 
 test.describe('desktop', () => {
@@ -55,7 +55,7 @@ test.describe('desktop', () => {
       const headings = await rail.locator('.sidebar-section-title').evaluateAll((els) => els.map((el) => (el.textContent ?? '').trim()));
       expect(headings).toEqual(Object.keys(want));
       for (const [section, labels] of Object.entries(want)) {
-        const sec = section === 'Downtime analysis' ? 'downtime' : section.toLowerCase();
+        const sec = section === 'Downtime analysis' ? 'downtime' : section === 'Dispatch & Packing' ? 'dispatch' : section.toLowerCase();
         const names = await rail.locator(`[data-section="${sec}"] a`).evaluateAll((els) => els.map((el) => (el.querySelector('.sidebar-link-label')?.textContent ?? '').trim()));
         expect(names, section).toEqual(labels);
       }
@@ -424,7 +424,7 @@ test.describe('phone', () => {
     const sheet = page.getByTestId('more-sheet');
     await expect(sheet).toBeVisible();
     // pages grouped under Analyze / Data (no Setup for a viewer)
-    await expect(sheet.locator('.more-group-title')).toHaveText(['Operate', 'Downtime analysis']);
+    await expect(sheet.locator('.more-group-title')).toHaveText(['Operate', 'Downtime analysis', 'Dispatch & Packing']);
     // Dashboard, Pareto, Repeated failures, Reliability, Reports, Actions, Events, Validate (no Upload for a viewer)
     await expect(sheet.locator('[data-section="downtime"] .more-tile[data-testid^="more-tile-"]:not([data-testid="more-tile-notifications"])')).toHaveCount(8);
     for (const id of ['overview', 'pareto', 'repeats', 'reliability', 'events', 'validate']) await expect(sheet.getByTestId(`more-tile-${id}`)).toBeVisible();
@@ -457,7 +457,7 @@ test.describe('phone', () => {
       await expect(page.getByTestId(`more-tile-${id}`)).toBeVisible();
     }
     for (const id of ['settings', 'users']) await expect(page.getByTestId(`more-tile-${id}`)).toHaveCount(0);
-    await expect(page.locator('.more-group-title')).toHaveText(['Operate', 'Downtime analysis', 'Setup']);
+    await expect(page.locator('.more-group-title')).toHaveText(['Operate', 'Downtime analysis', 'Dispatch & Packing', 'Setup']);
     await expect(page.locator('[data-section="setup"] .more-tile')).toHaveCount(1);
     await expect(page.getByTestId('more-tile-master')).toContainText('Can edit');
   });
